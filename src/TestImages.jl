@@ -11,28 +11,28 @@ struct Circle <: AbstractBaseShape
 end
 
 struct Polygon <: AbstractBaseShape
-    scale::Real
-    rotation::Real
     edges::Unsigned
+    rotation::Real
+    scale::Real
 end
 
 struct Star <: AbstractBaseShape
-    scale::Real
-    rotation::Real
     rays::Unsigned
+    rotation::Real
+    scale::Real
 end
 
 struct Empty <: AbstractBaseShape end
 
 struct OrbAndCross <: AbstractComposedShape
-    scale::Real
     orb::AbstractBaseShape
     cross::AbstractBaseShape
+    scale::Real
 end
 
 struct Shield <: AbstractComposedShape
-    scale::Real
     emblem::AbstractBaseShape
+    scale::Real
 end
 
 
