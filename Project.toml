@@ -1,0 +1,4 @@
+name = "NormalizedRadonCDT"
+uuid = "e0adff08-4a93-453d-8602-c3ed7d587dfa"
+authors = ["Robert Beinert <robert.beinert@tu-berlin.de>"]
+version = "0.1.0"
