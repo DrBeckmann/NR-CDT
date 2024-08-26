@@ -1,5 +1,5 @@
 module NormalizedRadonCDT
 
-greet() = print("Hello World!")
+include("TestImages.jl")
 
 end
