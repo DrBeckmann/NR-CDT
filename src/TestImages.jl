@@ -30,6 +30,22 @@ function Polygon(edges; rotation::Real=0, scale::Real=1)
     return Polygon(edges, rotation, (scale, scale))
 end
 
+function Triangle(; rotation::Real=0, scale::Tuple{Real, Real}=(1,1))
+    return Polygon(3, rotation + π / 2, scale)
+end
+
+function Triangle(; rotation::Real=0, scale::Real=1)
+    return Polygon(3, rotation + π / 2, (scale, scale))
+end
+
+function Square(; rotation::Real=0, scale::Tuple{Real, Real}=(1,1))
+    return Polygon(4, rotation + π / 4, scale)
+end
+
+function Square(; rotation::Real=0, scale::Real=1)
+    return Polygon(4, rotation + π / 4, (scale, scale))
+end
+
 struct Star <: AbstractBaseShape
     rays::Integer
     rotation::Real

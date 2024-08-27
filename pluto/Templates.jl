@@ -22,14 +22,14 @@ end
 
 # ╔═╡ 6590cd1e-3ac5-4bcf-9dfa-b8f024f93820
 begin
-	triangle = NormalizedRadonCDT.TestImages.Polygon(3, π/2, (1,1))
+	triangle = NormalizedRadonCDT.TestImages.Triangle()
 	image_triangle = NormalizedRadonCDT.TestImages.generate(triangle)
 	heatmap(image_triangle, ticks=nothing, border=:none)
 end
 
 # ╔═╡ 86d9d7bc-0b0f-42bc-84d4-be8ea1cf4d4f
 begin
-	square = NormalizedRadonCDT.TestImages.Polygon(4, π/4, (1,1))
+	square = NormalizedRadonCDT.TestImages.Square()
 	image_square = NormalizedRadonCDT.TestImages.generate(square)
 	heatmap(image_square, ticks=nothing, border=:none)
 end
@@ -43,7 +43,7 @@ end
 
 # ╔═╡ 1aabbfed-2b4f-4acb-a287-eddb9f8497e5
 begin
-	orbandcross = NormalizedRadonCDT.TestImages.OrbAndCross(circle, star, 0, (1,1))
+	orbandcross = NormalizedRadonCDT.TestImages.OrbAndCross(square, star, 0, (1,1))
 	image_orbandcross = NormalizedRadonCDT.TestImages.generate(orbandcross)
 	heatmap(image_orbandcross, ticks=nothing, border=:none)
 end
