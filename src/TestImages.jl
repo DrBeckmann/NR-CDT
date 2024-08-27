@@ -8,19 +8,20 @@ abstract type AbstractBaseShape <: AbstractShape end
 abstract type AbstractComposedShape <: AbstractShape end
 
 struct Circle <: AbstractBaseShape
-    scale::Real
+    rotation::Real
+    scale::Tuple{Real, Real}
 end
 
 struct Polygon <: AbstractBaseShape
     edges::Integer
     rotation::Real
-    scale::Real
+    scale::Tuple{Real, Real}
 end
 
 struct Star <: AbstractBaseShape
     rays::Integer
     rotation::Real
-    scale::Real
+    scale::Tuple{Real, Real}
 end
 
 struct Empty <: AbstractBaseShape end
@@ -28,15 +29,17 @@ struct Empty <: AbstractBaseShape end
 struct OrbAndCross <: AbstractComposedShape
     orb::AbstractBaseShape
     cross::AbstractBaseShape
-    scale::Real
+    rotation::Real
+    scale::Tuple{Real, Real}
 end
 
 struct Shield <: AbstractComposedShape
     emblem::AbstractBaseShape
-    scale::Real
+    rotation::Real
+    scale::Tuple{Real, Real}
 end
 
-function generate(shape::AbstractShape; size=(128, 128), width=3)
+function generate(shape::AbstractShape; size::Tuple{Integer, Integer}=(128, 128), width::Real=3)
     initiate_drawing(size, width)
     draw(shape)
     return extract_drawing()
