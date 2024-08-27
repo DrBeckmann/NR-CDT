@@ -54,6 +54,8 @@ function initiate_luxor_drawing(size::Tuple{Integer, Integer}, width::Real)
 	scale(x / 2, y / 2)
 end
 
+function luxor_draw(::Empty) end
+
 function luxor_draw(circle::Circle)
     apply_local_transform(circle)
     luxor_draw_circle()
@@ -99,21 +101,35 @@ function luxor_draw_star(rays::Integer)
     end
 end
 
-function luxor_draw(::Empty) end
-
 function luxor_draw(orbandcross::OrbAndCross)
+    apply_local_transform(orbandcross)
+    luxor_draw_crosspiece()
+    luxor_draw_orb(orbandcross)
+    luxor_draw_cross(orbandcross)
+    annul_local_transform(orbandcross)
+end
+
+function luxor_draw_crosspiece()
     sethue("white")
     move(Point(0, -0.5))
     line(Point(0, 0.5))
     strokepath()
+end
+
+function luxor_draw_orb(orbandcross)
     translate(0, 0.5)
     scale(0.5)
     luxor_draw(orbandcross.orb)
     scale(2)
-    translate(0, -1)
+    translate(0, -0.5)
+end
+
+function luxor_draw_cross(orbandcross)
+    translate(0, -0.5)
     scale(0.5)
     luxor_draw(orbandcross.cross)
     scale(2)
+    translate(0, 0.5)
 end
 
 function luxor_draw(shield::Shield)
