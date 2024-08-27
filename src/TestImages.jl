@@ -113,6 +113,20 @@ function luxor_draw(shield::Shield)
     scale(2)
 end
 
+function apply_local_transform(shape::AbstractShape)
+    (x, y) = shape.scale
+    ϕ = shape.rotation
+    scale(x, y)
+    rotate(-ϕ)
+end
+
+function annul_local_transform(shape::AbstractShape)
+    (x, y) = shape.scale
+    ϕ = shape.rotation
+    scale(1 / x, 1 / y)
+    rotate(ϕ)
+end
+
 function extract_luxor_drawing()
     image = image_as_matrix()
     finish()
