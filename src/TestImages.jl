@@ -55,10 +55,16 @@ function initiate_luxor_drawing(size::Tuple{Integer, Integer}, width::Real)
 end
 
 function luxor_draw(circle::Circle)
-	sethue("black")
-	Luxor.circle(Point(0, 0), 0.75, action=:fill)
-	sethue("white")
-	Luxor.circle(Point(0, 0), 0.75, action=:stroke)
+    apply_local_transform(circle)
+    luxor_draw_circle()
+    annul_local_transform(circle)
+end
+
+function luxor_draw_circle()
+    sethue("black")
+    circle(Point(0, 0), 0.75, action=:fill)
+    sethue("white")
+    circle(Point(0, 0), 0.75, action=:stroke)
 end
 
 function luxor_draw(polygon::Polygon)
