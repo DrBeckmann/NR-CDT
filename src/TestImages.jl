@@ -76,7 +76,7 @@ function Shield(emblem; rotation::Real=0, scale::Real=1)
     return Shield(emblem, rotation, (scale, scale))
 end
 
-function generate(shape::AbstractShape; size::Tuple{Integer, Integer}=(128, 128), width::Real=3)
+function generate(shape::AbstractShape; size::Tuple{Integer, Integer}=(128, 128), width::Real=2)
     initiate_luxor_drawing(size, width)
     luxor_draw(shape)
     return extract_luxor_drawing()
