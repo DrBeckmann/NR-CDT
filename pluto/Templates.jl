@@ -15,7 +15,7 @@ end
 
 # ╔═╡ b25b513b-b9f1-4572-b576-7c3dfb4f0f11
 begin
-	circle = NormalizedRadonCDT.TestImages.Circle(0,(1,1))
+	circle = NormalizedRadonCDT.TestImages.Circle()
 	image = NormalizedRadonCDT.TestImages.generate(circle)
 	heatmap(image, ticks=nothing, border=:none)
 end
@@ -36,7 +36,7 @@ end
 
 # ╔═╡ 978c6537-9d63-4366-8c5c-29555c7d5dfb
 begin
-	star = NormalizedRadonCDT.TestImages.Star(7, 0, (1,1))
+	star = NormalizedRadonCDT.TestImages.Star(8)
 	image_star = NormalizedRadonCDT.TestImages.generate(star)
 	heatmap(image_star, ticks=nothing, border=:none)
 end

@@ -12,16 +12,37 @@ struct Circle <: AbstractBaseShape
     scale::Tuple{Real, Real}
 end
 
+Circle(; rotation::Real=0, scale::Tuple{Real, Real}=(1,1)) = Circle(rotation, scale)
+Circle(; rotation::Real=0, scale::Real=1) = Circle(rotation, (scale, scale))
+
 struct Polygon <: AbstractBaseShape
     edges::Integer
     rotation::Real
     scale::Tuple{Real, Real}
+    Polygon(n, r, s) = n <= 0 ? error("negative edges") : new(n, r, s)
+end
+
+function Polygon(edges; rotation::Real=0, scale::Tuple{Real, Real}=(1,1)) 
+    return Polygon(edges, rotation, scale)
+end
+
+function Polygon(edges; rotation::Real=0, scale::Real=1) 
+    return Polygon(edges, rotation, (scale, scale))
 end
 
 struct Star <: AbstractBaseShape
     rays::Integer
     rotation::Real
     scale::Tuple{Real, Real}
+    Star(n, r, s) = n <= 0 ? error("negative rays") : new(n, r, s)
+end
+
+function Star(rays; rotation::Real=0, scale::Tuple{Real, Real}=(1,1)) 
+    return Star(rays, rotation, scale)
+end
+
+function Star(rays; rotation::Real=0, scale::Real=1) 
+    return Star(rays, rotation, (scale, scale))
 end
 
 struct Empty <: AbstractBaseShape end
@@ -33,10 +54,26 @@ struct OrbAndCross <: AbstractComposedShape
     scale::Tuple{Real, Real}
 end
 
+function OrbAndCross(orb, cross; rotation::Real=0, scale::Tuple{Real, Real}=(1,1)) 
+    return OrbAndCross(orb, cross, rotation, scale)
+end
+
+function OrbAndCross(orb, cross; rotation::Real=0, scale::Real=1) 
+    return OrbAndCross(orb, cross, rotation, (scale, scale))
+end
+
 struct Shield <: AbstractComposedShape
     emblem::AbstractBaseShape
     rotation::Real
     scale::Tuple{Real, Real}
+end
+
+function Shield(emblem; rotation::Real=0, scale::Tuple{Real, Real}=(1,1)) 
+    return Shield(emblem, rotation, scale)
+end
+
+function Shield(emblem; rotation::Real=0, scale::Real=1) 
+    return Shield(emblem, rotation, (scale, scale))
 end
 
 function generate(shape::AbstractShape; size::Tuple{Integer, Integer}=(128, 128), width::Real=3)
@@ -76,12 +113,10 @@ function luxor_draw(polygon::Polygon)
 end
 
 function luxor_draw_polygon(edges::Integer)
-    if edges > 0
-        sethue("black")
-        ngon(Point(0, 0), 0.75, edges, action=:fill)
-        sethue("white")
-        ngon(Point(0, 0), 0.75, edges, action=:stroke)
-    end
+    sethue("black")
+    ngon(Point(0, 0), 0.75, edges, action=:fill)
+    sethue("white")
+    ngon(Point(0, 0), 0.75, edges, action=:stroke)
 end
 
 function luxor_draw(star::Star)
