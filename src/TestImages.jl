@@ -45,12 +45,11 @@ function generate(shape::AbstractShape; size::Tuple{Integer, Integer}=(128, 128)
     return extract_luxor_drawing()
 end
 
-function initiate_luxor_drawing(size, width)
+function initiate_luxor_drawing(size::Tuple{Integer, Integer}, width::Real)
     (x, y) = size
     Drawing(x, y, :png)
 	origin()
 	background("black")
-	sethue("white")
 	setline(width)
 	scale(x / 2, y / 2)
 end
@@ -85,6 +84,7 @@ end
 function luxor_draw(::Empty) end
 
 function luxor_draw(orbandcross::OrbAndCross)
+    sethue("white")
     move(Point(0, -0.5))
     line(Point(0, 0.5))
     strokepath()
@@ -99,6 +99,7 @@ function luxor_draw(orbandcross::OrbAndCross)
 end
 
 function luxor_draw(shield::Shield)
+    sethue("white")
     move(Point(-0.75, -0.75))
     line(Point(-0.75, -0.5))
     curve(Point(-0.75, 0.5), Point(0, 0.75), Point(0, 0.75))
