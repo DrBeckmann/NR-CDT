@@ -68,12 +68,18 @@ function luxor_draw_circle()
 end
 
 function luxor_draw(polygon::Polygon)
-    rotate(-polygon.rotation)
-	sethue("black")
-	Luxor.ngon(Point(0, 0), 0.75, polygon.edges, action=:fill)
-	sethue("white")
-	Luxor.ngon(Point(0, 0), 0.75, polygon.edges, action=:stroke)
-    rotate(polygon.rotation)
+    apply_local_transform(polygon)
+    luxor_draw_polygon(polygon.edges)
+	annul_local_transform(polygon)
+end
+
+function luxor_draw_polygon(edges::Integer)
+    if edges > 0
+        sethue("black")
+        ngon(Point(0, 0), 0.75, edges, action=:fill)
+        sethue("white")
+        ngon(Point(0, 0), 0.75, edges, action=:stroke)
+    end
 end
 
 function luxor_draw(star::Star)

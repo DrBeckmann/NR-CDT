@@ -43,7 +43,7 @@ end
 
 # ╔═╡ 1aabbfed-2b4f-4acb-a287-eddb9f8497e5
 begin
-	orbandcross = NormalizedRadonCDT.TestImages.OrbAndCross(square, star, 0, (1,1))
+	orbandcross = NormalizedRadonCDT.TestImages.OrbAndCross(circle, star, 0, (1,1))
 	image_orbandcross = NormalizedRadonCDT.TestImages.generate(orbandcross)
 	heatmap(image_orbandcross, ticks=nothing, border=:none)
 end
