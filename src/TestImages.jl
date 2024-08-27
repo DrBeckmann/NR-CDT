@@ -161,8 +161,8 @@ end
 function apply_local_transform(shape::AbstractShape)
     (x, y) = shape.scale
     ϕ = shape.rotation
-    scale(x, y)
     rotate(-ϕ)
+    scale(x, y)
 end
 
 function annul_local_transform(shape::AbstractShape)
