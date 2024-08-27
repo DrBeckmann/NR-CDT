@@ -116,7 +116,7 @@ function luxor_draw_crosspiece()
     strokepath()
 end
 
-function luxor_draw_orb(orbandcross)
+function luxor_draw_orb(orbandcross::OrbAndCross)
     translate(0, 0.5)
     scale(0.5)
     luxor_draw(orbandcross.orb)
@@ -124,7 +124,7 @@ function luxor_draw_orb(orbandcross)
     translate(0, -0.5)
 end
 
-function luxor_draw_cross(orbandcross)
+function luxor_draw_cross(orbandcross::OrbAndCross)
     translate(0, -0.5)
     scale(0.5)
     luxor_draw(orbandcross.cross)
@@ -133,6 +133,13 @@ function luxor_draw_cross(orbandcross)
 end
 
 function luxor_draw(shield::Shield)
+    apply_local_transform(shield)
+    luxor_draw_shield()
+    luxor_draw_emblem(shield)
+    annul_local_transform(shield)
+end
+
+function luxor_draw_shield()
     sethue("white")
     move(Point(-0.75, -0.75))
     line(Point(-0.75, -0.5))
@@ -141,10 +148,14 @@ function luxor_draw(shield::Shield)
     line(Point(0.75, -0.75))
     closepath()
     strokepath()
+end
+
+function luxor_draw_emblem(shield::Shield)
     translate(0, -0.125)
     scale(0.5)
     luxor_draw(shield.emblem)
     scale(2)
+    translate(0, 0.125)
 end
 
 function apply_local_transform(shape::AbstractShape)
