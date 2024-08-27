@@ -83,14 +83,20 @@ function luxor_draw_polygon(edges::Integer)
 end
 
 function luxor_draw(star::Star)
-    rotate(-star.rotation)
-	sethue("white")
-    for k in 1:star.rays
-        move(Point(0, 0))
-	    line(Point(0.75sin(k * 2π / star.rays), -0.75cos(k * 2π / star.rays)))
+    apply_local_transform(star)
+    luxor_draw_star(star.rays)
+    annul_local_transform(star)
+end
+
+function luxor_draw_star(rays::Integer)
+    if rays > 0
+        sethue("white")
+        for k in 1:rays
+            move(Point(0, 0))
+            line(Point(0.75sin(k * 2π / rays), -0.75cos(k * 2π / rays)))
+        end
+        strokepath()
     end
-    strokepath()
-    rotate(star.rotation)
 end
 
 function luxor_draw(::Empty) end
