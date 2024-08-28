@@ -2,6 +2,8 @@ module TestImages
 
 using Images
 using Luxor
+
+export Circle, Polygon, Triangle, Square, Star, Empty, OrbAndCross, Shield, generate
     
 abstract type AbstractShape end
 abstract type AbstractBaseShape <: AbstractShape end
