@@ -15,7 +15,6 @@ struct Circle <: AbstractBaseShape
 end
 
 Circle(; rotation::Real=0, scale::Tuple{Real, Real}=(1,1)) = Circle(rotation, scale)
-Circle(; rotation::Real=0, scale::Real=1) = Circle(rotation, (scale, scale))
 
 struct Polygon <: AbstractBaseShape
     edges::Integer
@@ -28,24 +27,12 @@ function Polygon(edges; rotation::Real=0, scale::Tuple{Real, Real}=(1,1))
     return Polygon(edges, rotation, scale)
 end
 
-function Polygon(edges; rotation::Real=0, scale::Real=1) 
-    return Polygon(edges, rotation, (scale, scale))
-end
-
 function Triangle(; rotation::Real=0, scale::Tuple{Real, Real}=(1,1))
     return Polygon(3, rotation + π / 2, scale)
 end
 
-function Triangle(; rotation::Real=0, scale::Real=1)
-    return Polygon(3, rotation + π / 2, (scale, scale))
-end
-
 function Square(; rotation::Real=0, scale::Tuple{Real, Real}=(1,1))
     return Polygon(4, rotation + π / 4, scale)
-end
-
-function Square(; rotation::Real=0, scale::Real=1)
-    return Polygon(4, rotation + π / 4, (scale, scale))
 end
 
 struct Star <: AbstractBaseShape
@@ -57,10 +44,6 @@ end
 
 function Star(rays; rotation::Real=0, scale::Tuple{Real, Real}=(1,1)) 
     return Star(rays, rotation, scale)
-end
-
-function Star(rays; rotation::Real=0, scale::Real=1) 
-    return Star(rays, rotation, (scale, scale))
 end
 
 struct Empty <: AbstractBaseShape end
@@ -76,10 +59,6 @@ function OrbAndCross(orb, cross; rotation::Real=0, scale::Tuple{Real, Real}=(1,1
     return OrbAndCross(orb, cross, rotation, scale)
 end
 
-function OrbAndCross(orb, cross; rotation::Real=0, scale::Real=1) 
-    return OrbAndCross(orb, cross, rotation, (scale, scale))
-end
-
 struct Shield <: AbstractComposedShape
     emblem::AbstractBaseShape
     rotation::Real
@@ -88,10 +67,6 @@ end
 
 function Shield(emblem; rotation::Real=0, scale::Tuple{Real, Real}=(1,1)) 
     return Shield(emblem, rotation, scale)
-end
-
-function Shield(emblem; rotation::Real=0, scale::Real=1) 
-    return Shield(emblem, rotation, (scale, scale))
 end
 
 function generate(shape::AbstractShape; size::Tuple{Integer, Integer}=(128, 128), width::Real=2)
