@@ -9,7 +9,6 @@ using InteractiveUtils
 begin
 	import Pkg
 	Pkg.activate("..")
-	using Revise
 	using NormalizedRadonCDT.TestImages
 end
 
