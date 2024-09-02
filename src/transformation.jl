@@ -39,7 +39,7 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
         for (ℓ, tₗ) in enumerate(t)
             tscale = tₗ / scale 
             wscale = (tₗ - w/2) / cos(θₖ)
-            if 0 <= θₖ < π / 4
+            if 0 <= mod(θₖ , π / 2) < π / 4
                 for i in ax1
                     η = (tₗ * sin(θₖ) / scale - i) / cos(θₖ)
                     xᵢ = tₗ * cos(θₖ) / scale + η * sin(θ)
@@ -52,7 +52,7 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
                         P[ℓ, k] += (compute_unit_pixel_area((tₗ - xyt + width / 2) / scale, θₖ) - compute_unit_pixel_area((tₗ - xyt - width / 2) / scale, θₖ)) * scale^2 * I[i, j]
                     end
                 end
-            elseif 0 <= θₖ < π / 4
+            elseif π / 4 <= mod(θₖ , π / 2) < π / 2
                 for j in ax2
                     η = - (tₗ * cos(θₖ) / scale - i) / sin(θₖ)
                     yⱼ = tₗ * sin(θₖ) / scale - η * sin(θ)
