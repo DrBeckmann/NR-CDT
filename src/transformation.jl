@@ -29,6 +29,49 @@ function radon_area(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, widt
     return P ./ width
 end
 
+function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, width::Real)
+    P = zeros(eltype(I), length(t), length(θ))
+    ax1, ax2 = axes(I)
+
+    nax1, nax2 = length(ax1), length(ax2)
+    scale = sqrt(2) / max(nax1, nax2)
+    for (k, θₖ) in enumerate(θ)
+        for (ℓ, tₗ) in enumerate(t)
+            tscale = tₗ / scale 
+            wscale = (tₗ - w/2) / cos(θₖ)
+            if 0 <= θₖ < π / 4
+                for i in ax1
+                    η = (tₗ * sin(θₖ) / scale - i) / cos(θₖ)
+                    xᵢ = tₗ * cos(θₖ) / scale + η * sin(θ)
+                    xₒ = Int(ceil(xᵢ + w / 2 / scale))
+                    xᵤ = Int(floor(xᵢ - w / 2 / scale))
+                    for j in range(xᵤ, xₒ)
+                        x = (j - nax2 / 2) * scale
+                        y = (i - nax1 / 2) * scale
+                        xyt = -x * sin(θₖ) + y * cos(θₖ)
+                        P[ℓ, k] += (compute_unit_pixel_area((tₗ - xyt + width / 2) / scale, θₖ) - compute_unit_pixel_area((tₗ - xyt - width / 2) / scale, θₖ)) * scale^2 * I[i, j]
+                    end
+                end
+            elseif 0 <= θₖ < π / 4
+                for j in ax2
+                    η = - (tₗ * cos(θₖ) / scale - i) / sin(θₖ)
+                    yⱼ = tₗ * sin(θₖ) / scale - η * sin(θ)
+                    yₒ = Int(ceil(yᵢ + w / 2 / scale))
+                    yᵤ = Int(floor(yᵢ - w / 2 / scale))
+                    for i in range(yᵤ, yₒ)
+                        x = (j - nax2 / 2) * scale
+                        y = (i - nax1 / 2) * scale
+                        xyt = -x * sin(θₖ) + y * cos(θₖ)
+                        P[ℓ, k] += (compute_unit_pixel_area((tₗ - xyt + width / 2) / scale, θₖ) - compute_unit_pixel_area((tₗ - xyt - width / 2) / scale, θₖ)) * scale^2 * I[i, j]
+                    end
+                end
+            end
+        end
+    end
+
+    return P ./ width
+end
+
 
 function radon_line(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
     P = zeros(eltype(I), length(t), length(θ))
