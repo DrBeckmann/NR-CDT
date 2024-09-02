@@ -3,7 +3,7 @@ function radon(image::AbstractMatrix, radii::Integer, angles::Integer; width::Re
     ψ = LinRange(0, π, angles)
     t = LinRange(-1, 1, radii)
     if width > 1e-8
-        return radon_area(Float64.(image), ψ, t, width)
+        return radon_area_fast(Float64.(image), ψ, t, width)
     else
         return radon_line(Float64.(image), ψ, t)
     end
@@ -37,14 +37,14 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
     scale = sqrt(2) / max(nax1, nax2)
     for (k, θₖ) in enumerate(θ)
         for (ℓ, tₗ) in enumerate(t)
-            tscale = tₗ / scale 
-            wscale = (tₗ - w/2) / cos(θₖ)
+            # tscale = tₗ / scale 
+            # wscale = (tₗ - width/2) / cos(θₖ)
             if 0 <= mod(θₖ , π / 2) < π / 4
                 for i in ax1
                     η = (tₗ * sin(θₖ) / scale - i) / cos(θₖ)
                     xᵢ = tₗ * cos(θₖ) / scale + η * sin(θ)
-                    xₒ = Int(ceil(xᵢ + w / 2 / scale))
-                    xᵤ = Int(floor(xᵢ - w / 2 / scale))
+                    xₒ = Int(floor(xᵢ + width / 2 / scale + 0.5))
+                    xᵤ = Int(ceil(xᵢ - width / 2 / scale - 0.5))
                     for j in range(xᵤ, xₒ)
                         x = (j - nax2 / 2) * scale
                         y = (i - nax1 / 2) * scale
@@ -56,8 +56,8 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
                 for j in ax2
                     η = - (tₗ * cos(θₖ) / scale - i) / sin(θₖ)
                     yⱼ = tₗ * sin(θₖ) / scale - η * sin(θ)
-                    yₒ = Int(ceil(yᵢ + w / 2 / scale))
-                    yᵤ = Int(floor(yᵢ - w / 2 / scale))
+                    yₒ = Int(floor(yᵢ + width / 2 / scale + 0.5))
+                    yᵤ = Int(ceil(yᵢ - width / 2 / scale - 0.5))
                     for i in range(yᵤ, yₒ)
                         x = (j - nax2 / 2) * scale
                         y = (i - nax1 / 2) * scale
