@@ -42,7 +42,7 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
             if 0 <= mod(θₖ , π / 2) < π / 4
                 for i in ax1
                     η = (tₗ * sin(θₖ) / scale - i) / cos(θₖ)
-                    xᵢ = tₗ * cos(θₖ) / scale + η * sin(θ)
+                    xᵢ = tₗ * cos(θₖ) / scale + η * sin(θₖ)
                     xₒ = Int(floor(xᵢ + width / 2 / scale + 0.5))
                     xᵤ = Int(ceil(xᵢ - width / 2 / scale - 0.5))
                     for j in range(xᵤ, xₒ)
@@ -55,7 +55,7 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
             elseif π / 4 <= mod(θₖ , π / 2) < π / 2
                 for j in ax2
                     η = - (tₗ * cos(θₖ) / scale - i) / sin(θₖ)
-                    yⱼ = tₗ * sin(θₖ) / scale - η * sin(θ)
+                    yⱼ = tₗ * sin(θₖ) / scale - η * sin(θₖ)
                     yₒ = Int(floor(yᵢ + width / 2 / scale + 0.5))
                     yᵤ = Int(ceil(yᵢ - width / 2 / scale - 0.5))
                     for i in range(yᵤ, yₒ)
