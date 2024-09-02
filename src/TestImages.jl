@@ -2,7 +2,6 @@ module TestImages
 
 using Images
 using Luxor
-using Plots
 
 export Circle, Empty, Polygon, Square, Star, Triangle
 export OrbAndCross, Shield
