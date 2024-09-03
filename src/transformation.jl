@@ -45,8 +45,7 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
                     yₒ, yᵤ = intersection_y(x, θₖ, tₗ, scale, wscale, nax1)
                     for i in range(max(yᵤ,1), min(yₒ,nax1))
                         y = (i - nax1 / 2) * scale
-                        xyₜ = -x * sin(θₖ) + y * cos(θₖ)
-                        xyᵤ, xyₒ = (tₗ - xyₜ - width / 2) / scale, (tₗ - xyₜ + width / 2) / scale
+                        xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
                         P[ℓ, k] += (compute_unit_pixel_area(xyₒ, θₖ) - compute_unit_pixel_area(xyᵤ, θₖ)) * scale^2 * I[i, j]
                     end
                 end
@@ -58,8 +57,7 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
                     xₒ, xᵤ = intersection_x(y, θₖ, tₗ, scale, wscale, nax1)
                     for j in range(max(xᵤ,1), min(xₒ,nax2))
                         x = (j - nax2 / 2) * scale
-                        xyₜ = -x * sin(θₖ) + y * cos(θₖ)
-                        xyᵤ, xyₒ = (tₗ - xyₜ - width / 2) / scale, (tₗ - xyₜ + width / 2) / scale
+                        xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
                         P[ℓ, k] += (compute_unit_pixel_area(xyₒ, θₖ) - compute_unit_pixel_area(xyᵤ, θₖ)) * scale^2 * I[i, j]
                     end
                 end
@@ -71,8 +69,7 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
                     xₒ, xᵤ = intersection_x(y, θₖ, tₗ, scale, wscale, nax1)
                     for j in range(max(xᵤ,1), min(xₒ,nax2))
                         x = (j - nax2 / 2) * scale
-                        xyₜ = -x * sin(θₖ) + y * cos(θₖ)
-                        xyᵤ, xyₒ = (tₗ - xyₜ - width / 2) / scale, (tₗ - xyₜ + width / 2) / scale
+                        xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
                         P[ℓ, k] += (compute_unit_pixel_area(xyₒ, θₖ) - compute_unit_pixel_area(xyᵤ, θₖ)) * scale^2 * I[i, j]
                     end
                 end
@@ -84,8 +81,7 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
                     yₒ, yᵤ = intersection_y(x, θₖ, tₗ, scale, wscale, nax1)
                     for i in range(max(yᵤ,1), min(yₒ,nax1))
                         y = (i - nax1 / 2) * scale
-                        xyₜ = -x * sin(θₖ) + y * cos(θₖ)
-                        xyᵤ, xyₒ = (tₗ - xyₜ - width / 2) / scale, (tₗ - xyₜ + width / 2) / scale
+                        xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
                         P[ℓ, k] += (compute_unit_pixel_area(xyₒ, θₖ) - compute_unit_pixel_area(xyᵤ, θₖ)) * scale^2 * I[i, j]
                     end
                 end
@@ -112,6 +108,13 @@ function intersection_x(y::Real, ψ::Real, l::Real, scale::Real, wscale::Real, n
     xᵤ = Int(ceil(x - wscale - 0.5))
 
     return xₒ, xᵤ
+end
+
+function itegration_bound(x::Real, y::Real, ψ::Real, l::Real, scale::Real, width::Real)
+    xyₜ = -x * sin(ψ) + y * cos(ψ)
+    xyᵤ, xyₒ = (l - xyₜ - width / 2) / scale, (l - xyₜ + width / 2) / scale
+
+    return xyᵤ, xyₒ
 end
 
 
