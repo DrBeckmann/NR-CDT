@@ -46,7 +46,7 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
                     for i in range(max(yᵤ,1), min(yₒ,nax1))
                         y = (i - nax1 / 2) * scale
                         xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
-                        P[ℓ, k] += (compute_unit_pixel_area(xyₒ, θₖ) - compute_unit_pixel_area(xyᵤ, θₖ)) * scale^2 * I[i, j]
+                        P[ℓ, k] += compute_partial_area(I[i, j], xyᵤ, xyₒ, θₖ, scale)
                     end
                 end
             elseif π / 4 <= θₖ < π / 2
@@ -58,7 +58,7 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
                     for j in range(max(xᵤ,1), min(xₒ,nax2))
                         x = (j - nax2 / 2) * scale
                         xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
-                        P[ℓ, k] += (compute_unit_pixel_area(xyₒ, θₖ) - compute_unit_pixel_area(xyᵤ, θₖ)) * scale^2 * I[i, j]
+                        P[ℓ, k] += compute_partial_area(I[i, j], xyᵤ, xyₒ, θₖ, scale)
                     end
                 end
             elseif π / 2 <= θₖ < 3 * π / 4
@@ -70,7 +70,7 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
                     for j in range(max(xᵤ,1), min(xₒ,nax2))
                         x = (j - nax2 / 2) * scale
                         xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
-                        P[ℓ, k] += (compute_unit_pixel_area(xyₒ, θₖ) - compute_unit_pixel_area(xyᵤ, θₖ)) * scale^2 * I[i, j]
+                        P[ℓ, k] += compute_partial_area(I[i, j], xyᵤ, xyₒ, θₖ, scale)
                     end
                 end
             elseif 3 * π / 4 <= θₖ < π
@@ -82,7 +82,7 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
                     for i in range(max(yᵤ,1), min(yₒ,nax1))
                         y = (i - nax1 / 2) * scale
                         xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
-                        P[ℓ, k] += (compute_unit_pixel_area(xyₒ, θₖ) - compute_unit_pixel_area(xyᵤ, θₖ)) * scale^2 * I[i, j]
+                        P[ℓ, k] += compute_partial_area(I[i, j], xyᵤ, xyₒ, θₖ, scale)
                     end
                 end
             end
@@ -115,6 +115,12 @@ function itegration_bound(x::Real, y::Real, ψ::Real, l::Real, scale::Real, widt
     xyᵤ, xyₒ = (l - xyₜ - width / 2) / scale, (l - xyₜ + width / 2) / scale
 
     return xyᵤ, xyₒ
+end
+
+function compute_partial_area(I::Real, xyᵤ::Real, xyₒ::Real, ψ::Real, scale::Real)
+    area = (compute_unit_pixel_area(xyₒ, ψ) - compute_unit_pixel_area(xyᵤ, ψ)) * scale^2 * I
+
+    return area
 end
 
 
