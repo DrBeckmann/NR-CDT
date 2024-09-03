@@ -37,15 +37,12 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
     scale = sqrt(2) / max(nax1, nax2)
     for (ℓ, tₗ) in enumerate(t)
         for (k, θₖ) in enumerate(θ)
-            if 0 <= mod(θₖ , π / 2) <= π / 4
+            if 0 <= θₖ < π / 4
                 wscale = (width/2) / cos(θₖ) / scale
                 wscale = abs(wscale)
                 for j in ax2
                     x = (j - nax2 / 2) * scale
-                    η = (x + tₗ * sin(θₖ)) / cos(θₖ)
-                    yⱼ = (tₗ * cos(θₖ) + η * sin(θₖ)) / scale + nax1 / 2
-                    yₒ = Int(floor(yⱼ + wscale + 0.5))
-                    yᵤ = Int(ceil(yⱼ - wscale - 0.5))
+                    yₒ, yᵤ = intersection_y(x, θₖ, tₗ, scale, wscale, nax1)
                     for i in range(max(yᵤ,1), min(yₒ,nax1))
                         y = (i - nax1 / 2) * scale
                         xyₜ = -x * sin(θₖ) + y * cos(θₖ)
@@ -53,17 +50,40 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
                         P[ℓ, k] += (compute_unit_pixel_area(xyₒ, θₖ) - compute_unit_pixel_area(xyᵤ, θₖ)) * scale^2 * I[i, j]
                     end
                 end
-            elseif π / 4 <= mod(θₖ , π / 2) <= π / 2
+            elseif π / 4 <= θₖ < π / 2
                 wscale = (width/2) / cos(π / 2 - θₖ) / scale
                 wscale = abs(wscale)
                 for i in ax1
                     y = (i - nax1 / 2) * scale
-                    η = (y - tₗ * cos(θₖ)) / sin(θₖ)
-                    xᵢ = (-tₗ * sin(θₖ) + η * cos(θₖ)) / scale + nax2 / 2
-                    xₒ = Int(floor(xᵢ + wscale + 0.5))
-                    xᵤ = Int(ceil(xᵢ - sign(wscale) * wscale - 0.5))
+                    xₒ, xᵤ = intersection_x(y, θₖ, tₗ, scale, wscale, nax1)
                     for j in range(max(xᵤ,1), min(xₒ,nax2))
                         x = (j - nax2 / 2) * scale
+                        xyₜ = -x * sin(θₖ) + y * cos(θₖ)
+                        xyᵤ, xyₒ = (tₗ - xyₜ - width / 2) / scale, (tₗ - xyₜ + width / 2) / scale
+                        P[ℓ, k] += (compute_unit_pixel_area(xyₒ, θₖ) - compute_unit_pixel_area(xyᵤ, θₖ)) * scale^2 * I[i, j]
+                    end
+                end
+            elseif π / 2 <= θₖ < 3 * π / 4
+                wscale = (width/2) / sin(θₖ) / scale
+                wscale = abs(wscale)
+                for i in ax1
+                    y = (i - nax1 / 2) * scale
+                    xₒ, xᵤ = intersection_x(y, θₖ, tₗ, scale, wscale, nax1)
+                    for j in range(max(xᵤ,1), min(xₒ,nax2))
+                        x = (j - nax2 / 2) * scale
+                        xyₜ = -x * sin(θₖ) + y * cos(θₖ)
+                        xyᵤ, xyₒ = (tₗ - xyₜ - width / 2) / scale, (tₗ - xyₜ + width / 2) / scale
+                        P[ℓ, k] += (compute_unit_pixel_area(xyₒ, θₖ) - compute_unit_pixel_area(xyᵤ, θₖ)) * scale^2 * I[i, j]
+                    end
+                end
+            elseif 3 * π / 4 <= θₖ < π
+                wscale = (width/2) / sin(π / 2 - θₖ) / scale
+                wscale = abs(wscale)
+                for j in ax2
+                    x = (j - nax2 / 2) * scale
+                    yₒ, yᵤ = intersection_y(x, θₖ, tₗ, scale, wscale, nax1)
+                    for i in range(max(yᵤ,1), min(yₒ,nax1))
+                        y = (i - nax1 / 2) * scale
                         xyₜ = -x * sin(θₖ) + y * cos(θₖ)
                         xyᵤ, xyₒ = (tₗ - xyₜ - width / 2) / scale, (tₗ - xyₜ + width / 2) / scale
                         P[ℓ, k] += (compute_unit_pixel_area(xyₒ, θₖ) - compute_unit_pixel_area(xyᵤ, θₖ)) * scale^2 * I[i, j]
@@ -74,6 +94,24 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
     end
 
     return P ./ width
+end
+
+function intersection_y(x::Real, ψ::Real, l::Real, scale::Real, wscale::Real, nax1::Real)
+    η = (x + l * sin(ψ)) / cos(ψ)
+    y = (l * cos(ψ) + η * sin(ψ)) / scale + nax1 / 2
+    yₒ = Int(floor(y + wscale + 0.5))
+    yᵤ = Int(ceil(y - wscale - 0.5))
+
+    return yₒ, yᵤ
+end
+
+function intersection_x(y::Real, ψ::Real, l::Real, scale::Real, wscale::Real, nax2::Real)
+    η = (y - l * cos(ψ)) / sin(ψ)
+    x = (-l * sin(ψ) + η * cos(ψ)) / scale + nax2 / 2
+    xₒ = Int(floor(x + wscale + 0.5))
+    xᵤ = Int(ceil(x - wscale - 0.5))
+
+    return xₒ, xᵤ
 end
 
 
@@ -105,7 +143,7 @@ function radon_line_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
     scale = sqrt(2) / max(nax1, nax2)
     for (ℓ, tₗ) in enumerate(t)
         for (k, θₖ) in enumerate(θ)
-            if 0 <= mod(θₖ , π / 2) <= π / 4
+            if 0 <= mod(θₖ , π / 2) < π / 4
                 for j in ax2
                     x = (j - nax2 / 2) * scale
                     η = (x + tₗ * sin(θₖ)) / cos(θₖ)
@@ -118,13 +156,13 @@ function radon_line_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
                         P[ℓ, k] += compute_unit_pixel_line((tₗ - xyₜ) / scale, θₖ) * scale * I[i, j]
                     end
                 end
-            elseif π / 4 <= mod(θₖ , π / 2) <= π / 2
+            elseif π / 4 <= mod(θₖ , π / 2) < π / 2
                 for i in ax1
                     y = (i - nax1 / 2) * scale
                     η = (y - tₗ * cos(θₖ)) / sin(θₖ)
                     xᵢ = (-tₗ * sin(θₖ) + η * cos(θₖ)) / scale + nax2 / 2
-                    xₒ = Int(ceil(xᵢ + 0.5))
-                    xᵤ = Int(floor(xᵢ - 0.5))
+                    xₒ = Int(ceil(xᵢ + 1.5))
+                    xᵤ = Int(floor(xᵢ - 1.5))
                     for j in range(max(xᵤ,1), min(xₒ,nax2))
                         x = (j - nax2 / 2) * scale
                         xyₜ = -x * sin(θₖ) + y * cos(θₖ)
