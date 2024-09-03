@@ -5,7 +5,7 @@ function radon(image::AbstractMatrix, radii::Integer, angles::Integer; width::Re
     if width > 1e-8
         return radon_area_fast(Float64.(image), ψ, t, width)
     else
-        return radon_line(Float64.(image), ψ, t)
+        return radon_line_fast(Float64.(image), ψ, t)
     end
 end
 
@@ -35,34 +35,38 @@ function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange,
 
     nax1, nax2 = length(ax1), length(ax2)
     scale = sqrt(2) / max(nax1, nax2)
-    for (k, θₖ) in enumerate(θ)
-        for (ℓ, tₗ) in enumerate(t)
-            # tscale = tₗ / scale 
-            # wscale = (tₗ - width/2) / cos(θₖ)
-            if 0 <= mod(θₖ , π / 2) < π / 4
-                for i in ax1
-                    η = (tₗ * sin(θₖ) / scale - i) / cos(θₖ)
-                    xᵢ = tₗ * cos(θₖ) / scale + η * sin(θₖ)
-                    xₒ = Int(floor(xᵢ + width / 2 / scale + 0.5))
-                    xᵤ = Int(ceil(xᵢ - width / 2 / scale - 0.5))
-                    for j in range(xᵤ, xₒ)
-                        x = (j - nax2 / 2) * scale
+    for (ℓ, tₗ) in enumerate(t)
+        for (k, θₖ) in enumerate(θ)
+            if 0 <= mod(θₖ , π / 2) <= π / 4
+                wscale = (width/2) / cos(θₖ) / scale
+                wscale = abs(wscale)
+                for j in ax2
+                    x = (j - nax2 / 2) * scale
+                    η = (x + tₗ * sin(θₖ)) / cos(θₖ)
+                    yⱼ = (tₗ * cos(θₖ) + η * sin(θₖ)) / scale + nax1 / 2
+                    yₒ = Int(floor(yⱼ + wscale + 0.5))
+                    yᵤ = Int(ceil(yⱼ - wscale - 0.5))
+                    for i in range(max(yᵤ,1), min(yₒ,nax1))
                         y = (i - nax1 / 2) * scale
-                        xyt = -x * sin(θₖ) + y * cos(θₖ)
-                        P[ℓ, k] += (compute_unit_pixel_area((tₗ - xyt + width / 2) / scale, θₖ) - compute_unit_pixel_area((tₗ - xyt - width / 2) / scale, θₖ)) * scale^2 * I[i, j]
+                        xyₜ = -x * sin(θₖ) + y * cos(θₖ)
+                        xyᵤ, xyₒ = (tₗ - xyₜ - width / 2) / scale, (tₗ - xyₜ + width / 2) / scale
+                        P[ℓ, k] += (compute_unit_pixel_area(xyₒ, θₖ) - compute_unit_pixel_area(xyᵤ, θₖ)) * scale^2 * I[i, j]
                     end
                 end
-            elseif π / 4 <= mod(θₖ , π / 2) < π / 2
-                for j in ax2
-                    η = - (tₗ * cos(θₖ) / scale - i) / sin(θₖ)
-                    yⱼ = tₗ * sin(θₖ) / scale - η * sin(θₖ)
-                    yₒ = Int(floor(yᵢ + width / 2 / scale + 0.5))
-                    yᵤ = Int(ceil(yᵢ - width / 2 / scale - 0.5))
-                    for i in range(yᵤ, yₒ)
+            elseif π / 4 <= mod(θₖ , π / 2) <= π / 2
+                wscale = (width/2) / cos(π / 2 - θₖ) / scale
+                wscale = abs(wscale)
+                for i in ax1
+                    y = (i - nax1 / 2) * scale
+                    η = (y - tₗ * cos(θₖ)) / sin(θₖ)
+                    xᵢ = (-tₗ * sin(θₖ) + η * cos(θₖ)) / scale + nax2 / 2
+                    xₒ = Int(floor(xᵢ + wscale + 0.5))
+                    xᵤ = Int(ceil(xᵢ - sign(wscale) * wscale - 0.5))
+                    for j in range(max(xᵤ,1), min(xₒ,nax2))
                         x = (j - nax2 / 2) * scale
-                        y = (i - nax1 / 2) * scale
-                        xyt = -x * sin(θₖ) + y * cos(θₖ)
-                        P[ℓ, k] += (compute_unit_pixel_area((tₗ - xyt + width / 2) / scale, θₖ) - compute_unit_pixel_area((tₗ - xyt - width / 2) / scale, θₖ)) * scale^2 * I[i, j]
+                        xyₜ = -x * sin(θₖ) + y * cos(θₖ)
+                        xyᵤ, xyₒ = (tₗ - xyₜ - width / 2) / scale, (tₗ - xyₜ + width / 2) / scale
+                        P[ℓ, k] += (compute_unit_pixel_area(xyₒ, θₖ) - compute_unit_pixel_area(xyᵤ, θₖ)) * scale^2 * I[i, j]
                     end
                 end
             end
@@ -91,6 +95,47 @@ function radon_line(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
     end
 
     return P
+end
+
+function radon_line_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
+    P = zeros(eltype(I), length(t), length(θ))
+    ax1, ax2 = axes(I)
+
+    nax1, nax2 = length(ax1), length(ax2)
+    scale = sqrt(2) / max(nax1, nax2)
+    for (ℓ, tₗ) in enumerate(t)
+        for (k, θₖ) in enumerate(θ)
+            if 0 <= mod(θₖ , π / 2) <= π / 4
+                for j in ax2
+                    x = (j - nax2 / 2) * scale
+                    η = (x + tₗ * sin(θₖ)) / cos(θₖ)
+                    yⱼ = (tₗ * cos(θₖ) + η * sin(θₖ)) / scale + nax1 / 2
+                    yₒ = Int(ceil(yⱼ + 0.5))
+                    yᵤ = Int(floor(yⱼ - 0.5))
+                    for i in range(max(yᵤ,1), min(yₒ,nax1))
+                        y = (i - nax1 / 2) * scale
+                        xyₜ = -x * sin(θₖ) + y * cos(θₖ)
+                        P[ℓ, k] += compute_unit_pixel_line((tₗ - xyₜ) / scale, θₖ) * scale * I[i, j]
+                    end
+                end
+            elseif π / 4 <= mod(θₖ , π / 2) <= π / 2
+                for i in ax1
+                    y = (i - nax1 / 2) * scale
+                    η = (y - tₗ * cos(θₖ)) / sin(θₖ)
+                    xᵢ = (-tₗ * sin(θₖ) + η * cos(θₖ)) / scale + nax2 / 2
+                    xₒ = Int(ceil(xᵢ + 0.5))
+                    xᵤ = Int(floor(xᵢ - 0.5))
+                    for j in range(max(xᵤ,1), min(xₒ,nax2))
+                        x = (j - nax2 / 2) * scale
+                        xyₜ = -x * sin(θₖ) + y * cos(θₖ)
+                        P[ℓ, k] += compute_unit_pixel_line((tₗ - xyₜ) / scale, θₖ) * scale * I[i, j]
+                    end
+                end
+            end
+        end
+    end
+
+    return P ./ width
 end
 
 function compute_unit_pixel_area(t::Real, ψ::Real)
