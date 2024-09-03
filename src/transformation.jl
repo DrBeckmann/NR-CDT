@@ -135,7 +135,7 @@ function radon_line_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
         end
     end
 
-    return P ./ width
+    return P
 end
 
 function compute_unit_pixel_area(t::Real, ψ::Real)
