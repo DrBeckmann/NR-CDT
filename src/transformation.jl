@@ -5,7 +5,7 @@ function radon(image::AbstractMatrix, radii::Integer, angles::Integer; width::Re
     if width > 1e-8
         return radon_area(Float64.(image), ψ, t, width)
     else
-        return radon_line_fast(Float64.(image), ψ, t)
+        return radon_line(Float64.(image), ψ, t)
     end
 end
 
@@ -100,7 +100,7 @@ function compute_partial_area(I::Real, xyᵤ::Real, xyₒ::Real, ψ::Real, scale
 end
 
 
-function radon_line(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
+function radon_line_slow(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
     P = zeros(eltype(I), length(t), length(θ))
     ax1, ax2 = axes(I)
 
@@ -120,7 +120,7 @@ function radon_line(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
     return P
 end
 
-function radon_line_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
+function radon_line(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
     P = zeros(eltype(I), length(t), length(θ))
     ax1, ax2 = axes(I)
 
@@ -128,30 +128,24 @@ function radon_line_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
     scale = sqrt(2) / max(nax1, nax2)
     for (ℓ, tₗ) in enumerate(t)
         for (k, θₖ) in enumerate(θ)
-            if 0 <= mod(θₖ , π / 2) < π / 4
+            if 0 <= θₖ < π / 4 || 3 * π / 4 <= θₖ < π
                 for j in ax2
                     x = (j - nax2 / 2) * scale
-                    η = (x + tₗ * sin(θₖ)) / cos(θₖ)
-                    yⱼ = (tₗ * cos(θₖ) + η * sin(θₖ)) / scale + nax1 / 2
-                    yₒ = Int(ceil(yⱼ + 0.5))
-                    yᵤ = Int(floor(yⱼ - 0.5))
+                    yₒ, yᵤ = intersection_y(x, θₖ, tₗ, scale, 1, nax1)
                     for i in range(max(yᵤ,1), min(yₒ,nax1))
                         y = (i - nax1 / 2) * scale
-                        xyₜ = -x * sin(θₖ) + y * cos(θₖ)
-                        P[ℓ, k] += compute_unit_pixel_line((tₗ - xyₜ) / scale, θₖ) * scale * I[i, j]
+                        xyₜ = intersection_t(x, y, θₖ)
+                        P[ℓ, k] += compute_partial_line(I[i, j], tₗ, xyₜ, θₖ, scale)
                     end
                 end
-            elseif π / 4 <= mod(θₖ , π / 2) < π / 2
+            elseif π / 4 <= θₖ < π / 2 || π / 2 <= θₖ < 3 * π / 4
                 for i in ax1
                     y = (i - nax1 / 2) * scale
-                    η = (y - tₗ * cos(θₖ)) / sin(θₖ)
-                    xᵢ = (-tₗ * sin(θₖ) + η * cos(θₖ)) / scale + nax2 / 2
-                    xₒ = Int(ceil(xᵢ + 1.5))
-                    xᵤ = Int(floor(xᵢ - 1.5))
+                    xₒ, xᵤ = intersection_x(y, θₖ, tₗ, scale, 1, nax1)
                     for j in range(max(xᵤ,1), min(xₒ,nax2))
                         x = (j - nax2 / 2) * scale
-                        xyₜ = -x * sin(θₖ) + y * cos(θₖ)
-                        P[ℓ, k] += compute_unit_pixel_line((tₗ - xyₜ) / scale, θₖ) * scale * I[i, j]
+                        xyₜ = intersection_t(x, y, θₖ)
+                        P[ℓ, k] += compute_partial_line(I[i, j], tₗ, xyₜ, θₖ, scale)
                     end
                 end
             end
@@ -159,6 +153,18 @@ function radon_line_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
     end
 
     return P
+end
+
+function intersection_t(x::Real, y::Real, ψ::Real)
+    xyₜ = -x * sin(ψ) + y * cos(ψ)
+
+    return xyₜ
+end
+
+function compute_partial_line(I::Real, l::Real, xyₜ::Real, ψ::Real, scale::Real)
+    line = compute_unit_pixel_line((l - xyₜ) / scale, ψ) * scale * I
+
+    return line
 end
 
 function compute_unit_pixel_area(t::Real, ψ::Real)
