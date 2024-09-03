@@ -37,8 +37,8 @@ function radon_area(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, widt
     scale = sqrt(2) / max(nax1, nax2)
     for (ℓ, tₗ) in enumerate(t)
         for (k, θₖ) in enumerate(θ)
-            if 0 <= θₖ < π / 4
-                wscale = (width/2) / cos(θₖ) / scale
+            if 0 <= θₖ < π / 4 || 3 * π / 4 <= θₖ < π
+                wscale = (width/2) / cos(π - θₖ) / scale
                 wscale = abs(wscale)
                 for j in ax2
                     x = (j - nax2 / 2) * scale
@@ -49,19 +49,7 @@ function radon_area(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, widt
                         P[ℓ, k] += compute_partial_area(I[i, j], xyᵤ, xyₒ, θₖ, scale)
                     end
                 end
-            elseif π / 4 <= θₖ < π / 2
-                wscale = (width/2) / cos(π / 2 - θₖ) / scale
-                wscale = abs(wscale)
-                for i in ax1
-                    y = (i - nax1 / 2) * scale
-                    xₒ, xᵤ = intersection_x(y, θₖ, tₗ, scale, wscale, nax1)
-                    for j in range(max(xᵤ,1), min(xₒ,nax2))
-                        x = (j - nax2 / 2) * scale
-                        xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
-                        P[ℓ, k] += compute_partial_area(I[i, j], xyᵤ, xyₒ, θₖ, scale)
-                    end
-                end
-            elseif π / 2 <= θₖ < 3 * π / 4
+            elseif π / 4 <= θₖ < π / 2 || π / 2 <= θₖ < 3 * π / 4
                 wscale = (width/2) / sin(θₖ) / scale
                 wscale = abs(wscale)
                 for i in ax1
@@ -69,18 +57,6 @@ function radon_area(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, widt
                     xₒ, xᵤ = intersection_x(y, θₖ, tₗ, scale, wscale, nax1)
                     for j in range(max(xᵤ,1), min(xₒ,nax2))
                         x = (j - nax2 / 2) * scale
-                        xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
-                        P[ℓ, k] += compute_partial_area(I[i, j], xyᵤ, xyₒ, θₖ, scale)
-                    end
-                end
-            elseif 3 * π / 4 <= θₖ < π
-                wscale = (width/2) / sin(π / 2 - θₖ) / scale
-                wscale = abs(wscale)
-                for j in ax2
-                    x = (j - nax2 / 2) * scale
-                    yₒ, yᵤ = intersection_y(x, θₖ, tₗ, scale, wscale, nax1)
-                    for i in range(max(yᵤ,1), min(yₒ,nax1))
-                        y = (i - nax1 / 2) * scale
                         xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
                         P[ℓ, k] += compute_partial_area(I[i, j], xyᵤ, xyₒ, θₖ, scale)
                     end
