@@ -3,13 +3,13 @@ function radon(image::AbstractMatrix, radii::Integer, angles::Integer; width::Re
     ψ = LinRange(0, π, angles)
     t = LinRange(-1, 1, radii)
     if width > 1e-8
-        return radon_area_fast(Float64.(image), ψ, t, width)
+        return radon_area(Float64.(image), ψ, t, width)
     else
         return radon_line_fast(Float64.(image), ψ, t)
     end
 end
 
-function radon_area(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, width::Real)
+function radon_area_slow(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, width::Real)
     P = zeros(eltype(I), length(t), length(θ))
     ax1, ax2 = axes(I)
 
@@ -29,7 +29,7 @@ function radon_area(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, widt
     return P ./ width
 end
 
-function radon_area_fast(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, width::Real)
+function radon_area(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, width::Real)
     P = zeros(eltype(I), length(t), length(θ))
     ax1, ax2 = axes(I)
 
