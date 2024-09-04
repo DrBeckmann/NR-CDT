@@ -1,12 +1,12 @@
 function signal_to_pdf(signal::AbstractArray, eps::Real)
 
     if sum(signal) > 0
-        pdf = signal./sum(a)
+        pdf = signal./sum(signal)
     else 
         pdf = signal
     end
-    pdf = pdf .+ eps;
-    pdf = pdf ./ sum(pdf);
+    pdf = pdf .+ eps
+    pdf = pdf ./ sum(pdf)
     return pdf
 end
 
@@ -18,11 +18,11 @@ function cdt(x₀::AbstractArray, s₀::AbstractArray, x₁::AbstractArray, s₁
     cum₁ = cumsum(s₁)
 
     if size(unique(s₀))[1] == 1
-        s_hat_inter = LinInter(cum₁, x₁);
+        s_hat_inter = LinInter(cum₁, x₁)
         xnew₀ = ifelse.(x₀ .< minimum(cum₁), minimum(cum₁), ifelse.(x₀ .> maximum(cum₁), maximum(cum₁), x₀))
         s_hat = s_hat_inter(xnew₀)
     else
-        s_hat_inter = LinInter(r .* cum₁, x₁);
+        s_hat_inter = LinInter(r .* cum₁, x₁)
         s_hat = s_hat_inter(r .* cum₀)
     end 
 

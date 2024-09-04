@@ -232,16 +232,15 @@ function adj_radon(I::AbstractMatrix, n::Int, m::Int)
     axangle = LinRange(0, π, d)
     axt = LinRange(-1, 1, t)
     dis = axt[2] - axt[1]
-    print(dis)
     
     for i in range(-n+1, n-1), j in range(-m+1, m-1)
         for (k, θₖ) in enumerate(axangle)
             x₁ᵢ, x₂ⱼ = i/(n - 1), j/(m - 1)
             if x₁ᵢ^2 + x₂ⱼ^2 <=1
-                sᵢⱼ = x₁ᵢ * cos(θₖ) + x₂ⱼ * sin(θₖ)
+                sᵢⱼ = -x₁ᵢ * cos(θₖ) + x₂ⱼ * sin(θₖ)
                 tᵢⱼ = sᵢⱼ / dis
                 αᵢⱼ = tᵢⱼ - floor(tᵢⱼ)
-                if -t/2 < Int(floor(tᵢⱼ)) < t/2 && -t/2 < Int(ceil(tᵢⱼ)) < t/2
+                if -t/2 < Int(floor(tᵢⱼ)) < t/2 && -t/2 < Int(ceil(tᵢⱼ)) < t/2 
                     P[i+n+1, j+m+1] += (1 - αᵢⱼ) * I[Int(floor(tᵢⱼ)) + Int(ceil(t/2)), k] + αᵢⱼ * I[Int(ceil(tᵢⱼ)) + Int(ceil(t/2)), k]
                 end
             end
@@ -253,32 +252,49 @@ end
 
 function iradon(I::AbstractMatrix, n::Int, m::Int)
 
-    P = zeros(eltype(I), 2*n, 2*m)
-
     t, d = size(I)
     axangle = LinRange(0, π, d)
     axt = LinRange(-1, 1, t)
     dis = axt[2] - axt[1]
-    print(dis)
+
+
+    T = eltype(I)
+    P = [zeros(T, 2*n, 2*m) for _ = 1:nthreads()]
+    I′ = [Vector{Complex{T}}(undef, t) for _ = 1:nthreads()]
+    Q = [Vector{T}(undef, t) for _ = 1:nthreads()]
     
     for i in range(-n+1, n-1), j in range(-m+1, m-1)
-        for (k, θₖ) in enumerate(axangle)
+        l = SpinLock()
+        @threads for (k, θₖ) in collect(enumerate(axangle))
+            id = threadid()
+            Pid = P[id]
+            Qid = Q[id]
+            Iid = I′[id]
+
             x₁ᵢ, x₂ⱼ = i/(n - 1), j/(m - 1)
 
-            ftₖ = fft(I[:,k]) ./ dis
-            filterₖ = ftₖ .* abs.(axt)
-            fIₖ = real.(ifft(filterₖ))
+            Iid[1:t] .= I[:,k]
+            # Iid[t+1:end] .= 0
 
+            lock(l)
+            fft!(Iid)
+            Iid .*= abs.(LinRange(0,1,size(Iid)[1]))
+            ifft!(Iid)
+            unlock(l)
+
+            # Qid .= dis .* real.(Iid[Int(floor(t/2))+1:Int(floor(3*t/2))])
+            Qid .= dis .* real.(Iid)
+            
             if x₁ᵢ^2 + x₂ⱼ^2 <=1
-                sᵢⱼ = x₁ᵢ * cos(θₖ) + x₂ⱼ * sin(θₖ)
+                sᵢⱼ = - x₁ᵢ * cos(θₖ) + x₂ⱼ * sin(θₖ)
                 tᵢⱼ = sᵢⱼ / dis
                 αᵢⱼ = tᵢⱼ - floor(tᵢⱼ)
-                if -t/2 < Int(floor(tᵢⱼ)) < t/2 && -t/2 < Int(ceil(tᵢⱼ)) < t/2
-                    P[i+n+1, j+m+1] += (1 - αᵢⱼ) * fIₖ[Int(floor(tᵢⱼ)) + Int(ceil(t/2))] + αᵢⱼ * fIₖ[Int(ceil(tᵢⱼ)) + Int(ceil(t/2))]
+                if -t/2 < Int(floor(tᵢⱼ)) < t && -t/2 < Int(ceil(tᵢⱼ)) < t
+                    Pid[i+n+1, j+m+1] += (1 - αᵢⱼ) * Qid[Int(floor(tᵢⱼ)) + Int(ceil(t/2))] + αᵢⱼ * Qid[Int(ceil(tᵢⱼ)) + Int(ceil(t/2))]
                 end
             end
         end
     end
 
-    return P
+    return sum(P) .* π ./ d
 end
