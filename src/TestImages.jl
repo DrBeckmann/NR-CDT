@@ -2,6 +2,7 @@ module TestImages
 
 using Images
 using Luxor
+using FFTW
 
 export Circle, Empty, Polygon, Square, Star, Triangle
 export OrbAndCross, Shield
