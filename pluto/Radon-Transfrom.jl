@@ -11,7 +11,7 @@ begin
 	Pkg.activate("..")
 	using NormalizedRadonCDT.TestImages
 	using NormalizedRadonCDT
-	using NormalizedRadonCDT.transformation
+	using NormalizedRadonCDT.RadonTransform
 	using Plots
 end
 
@@ -66,10 +66,10 @@ image = render(OrbAndCross(Circle(), Star(10)));
 heatmap(image)
 
 # ╔═╡ c5fe52fe-46f3-4fa2-8077-cd0c8ee99907
-sino_width = NormalizedRadonCDT.transformation.radon(image, 100, 100, 0.05);
+sino_width = NormalizedRadonCDT.RadonTransform.radon(image, 100, 100, 0.05);
 
 # ╔═╡ 4e0ac30a-2ca4-483e-b2ea-b1548a8b9e3f
-sino = NormalizedRadonCDT.transformation.radon(image,100,100,0);
+sino = NormalizedRadonCDT.RadonTransform.radon(image,100,100,0);
 
 # ╔═╡ 6afd8345-f6a1-41e4-a50e-179049e30a84
 md"""

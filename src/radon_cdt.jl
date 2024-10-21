@@ -1,6 +1,6 @@
 module radon_cdt
 
-using NormalizedRadonCDT.transformation: radon as exactradon
+using NormalizedRadonCDT.RadonTransform: radon as exactradon
 using Interpolations: LinearInterpolation as LinInter
 using LIBSVM, LIBLINEAR
 
