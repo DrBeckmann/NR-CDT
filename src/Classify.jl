@@ -206,9 +206,9 @@ function classify_data_NRCDT(samp, image_size, data_size, random_seed, num_angle
     pred_euclid = linear_predict(clf_euclid_model, transpose(test_data_reshaped))[1];
 
     acc_euclid = mean(test_labels .== pred_euclid)     
-    println("=============================================================================================")
-    println("Accuracy of Euclidean : \t", acc_euclid)
-    println("---------------------------------------------------------------------------------------------")
+    println("=============================================================================")
+    println("Acc. of Euclidean : \t", acc_euclid)
+    println("-----------------------------------------------------------------------------")
 
 
     #####
@@ -232,8 +232,8 @@ function classify_data_NRCDT(samp, image_size, data_size, random_seed, num_angle
         pred_rcdt = linear_predict(clf_rcdt_model, transpose(test_data_transformed))[1];
         append!(acc_rcdt, mean(test_labels .== pred_rcdt))
 
-        println("Accuracy of RCDT with \t", i, "\t instance(s) : \t", acc_rcdt[i])
-        println("---------------------------------------------------------------------------------------------")
+        println("Acc. of RCDT with \t", i, "\t inst.(s) : \t", acc_rcdt[i])
+        println("-----------------------------------------------------------------------------")
     end
 
     #####
@@ -278,7 +278,7 @@ function classify_data_NRCDT(samp, image_size, data_size, random_seed, num_angle
     acc_rcdt_normalized_max = mean(test_labels .== pred_rcdt_normalized_max)
     acc_rcdt_normalized_mean = mean(test_labels .== pred_rcdt_normalized_mean)
 
-    println("Accuracy of max-NRCDT : \t", acc_rcdt_normalized_max, "\t", "Accuracy of mean-NRCDT : \t", acc_rcdt_normalized_mean)
-    println("---------------------------------------------------------------------------------------------")
+    println("Acc. of max-NRCDT : \t", acc_rcdt_normalized_max, "\t", "Acc. of mean-NRCDT : \t", acc_rcdt_normalized_mean)
+    println("-----------------------------------------------------------------------------")
     
 end
