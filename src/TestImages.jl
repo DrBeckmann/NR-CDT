@@ -3,6 +3,12 @@ module TestImages
 using Images
 using Luxor
 using FFTW
+using JLD2
+using Random
+using Statistics
+using Distributions
+using ImageTransformations
+using Images
 
 export Circle, Empty, Polygon, Square, Star, Triangle
 export OrbAndCross, Shield
@@ -86,7 +92,7 @@ function initiate_luxor_drawing(size::Tuple{Integer,Integer}, width::Real)
     origin()
     background("black")
     setline(width)
-    scale(x / 2, y / 2)
+    Luxor.scale(x / 2, y / 2)
     return nothing
 end
 
@@ -161,18 +167,18 @@ end
 
 function luxor_draw_orb(orbandcross::OrbAndCross)
     translate(0, 0.5)
-    scale(0.5)
+    Luxor.scale(0.5)
     luxor_draw(orbandcross.orb)
-    scale(2)
+    Luxor.scale(2)
     translate(0, -0.5)
     return nothing
 end
 
 function luxor_draw_cross(orbandcross::OrbAndCross)
     translate(0, -0.5)
-    scale(0.5)
+    Luxor.scale(0.5)
     luxor_draw(orbandcross.cross)
-    scale(2)
+    Luxor.scale(2)
     translate(0, 0.5)
     return nothing
 end
@@ -199,9 +205,9 @@ end
 
 function luxor_draw_emblem(shield::Shield)
     translate(0, -0.125)
-    scale(0.5)
+    Luxor.scale(0.5)
     luxor_draw(shield.emblem)
-    scale(2)
+    Luxor.scale(2)
     translate(0, 0.125)
     return nothing
 end
@@ -210,14 +216,14 @@ function apply_local_transform(shape::AbstractShape)
     (x, y) = shape.scale
     ϕ = shape.rotation
     rotate(-ϕ)
-    scale(x, y)
+    Luxor.scale(x, y)
     return nothing
 end
 
 function annul_local_transform(shape::AbstractShape)
     (x, y) = shape.scale
     ϕ = shape.rotation
-    scale(1 / x, 1 / y)
+    Luxor.scale(1 / x, 1 / y)
     rotate(ϕ)
     return nothing
 end

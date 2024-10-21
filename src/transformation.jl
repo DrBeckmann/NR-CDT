@@ -1,6 +1,15 @@
+module transformation
 
-function radon(image::AbstractMatrix, radii::Integer, angles::Integer; width::Real=0)
-    ψ = LinRange(0, π, angles)
+using Base.Threads
+
+export radon
+
+function radon(image::AbstractMatrix, radii::Integer, angles::Integer, width::Real)
+    if angles == 1
+        ψ = LinRange(0,0,angles)
+    else 
+        ψ = LinRange(0, π, angles)
+    end
     t = LinRange(-1, 1, radii)
     if width > 1e-8
         return radon_area(Float64.(image), ψ, t, width)
@@ -310,4 +319,6 @@ function iradon(I::AbstractMatrix, n::Int, m::Int)
     end
 
     return sum(P) .* π ./ d
+end
+
 end

@@ -1,3 +1,11 @@
+module radon_cdt
+
+using NormalizedRadonCDT.transformation: radon as exactradon
+using Interpolations: LinearInterpolation as LinInter
+using LIBSVM, LIBLINEAR
+
+export rcdt, signal_to_pdf, cdt
+
 function signal_to_pdf(signal::AbstractArray, eps::Real)
 
     if sum(signal) > 0
@@ -29,14 +37,16 @@ function cdt(x₀::AbstractArray, s₀::AbstractArray, x₁::AbstractArray, s₁
     return s_hat
 end
 
-function rcdt(ref::AbstractMatrix, tar::AbstractMatrix, radii::Integer, angles::Integer; width::Real=0)
+function rcdt(ref::AbstractMatrix, tar::AbstractMatrix, angles::Integer, width::Real)
+
+    radii = Int(ceil(sqrt(2) * size(tar)[1]))
     
-    tar_radon = transpose(radon(tar, radii, angles, width))
+    tar_radon = transpose(exactradon(tar, radii, angles, width))
 
     if size(unique(ref))[1] == 1
         ref_radon = ones(size(tar_radon))
     else
-        ref_radon = transpose(radon(ref, radii, angles, width))
+        ref_radon = transpose(exactradon(ref, radii, angles, width))
     end
 
     tar_rcdt = zeros(size(ref_radon));
@@ -48,4 +58,6 @@ function rcdt(ref::AbstractMatrix, tar::AbstractMatrix, radii::Integer, angles::
     end
 
     return tar_rcdt, tar_radon
+end
+
 end
