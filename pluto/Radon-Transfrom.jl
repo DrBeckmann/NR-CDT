@@ -11,6 +11,7 @@ begin
 	Pkg.activate("..")
 	using NormalizedRadonCDT.TestImages
 	using NormalizedRadonCDT
+	using NormalizedRadonCDT.transformation
 	using Plots
 end
 
@@ -59,16 +60,16 @@ we obtain the line based Radon transformation.
 """
 
 # ╔═╡ 1aabbfed-2b4f-4acb-a287-eddb9f8497e5
-image = render(OrbAndCross(Circle(), Star(7)));
+image = render(OrbAndCross(Circle(), Star(10)));
 
 # ╔═╡ 15185324-7336-4c5b-860c-37895249ff5c
 heatmap(image)
 
 # ╔═╡ c5fe52fe-46f3-4fa2-8077-cd0c8ee99907
-sino_width = NormalizedRadonCDT.radon(image, 100, 100, width=0.1);
+sino_width = NormalizedRadonCDT.transformation.radon(image, 100, 100, 0.05);
 
 # ╔═╡ 4e0ac30a-2ca4-483e-b2ea-b1548a8b9e3f
-sino = NormalizedRadonCDT.radon(image, 100, 100);
+sino = NormalizedRadonCDT.transformation.radon(image,100,100,0);
 
 # ╔═╡ 6afd8345-f6a1-41e4-a50e-179049e30a84
 md"""
@@ -95,8 +96,8 @@ heatmap(sino)
 # ╟─28f16420-6b87-43cb-b807-b4dd8ac908ff
 # ╠═1aabbfed-2b4f-4acb-a287-eddb9f8497e5
 # ╟─15185324-7336-4c5b-860c-37895249ff5c
-# ╟─c5fe52fe-46f3-4fa2-8077-cd0c8ee99907
-# ╟─4e0ac30a-2ca4-483e-b2ea-b1548a8b9e3f
+# ╠═c5fe52fe-46f3-4fa2-8077-cd0c8ee99907
+# ╠═4e0ac30a-2ca4-483e-b2ea-b1548a8b9e3f
 # ╟─6afd8345-f6a1-41e4-a50e-179049e30a84
 # ╟─58989d05-1fd6-4866-95e4-e4ab5a51ca68
 # ╟─fc548d1c-0d46-433d-b0d6-5a82e3400f74
