@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.0
+# v0.19.46
 
 using Markdown
 using InteractiveUtils
@@ -9,8 +9,8 @@ using InteractiveUtils
 begin
 	import Pkg
 	Pkg.activate("..")
-	using NormalizedRadonCDT.TestImages
 	using NormalizedRadonCDT
+	using NormalizedRadonCDT.TestImages
 	using NormalizedRadonCDT.RadonTransform
 	using Plots
 end

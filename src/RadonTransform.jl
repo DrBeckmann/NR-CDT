@@ -1,42 +1,89 @@
 module RadonTransform
 
-using Base.Threads
-
 export radon
 
+struct Intensity
+    data::AbstractMatrix
+    pixel_size::Real
+end
+
+function Intensity(I::AbstractMatrix)
+    pixel_size = sqrt(2) / max(size(I)...)
+    return Intensity(I, pixel_size)    
+end
+
+struct Sinogram
+    data::AbstractMatrix
+    radii::AbstractVector
+    angles::AbstractVector
+    width::Real
+    Sinogram(S, t, θ, w) = (w < 0) ? error("negative width") : new(S, t, θ, w)
+end
+
+function Sinogram(t::AbstractVector, θ::AbstractVector, w::Real)
+    S = zeros((length(t), length(θ)))
+    return Sinogram(S, t, θ, w)
+end
+
 function radon(image::AbstractMatrix, radii::Integer, angles::Integer, width::Real)
-    if angles == 1
-        ψ = LinRange(0,0,angles)
-    else 
-        ψ = LinRange(0, π, angles)
+    t = collect(LinRange(-1, 1, radii))
+    θ = (angles == 1) ? [0.0] : collect(LinRange(0.0, π, angles))
+    return radon(image, t, θ, width)
+end
+
+function radon(image::AbstractMatrix, radii::AbstractVector, angles::AbstractVector, width::Real)
+    I = Intensity(Float64.(image))
+    S = zeros((length(radii), length(angles)))
+    for ℓ in eachindex(radii), k in eachindex(angles)
+        S[ℓ, k] = integrate_along_ray(I, radii[ℓ], angles[k], width)
     end
-    t = LinRange(-1, 1, radii)
-    if width > 1e-8
-        return radon_area(Float64.(image), ψ, t, width)
-    else
-        return radon_line(Float64.(image), ψ, t)
+    return S
+    #return Sinogram(S, radii, angles, width)
+end
+
+function integrate_along_ray(I::Intensity, radius::Real, angle::Real, width::Real)
+    if 0 <= angle < π / 4 || 3 * π / 4 <= angle < π
+        return integrate_horizontal_first(I, radius, angle, width)
+    elseif π / 4 <= angle < π / 2 || π / 2 <= angle < 3 * π / 4
+        return integrate_vertical_first(I, radius, angle, width)
     end
 end
 
-function radon_area_slow(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, width::Real)
-    P = zeros(eltype(I), length(t), length(θ))
-    ax1, ax2 = axes(I)
-
-    nax1, nax2 = length(ax1), length(ax2)
-    scale = sqrt(2) / max(nax1, nax2)
-    for j in ax2, i in ax1
-        x = (j - nax2 / 2) * scale
-        y = (i - nax1 / 2) * scale
-        for (k, θₖ) in enumerate(θ)
-            for (ℓ, tₗ) in enumerate(t)
-                xyt = -x * sin(θₖ) + y * cos(θₖ)
-                P[ℓ, k] += (compute_unit_pixel_area((tₗ - xyt + width / 2) / scale, θₖ) - compute_unit_pixel_area((tₗ - xyt - width / 2) / scale, θₖ)) * scale^2 * I[i, j]
-            end
+function integrate_horizontal_first(I::Intensity, radius::Real, angle::Real, width::Real)
+    wscale = (width/2) / cos(π - angle) / I.pixel_size
+    wscale = abs(wscale)
+    P = 0.0
+    (nax1, nax2) = size(I.data)
+    for j in axes(I.data, 2)
+        x = (j - nax2 / 2) * I.pixel_size
+        yₒ, yᵤ = intersection_y(x, angle, radius, I.pixel_size, wscale, nax1)
+        for i in range(max(yᵤ,1), min(yₒ,nax1))
+            y = (i - nax1 / 2) * I.pixel_size
+            xyᵤ, xyₒ = itegration_bound(x, y, angle, radius, I.pixel_size, width)
+            P += compute_partial_area(I.data[i, j], xyᵤ, xyₒ, angle, I.pixel_size)
         end
     end
-
-    return P ./ width
+    return P
 end
+
+
+function integrate_vertical_first(I::Intensity, radius::Real, angle::Real, width::Real)
+    wscale = (width/2) / sin(angle) / I.pixel_size
+    wscale = abs(wscale)
+    P = 0.0
+    (nax1, nax2) = size(I.data)
+    for i in axes(I.data, 1)
+        y = (i - nax1 / 2) * I.pixel_size
+        xₒ, xᵤ = intersection_x(y, angle, radius, I.pixel_size, wscale, nax1)
+        for j in range(max(xᵤ,1), min(xₒ,nax2))
+            x = (j - nax2 / 2) * I.pixel_size
+            xyᵤ, xyₒ = itegration_bound(x, y, angle, radius, I.pixel_size, width)
+            P += compute_partial_area(I.data[i, j], xyᵤ, xyₒ, angle, I.pixel_size)
+        end
+    end
+    return P
+end
+
 
 function radon_area(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, width::Real)
     P = zeros(eltype(I), length(t), length(θ))
@@ -266,7 +313,7 @@ function _ramp_spatial(N::Int, τ, Npad::Int = N)
     [i ≤ N ? hval(i - N2 - 1) : 0. for i = 1:Npad]
 end
 
-function iradon(I::AbstractMatrix, n::Int, m::Int)
+#= function iradon(I::AbstractMatrix, n::Int, m::Int)
 
     t, d = size(I)
     axangle = LinRange(0, π, d)
@@ -319,6 +366,6 @@ function iradon(I::AbstractMatrix, n::Int, m::Int)
     end
 
     return sum(P) .* π ./ d
-end
+end =#
 
 end
