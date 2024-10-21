@@ -47,7 +47,7 @@ function split_data(data, labels, split)
     return data_train, labels_train, data_test, labels_test
 end;
 
-function classify_data_NRCDT(samp, image_size, data_size, random_seed, num_angles_rcdt, num_angles_rcdt_norm, num_rcdt, width)
+function classify_data_NRCDT(samp, image_size, data_size, random_seed, num_angles_rcdt, num_angles_rcdt_norm, num_rcdt, noise, width)
 
     templates = load("temp.jld")["temp"]
     label = range(1, size(templates)[1])
@@ -103,7 +103,12 @@ function classify_data_NRCDT(samp, image_size, data_size, random_seed, num_angle
     #####
     #####
 
-    parameters = [(0.75,1.25),(-5.,5.),(-0.5,0.5),(-10,10),(-10,10),(4,20,2,5)] #noise: (4,20,2,5), (10,40,2,5)
+    if noise == 0
+        parameters = [(0.75,1.25),(-5.,5.),(-0.5,0.5),(-10,10),(-10,10)] #noise: (4,20,2,5), (10,40,2,5)
+    elseif noise == 1
+        parameters = [(0.75,1.25),(-5.,5.),(-0.5,0.5),(-10,10),(-10,10),(4,20,2,5)] #noise: (4,20,2,5), (10,40,2,5)
+    end
+
 
     dataset, labels =  gen_dataset(temp, lab, 2*image_size, data_size, parameters, random_seed)
 
