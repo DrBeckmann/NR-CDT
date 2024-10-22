@@ -2,6 +2,8 @@ module RadonTransform
 
 export radon
 
+using FFTW
+
 struct Intensity
     data::AbstractMatrix
     pixel_size::Real
@@ -42,6 +44,14 @@ function radon(image::AbstractMatrix, radii::AbstractVector, angles::AbstractVec
 end
 
 function integrate_along_ray(I::Intensity, radius::Real, angle::Real, width::Real)
+    if width == 0
+        integrate_along_line_ray(I::Intensity, radius::Real, angle::Real)
+    elseif width > 0
+        integrate_along_area_ray(I::Intensity, radius::Real, angle::Real, width::Real)
+    end
+end 
+
+function integrate_along_area_ray(I::Intensity, radius::Real, angle::Real, width::Real)
     if 0 <= angle < π / 4 || 3 * π / 4 <= angle < π
         return integrate_horizontal_first(I, radius, angle, width)
     elseif π / 4 <= angle < π / 2 || π / 2 <= angle < 3 * π / 4
@@ -211,6 +221,44 @@ function radon_line(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
     return P
 end
 
+function integrate_along_line_ray(I::Intensity, radius::Real, angle::Real)
+    if 0 <= angle < π / 4 || 3 * π / 4 <= angle < π
+        return integrate_horizontal_line_first(I, radius, angle)
+    elseif π / 4 <= angle < π / 2 || π / 2 <= angle < 3 * π / 4
+        return integrate_vertical_line_first(I, radius, angle)
+    end
+end
+
+function integrate_horizontal_line_first(I::Intensity, radius::Real, angle::Real)
+    P = 0.0
+    (nax1, nax2) = size(I.data)
+    for j in axes(I.data, 2)
+        x = (j - nax2 / 2) * I.pixel_size
+        yₒ, yᵤ = intersection_y(x, angle, radius, I.pixel_size, 1, nax1)
+        for i in range(max(yᵤ,1), min(yₒ,nax1))
+            y = (i - nax1 / 2) * I.pixel_size
+            xyₜ = intersection_t(x, y, angle)
+            P += compute_partial_line(I.data[i, j], radius, xyₜ, angle, I.pixel_size)
+        end
+    end
+    return P
+end
+
+function integrate_vertical_line_first(I::Intensity, radius::Real, angle::Real)
+    P = 0.0
+    (nax1, nax2) = size(I.data)
+    for i in axes(I.data, 1)
+        y = (i - nax1 / 2) * I.pixel_size
+        xₒ, xᵤ = intersection_x(y, angle, radius, I.pixel_size, 1, nax1)
+        for j in range(max(xᵤ,1), min(xₒ,nax2))
+            x = (j - nax2 / 2) * I.pixel_size
+            xyₜ = intersection_t(x, y, angle)
+            P += compute_partial_line(I.data[i, j], radius, xyₜ, angle, I.pixel_size)
+        end
+    end
+    return P
+end
+
 function intersection_t(x::Real, y::Real, ψ::Real)
     xyₜ = -x * sin(ψ) + y * cos(ψ)
 
@@ -313,7 +361,7 @@ function _ramp_spatial(N::Int, τ, Npad::Int = N)
     [i ≤ N ? hval(i - N2 - 1) : 0. for i = 1:Npad]
 end
 
-#= function iradon(I::AbstractMatrix, n::Int, m::Int)
+function iradon(I::AbstractMatrix, n::Int, m::Int)
 
     t, d = size(I)
     axangle = LinRange(0, π, d)
@@ -334,7 +382,7 @@ end
     
     for i in range(-n+1, n-1), j in range(-m+1, m-1)
         l = SpinLock()
-        @threads for (k, θₖ) in collect(enumerate(axangle))
+        for (k, θₖ) in collect(enumerate(axangle))
             id = threadid()
             Pid = P[id]
             Qid = Q[id]
@@ -366,6 +414,6 @@ end
     end
 
     return sum(P) .* π ./ d
-end =#
+end
 
 end
