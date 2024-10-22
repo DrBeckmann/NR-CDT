@@ -29,7 +29,7 @@ struct Polygon <: AbstractBaseShape
     edges::Integer
     rotation::Real
     scale::Tuple{Real,Real}
-    Polygon(n, r, s) = n <= 0 ? error("negative edges") : new(n, r, s)
+    Polygon(n, r, s) = (n <= 0) ? error("negative edges") : new(n, r, s)
 end
 
 function Polygon(edges; rotation::Real=0, scale::Tuple{Real,Real}=(1, 1))
@@ -48,7 +48,7 @@ struct Star <: AbstractBaseShape
     rays::Integer
     rotation::Real
     scale::Tuple{Real,Real}
-    Star(n, r, s) = n <= 0 ? error("negative rays") : new(n, r, s)
+    Star(n, r, s) = (n <= 0) ? error("negative rays") : new(n, r, s)
 end
 
 function Star(rays; rotation::Real=0, scale::Tuple{Real,Real}=(1, 1))
