@@ -53,13 +53,13 @@ end
 
 function integrate_along_area_ray(I::Intensity, radius::Real, angle::Real, width::Real)
     if 0 <= angle < π / 4 || 3 * π / 4 <= angle < π
-        return integrate_horizontal_first(I, radius, angle, width)
+        return integrate_horizontal_area_first(I, radius, angle, width)
     elseif π / 4 <= angle < π / 2 || π / 2 <= angle < 3 * π / 4
-        return integrate_vertical_first(I, radius, angle, width)
+        return integrate_vertical_area_first(I, radius, angle, width)
     end
 end
 
-function integrate_horizontal_first(I::Intensity, radius::Real, angle::Real, width::Real)
+function integrate_horizontal_area_first(I::Intensity, radius::Real, angle::Real, width::Real)
     wscale = (width/2) / cos(π - angle) / I.pixel_size
     wscale = abs(wscale)
     P = 0.0
@@ -73,11 +73,11 @@ function integrate_horizontal_first(I::Intensity, radius::Real, angle::Real, wid
             P += compute_partial_area(I.data[i, j], xyᵤ, xyₒ, angle, I.pixel_size)
         end
     end
-    return P
+    return P ./ width
 end
 
 
-function integrate_vertical_first(I::Intensity, radius::Real, angle::Real, width::Real)
+function integrate_vertical_area_first(I::Intensity, radius::Real, angle::Real, width::Real)
     wscale = (width/2) / sin(angle) / I.pixel_size
     wscale = abs(wscale)
     P = 0.0
@@ -91,46 +91,6 @@ function integrate_vertical_first(I::Intensity, radius::Real, angle::Real, width
             P += compute_partial_area(I.data[i, j], xyᵤ, xyₒ, angle, I.pixel_size)
         end
     end
-    return P
-end
-
-
-function radon_area(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, width::Real)
-    P = zeros(eltype(I), length(t), length(θ))
-    ax1, ax2 = axes(I)
-
-    nax1, nax2 = length(ax1), length(ax2)
-    scale = sqrt(2) / max(nax1, nax2)
-    for (ℓ, tₗ) in enumerate(t)
-        for (k, θₖ) in enumerate(θ)
-            if 0 <= θₖ < π / 4 || 3 * π / 4 <= θₖ < π
-                wscale = (width/2) / cos(π - θₖ) / scale
-                wscale = abs(wscale)
-                for j in ax2
-                    x = (j - nax2 / 2) * scale
-                    yₒ, yᵤ = intersection_y(x, θₖ, tₗ, scale, wscale, nax1)
-                    for i in range(max(yᵤ,1), min(yₒ,nax1))
-                        y = (i - nax1 / 2) * scale
-                        xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
-                        P[ℓ, k] += compute_partial_area(I[i, j], xyᵤ, xyₒ, θₖ, scale)
-                    end
-                end
-            elseif π / 4 <= θₖ < π / 2 || π / 2 <= θₖ < 3 * π / 4
-                wscale = (width/2) / sin(θₖ) / scale
-                wscale = abs(wscale)
-                for i in ax1
-                    y = (i - nax1 / 2) * scale
-                    xₒ, xᵤ = intersection_x(y, θₖ, tₗ, scale, wscale, nax1)
-                    for j in range(max(xᵤ,1), min(xₒ,nax2))
-                        x = (j - nax2 / 2) * scale
-                        xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
-                        P[ℓ, k] += compute_partial_area(I[i, j], xyᵤ, xyₒ, θₖ, scale)
-                    end
-                end
-            end
-        end
-    end
-
     return P ./ width
 end
 
@@ -139,7 +99,6 @@ function intersection_y(x::Real, ψ::Real, l::Real, scale::Real, wscale::Real, n
     y = (l * cos(ψ) + η * sin(ψ)) / scale + nax1 / 2
     yₒ = Int(floor(y + wscale + 0.5))
     yᵤ = Int(ceil(y - wscale - 0.5))
-
     return yₒ, yᵤ
 end
 
@@ -148,77 +107,18 @@ function intersection_x(y::Real, ψ::Real, l::Real, scale::Real, wscale::Real, n
     x = (-l * sin(ψ) + η * cos(ψ)) / scale + nax2 / 2
     xₒ = Int(floor(x + wscale + 0.5))
     xᵤ = Int(ceil(x - wscale - 0.5))
-
     return xₒ, xᵤ
 end
 
 function itegration_bound(x::Real, y::Real, ψ::Real, l::Real, scale::Real, width::Real)
     xyₜ = -x * sin(ψ) + y * cos(ψ)
     xyᵤ, xyₒ = (l - xyₜ - width / 2) / scale, (l - xyₜ + width / 2) / scale
-
     return xyᵤ, xyₒ
 end
 
 function compute_partial_area(I::Real, xyᵤ::Real, xyₒ::Real, ψ::Real, scale::Real)
     area = (compute_unit_pixel_area(xyₒ, ψ) - compute_unit_pixel_area(xyᵤ, ψ)) * scale^2 * I
-
     return area
-end
-
-
-function radon_line_slow(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
-    P = zeros(eltype(I), length(t), length(θ))
-    ax1, ax2 = axes(I)
-
-    nax1, nax2 = length(ax1), length(ax2)
-    scale = sqrt(2) / max(nax1, nax2)
-    for j in ax2, i in ax1
-        x = (j - nax2 / 2) * scale
-        y = (i - nax1 / 2) * scale
-        for (k, θₖ) in enumerate(θ)
-            for (ℓ, tₗ) in enumerate(t)
-                xyt = -x * sin(θₖ) + y * cos(θₖ)
-                P[ℓ, k] += compute_unit_pixel_line((tₗ - xyt) / scale, θₖ) * scale * I[i, j]
-            end
-        end
-    end
-
-    return P
-end
-
-function radon_line(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
-    P = zeros(eltype(I), length(t), length(θ))
-    ax1, ax2 = axes(I)
-
-    nax1, nax2 = length(ax1), length(ax2)
-    scale = sqrt(2) / max(nax1, nax2)
-    for (ℓ, tₗ) in enumerate(t)
-        for (k, θₖ) in enumerate(θ)
-            if 0 <= θₖ < π / 4 || 3 * π / 4 <= θₖ < π
-                for j in ax2
-                    x = (j - nax2 / 2) * scale
-                    yₒ, yᵤ = intersection_y(x, θₖ, tₗ, scale, 1, nax1)
-                    for i in range(max(yᵤ,1), min(yₒ,nax1))
-                        y = (i - nax1 / 2) * scale
-                        xyₜ = intersection_t(x, y, θₖ)
-                        P[ℓ, k] += compute_partial_line(I[i, j], tₗ, xyₜ, θₖ, scale)
-                    end
-                end
-            elseif π / 4 <= θₖ < π / 2 || π / 2 <= θₖ < 3 * π / 4
-                for i in ax1
-                    y = (i - nax1 / 2) * scale
-                    xₒ, xᵤ = intersection_x(y, θₖ, tₗ, scale, 1, nax1)
-                    for j in range(max(xᵤ,1), min(xₒ,nax2))
-                        x = (j - nax2 / 2) * scale
-                        xyₜ = intersection_t(x, y, θₖ)
-                        P[ℓ, k] += compute_partial_line(I[i, j], tₗ, xyₜ, θₖ, scale)
-                    end
-                end
-            end
-        end
-    end
-
-    return P
 end
 
 function integrate_along_line_ray(I::Intensity, radius::Real, angle::Real)
@@ -261,13 +161,11 @@ end
 
 function intersection_t(x::Real, y::Real, ψ::Real)
     xyₜ = -x * sin(ψ) + y * cos(ψ)
-
     return xyₜ
 end
 
 function compute_partial_line(I::Real, l::Real, xyₜ::Real, ψ::Real, scale::Real)
     line = compute_unit_pixel_line((l - xyₜ) / scale, ψ) * scale * I
-
     return line
 end
 

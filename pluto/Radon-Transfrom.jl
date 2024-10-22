@@ -60,13 +60,13 @@ we obtain the line based Radon transformation.
 """
 
 # ╔═╡ 1aabbfed-2b4f-4acb-a287-eddb9f8497e5
-image = render(OrbAndCross(Circle(), Star(10)));
+image = render(OrbAndCross(Circle(), Star(1)));
 
 # ╔═╡ 15185324-7336-4c5b-860c-37895249ff5c
 heatmap(image)
 
 # ╔═╡ c5fe52fe-46f3-4fa2-8077-cd0c8ee99907
-sino_width = NormalizedRadonCDT.RadonTransform.radon(image, 100, 100, 0.05);
+sino_width = NormalizedRadonCDT.RadonTransform.radon(image, 100, 100, 0.5);
 
 # ╔═╡ 4e0ac30a-2ca4-483e-b2ea-b1548a8b9e3f
 sino = NormalizedRadonCDT.RadonTransform.radon(image,100,100,0);
