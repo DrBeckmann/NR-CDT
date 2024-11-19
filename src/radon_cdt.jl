@@ -19,17 +19,20 @@ function signal_to_pdf(signal::AbstractArray, eps::Real)
 end
 
 function cdt(x₀::AbstractArray, s₀::AbstractArray, x₁::AbstractArray, s₁::AbstractArray)
-    s₀ = signal_to_pdf(s₀, 1e-7)
-    s₁ = signal_to_pdf(s₁, 1e-7)
+    s₀ = signal_to_pdf(s₀, 1e-15)
+    s₁ = signal_to_pdf(s₁, 1e-15)
     r = minimum(abs.(x₀ .- circshift(x₀, 1)))
     cum₀ = cumsum(s₀)
     cum₁ = cumsum(s₁)
 
     if size(unique(s₀))[1] == 1
         s_hat_inter = LinInter(cum₁, x₁)
-        xnew₀ = ifelse.(x₀ .< minimum(cum₁), minimum(cum₁), ifelse.(x₀ .> maximum(cum₁), maximum(cum₁), x₀))
-        s_hat = s_hat_inter(xnew₀)
+        # xnew₀ = ifelse.(x₀ .< minimum(cum₁), minimum(cum₁), ifelse.(x₀ .> maximum(cum₁), maximum(cum₁), x₀))
+        # xnew = ifelse.(cum₀ .< minimum(cum₁), minimum(cum₁), ifelse.(cum₀ .> maximum(cum₁[end-1]), maximum(cum₁[end-1]), cum₀))
+        xnew = collect(LinRange(0,1,size(cum₀)[1]+2))[2:end-1]
+        s_hat = s_hat_inter(xnew)
     else
+        println("here")
         s_hat_inter = LinInter(r .* cum₁, x₁)
         s_hat = s_hat_inter(r .* cum₀)
     end 
@@ -37,24 +40,25 @@ function cdt(x₀::AbstractArray, s₀::AbstractArray, x₁::AbstractArray, s₁
     return s_hat
 end
 
-function rcdt(ref::AbstractMatrix, tar::AbstractMatrix, angles::Integer, width::Real)
+function rcdt(ref::AbstractMatrix, tar::AbstractMatrix, angles::Real, scale_radii::Integer, width::Real)
 
     radii = Int(ceil(sqrt(2) * size(tar)[1]))
     
-    tar_radon = transpose(exactradon(tar, radii, angles, width))
+    tar_radon = transpose(exactradon(Float64.(tar), Int64(radii*scale_radii), angles, Float64(width)))
+
 
     if size(unique(ref))[1] == 1
         ref_radon = ones(size(tar_radon))
     else
-        ref_radon = transpose(exactradon(ref, radii, angles, width))
+        ref_radon = transpose(exactradon(Float64.(ref), Int64(radii*scale_radii), angles, Float64(width)))
     end
 
     tar_rcdt = zeros(size(ref_radon));
-    x_ref = LinRange(0, 1, size(ref_radon)[2])
-    x_tar = LinRange(0, 1, size(tar_radon)[2])
+    x_ref = collect(LinRange(0, 1, size(ref_radon)[2]))
+    x_tar = collect(LinRange(-1, 1, size(tar_radon)[2]))
     
     for i in 1:size(ref_radon)[1]
-        tar_rcdt[i, :] = cdt(x_ref, ref_radon[i, :], x_tar, tar_radon[i, :])
+        tar_rcdt[i, :] = cdt(x_ref, ones(size(ref_radon)[2])/size(ref_radon)[2], x_tar, tar_radon[i, :])
     end
 
     return tar_rcdt, tar_radon

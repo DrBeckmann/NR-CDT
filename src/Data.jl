@@ -112,15 +112,33 @@ function gen_dataset(template, label, image_size, size_data, parameters, seed)
     size_temp = size(template)[1]
     dataset = zeros(size_data*size_temp, image_size, image_size);
     labels = zeros(size_data*size_temp);
-    for i in 1:size_data
-        for j in 1:size_temp
+    for j in 1:size_temp
+        for i in 1:size_data
             img = random_image_distortion(template[j,:,:], image_size, scale_bounds, angle_bounds, shear_bounds, shift_bounds_x, shift_bounds_y, noise_bounds, seed+i);
-            dataset[j + (i-1)*size_temp,:,:] = img;
-            labels[j + (i-1)*size_temp] = label[j];
+            dataset[i + (j-1)*size_data,:,:] = img;
+            labels[i + (j-1)*size_data] = label[j];
         end
     end
     
     return dataset, labels
+end;
+
+function gen_dataset_mnist(template, image_size, parameters, seed)
+
+    scale_bounds = parameters[1];
+    angle_bounds = parameters[2];
+    shear_bounds = parameters[3];
+    shift_bounds_x = parameters[4];
+    shift_bounds_y = parameters[5];
+    if size(parameters)[1] > 5
+        noise_bounds = parameters[6];
+    else 
+        noise_bounds = 0;
+    end
+
+    noise_data_imag = random_image_distortion(template, image_size, scale_bounds, angle_bounds, shear_bounds, shift_bounds_x, shift_bounds_y, noise_bounds, seed)
+    
+    return noise_data_imag
 end;
 
 function create_data(samp, image_size, size_data, random_seed)
