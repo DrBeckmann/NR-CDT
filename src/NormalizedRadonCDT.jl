@@ -4,7 +4,6 @@ export TestImages
 export RadonTransform
 export radon_cdt
 
-using FFTW
 using Base.Threads
 
 include("TestImages.jl")

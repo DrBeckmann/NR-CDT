@@ -2,8 +2,6 @@ module RadonTransform
 
 export radon
 
-using FFTW
-
 #=
 
 function radon(image::AbstractMatrix, radii::Integer, angles::Integer, width::Real)
