@@ -13,19 +13,6 @@ function Intensity(I::AbstractMatrix)
     return Intensity(I, pixel_size)    
 end
 
-struct Sinogram
-    data::Matrix{Float64}
-    radii::Vector{Float64}
-    angles::Vector{Float64}
-    width::Float64
-    Sinogram(S, t, θ, w) = (w < 0) ? error("negative width") : new(S, t, θ, w)
-end
-
-function Sinogram(t::Vector{Float64}, θ::Vector{Float64}, w::Float64)
-    S = zeros((length(t), length(θ)))
-    return Sinogram(S, t, θ, w)
-end
-
 function radon(image::Matrix{Float64}, radii::Int64, angles::Real, width::Float64)
     t = collect(LinRange(-1, 1, radii))
     θ = (angles == 0) ? [0.0] : ((mod(angles,1) != 0) ? [Float64(angles)] : ((angles == 1) ? [0.0] : collect(LinRange(0.0, π, angles))))
@@ -39,7 +26,6 @@ function radon_compute(image::Matrix{Float64}, radii::Vector{Float64}, angles::V
         S[ℓ, k] = integrate_along_ray(I, radii[ℓ], angles[k], width)
     end
     return S
-    #return Sinogram(S, radii, angles, width)
 end
 
 function integrate_along_ray(I::Intensity, radius::Float64, angle::Float64, width::Float64)
