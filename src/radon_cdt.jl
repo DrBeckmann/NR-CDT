@@ -32,7 +32,6 @@ function cdt(x₀::AbstractArray, s₀::AbstractArray, x₁::AbstractArray, s₁
         xnew = collect(LinRange(0,1,size(cum₀)[1]+2))[2:end-1]
         s_hat = s_hat_inter(xnew)
     else
-        println("here")
         s_hat_inter = LinInter(r .* cum₁, x₁)
         s_hat = s_hat_inter(r .* cum₀)
     end 

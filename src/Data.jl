@@ -96,7 +96,98 @@ function random_image_distortion(image, image_size, scale_bounds, angle_bounds, 
     return image
 end;
 
-function gen_dataset(template, label, image_size, size_data, parameters, seed)
+function nonlinear_distortion(img::AbstractMatrix, amplitude::Float64, frequency::Float64)
+    rows, cols = size(img)
+    distorted_img = zeros(eltype(img), rows, cols)
+
+	amplitude = amplitude*rand(1)[1]
+	frequency = frequency*rand(1)[1]
+
+    for i in 1:rows
+        for j in 1:cols
+            # Compute the new coordinates using a sinusoidal distortion
+            new_i = clamp(i + amplitude * sin(2π * frequency * j / cols), 1, rows)
+            new_j = clamp(j + amplitude * cos(2π * frequency * i / rows), 1, cols)
+
+            # Perform bilinear interpolation
+            top = floor(Int, new_i)
+            bottom = ceil(Int, new_i)
+            left = floor(Int, new_j)
+            right = ceil(Int, new_j)
+
+            weight_tl = (bottom - new_i) * (right - new_j)
+            weight_tr = (bottom - new_i) * (new_j - left)
+            weight_bl = (new_i - top) * (right - new_j)
+            weight_br = (new_i - top) * (new_j - left)
+
+            # Assign interpolated value
+            distorted_img[i, j] = 
+                weight_tl * img[top, left] +
+                weight_tr * img[top, right] +
+                weight_bl * img[bottom, left] +
+                weight_br * img[bottom, right]
+        end
+    end
+
+    return distorted_img
+end
+
+function random_int_pair(range::UnitRange{Int})
+    x = rand(range)
+    y = rand(range)
+    return (x, y)
+end
+
+function impulsive_distortion(img::AbstractMatrix, freg::Float64, amp::Int, num::Int)
+    rows, cols = size(img)
+    distorted_img = zeros(eltype(img), rows, cols)
+
+
+	for k in 1:num
+		(i,j) = random_int_pair(amp+1:cols-amp-1)
+		for k in -amp:amp
+			for l in -amp:amp
+				# distorted_img[i+k,j+l] += 1/(k^2*freg+l^2*freg+1)
+				distorted_img[i+k,j+l] += exp(-(k^2*freg+l^2*freg))
+			end
+		end
+	end
+
+	distorted_img += img
+
+    return distorted_img
+end
+
+function temp_distortion(temp, noise)
+	nonlinear_noise = noise[1]
+	impulsive_noise = noise[2]
+    bar_noise = noise[3]
+
+	if nonlinear_noise[1] != 0
+		temp = nonlinear_distortion(temp, nonlinear_noise[1], nonlinear_noise[2])
+	end
+
+	if impulsive_noise[1] != 0
+		temp = impulsive_distortion(temp, impulsive_noise[1], Int(impulsive_noise[2]), Int(impulsive_noise[3]))
+	end
+
+    if bar_noise[1] != 0
+		temp = bar_distortion(temp)
+	end
+
+	return temp
+end
+
+function bar_distortion(img::AbstractMatrix)
+    size_img = size(img)[1]
+    for k in 1:10
+        k = rand(10:size_img-10)
+        img[:,k:k+3] = zeros(size_img,4)
+    end
+    return img
+end
+
+function gen_dataset(template, label, image_size, size_data, parameters, parameters_non_aff, seed)
 
     scale_bounds = parameters[1];
     angle_bounds = parameters[2];
@@ -114,7 +205,8 @@ function gen_dataset(template, label, image_size, size_data, parameters, seed)
     labels = zeros(size_data*size_temp);
     for j in 1:size_temp
         for i in 1:size_data
-            img = random_image_distortion(template[j,:,:], image_size, scale_bounds, angle_bounds, shear_bounds, shift_bounds_x, shift_bounds_y, noise_bounds, seed+i);
+            temp_eps = temp_distortion(template[j,:,:], parameters_non_aff)
+            img = random_image_distortion(temp_eps, image_size, scale_bounds, angle_bounds, shear_bounds, shift_bounds_x, shift_bounds_y, noise_bounds, seed+i);
             dataset[i + (j-1)*size_data,:,:] = img;
             labels[i + (j-1)*size_data] = label[j];
         end
@@ -123,7 +215,23 @@ function gen_dataset(template, label, image_size, size_data, parameters, seed)
     return dataset, labels
 end;
 
-function gen_dataset_mnist(template, image_size, parameters, seed)
+function gen_dataset_nonaffine(template, label, image_size, size_data, parameters)
+
+    size_temp = size(template)[1]
+    dataset = zeros(size_data*size_temp, image_size, image_size);
+    labels = zeros(size_data*size_temp);
+    for j in 1:size_temp
+        for i in 1:size_data
+            img = temp_distortion(template[j,:,:], [parameters[1], parameters[2], parameters[3]])
+            dataset[i + (j-1)*size_data,:,:] = img;
+            labels[i + (j-1)*size_data] = label[j];
+        end
+    end
+    
+    return dataset, labels
+end;
+
+function gen_dataset_mnist(template, image_size, parameters, parameters_non_aff, seed)
 
     scale_bounds = parameters[1];
     angle_bounds = parameters[2];
@@ -136,7 +244,8 @@ function gen_dataset_mnist(template, image_size, parameters, seed)
         noise_bounds = 0;
     end
 
-    noise_data_imag = random_image_distortion(template, image_size, scale_bounds, angle_bounds, shear_bounds, shift_bounds_x, shift_bounds_y, noise_bounds, seed)
+    temp_eps = temp_distortion(template, parameters_non_aff)
+    noise_data_imag = random_image_distortion(temp_eps, image_size, scale_bounds, angle_bounds, shear_bounds, shift_bounds_x, shift_bounds_y, noise_bounds, seed)
     
     return noise_data_imag
 end;

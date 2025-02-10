@@ -16,6 +16,9 @@ end
 # ╔═╡ c2e723a2-fa6d-4884-8eb5-7713dd8fc3de
 temp_data = [1,6,12]
 
+# ╔═╡ a9e068b2-5f53-4d48-8ba6-ec1c66897a39
+templates = load("pluto/temp.jld")["temp"]
+
 # ╔═╡ c3b7783d-ce49-49d8-8eb4-77dfda088fa0
 NormalizedRadonCDT.nearest_data_NRCDT(temp_data, 128, 10, 42, 2, 1, 0, 0)
 
@@ -61,6 +64,7 @@ NormalizedRadonCDT.nearest_data_NRCDT(temp_data, 128, 10, 42, 128, 1, 0.5, 0)
 # ╔═╡ Cell order:
 # ╠═03f9300e-692e-11ef-145c-85ecce1e4c7f
 # ╠═c2e723a2-fa6d-4884-8eb5-7713dd8fc3de
+# ╠═a9e068b2-5f53-4d48-8ba6-ec1c66897a39
 # ╠═c3b7783d-ce49-49d8-8eb4-77dfda088fa0
 # ╠═572c96a1-bc8e-467d-a051-2051db6e4080
 # ╠═932daed7-3788-463b-8d00-39f6983c7c7b
