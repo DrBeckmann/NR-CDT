@@ -2,11 +2,25 @@ module RadonTransform
 
 export radon
 
+struct RadonOpt
+    radii::Int64
+    angles::Int64
+    width::Float64
+    function RadonOpt(t, θ, w)
+        if t <= 0
+            error("negative number of radii")
+        elseif θ <= 0
+            error("negative number of angles")
+        elseif w < 0.0
+            error("negative width")
+        end 
+        return new(t, θ, w)
+    end
+end
 struct Intensity
     data::Matrix{Float64}
     pixel_size::Float64
 end
-
 
 function Intensity(I::AbstractMatrix)
     pixel_size = sqrt(2) / max(size(I)...)
