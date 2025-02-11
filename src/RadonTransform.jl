@@ -60,17 +60,16 @@ function compute_radon(p::Phantom, opt::RadonOpt)
     return s
 end
 
-
-
-
-
-function integrate(I::Phantom, r::Ray)
-    if r.w > 0
-        integrate_along_area_ray(I::Phantom, r.t, r.θ, r.w)
-    else 
-        integrate_along_line_ray(I::Phantom, r.t, r.θ)
+function integrate(p::Phantom, r::Ray)
+    if π / 4 <= r.θ < 3 * π / 4
+        return integrate_y_first(p, r)
+    else
+        return integrate_x_first(p, r)
     end
 end 
+
+
+
 
 function integrate_along_area_ray(I::Phantom, radius::Float64, angle::Float64, width::Float64)
     if 0 <= angle < π / 4 || 3 * π / 4 <= angle < π
@@ -144,13 +143,14 @@ end
 
 function integrate_along_line_ray(I::Phantom, radius::Float64, angle::Float64)
     if 0 <= angle < π / 4 || 3 * π / 4 <= angle < π
-        return integrate_horizontal_line_first(I, radius, angle)
+        return integrate_x_first(I, radius, angle)
     elseif π / 4 <= angle < π / 2 || π / 2 <= angle < 3 * π / 4
-        return integrate_vertical_line_first(I, radius, angle)
+        return integrate_y_first(I, radius, angle)
     end
 end
 
-function integrate_horizontal_line_first(I::Phantom, radius::Float64, angle::Float64)
+function integrate_x_first(I::Phantom, r::Ray)
+    (radius, angle) = (r.t, r.θ)
     P = 0.0
     (nax1, nax2) = size(I.data)
     for j in axes(I.data, 2)
@@ -165,7 +165,8 @@ function integrate_horizontal_line_first(I::Phantom, radius::Float64, angle::Flo
     return P
 end
 
-function integrate_vertical_line_first(I::Phantom, radius::Float64, angle::Float64)
+function integrate_y_first(I::Phantom, r::Ray)
+    (radius, angle) = (r.t, r.θ)
     P = 0.0
     (nax1, nax2) = size(I.data)
     for i in axes(I.data, 1)
