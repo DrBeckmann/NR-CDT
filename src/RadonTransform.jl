@@ -64,10 +64,10 @@ function integrate_horizontal_area_first(I::Intensity, radius::Float64, angle::F
     P = 0.0
     (nax1, nax2) = size(I.data)
     for j in axes(I.data, 2)
-        x = (j - nax2 / 2) * I.pixel_size
+        x = (j - nax2 / 2 - 0.5) * I.pixel_size
         yₒ, yᵤ = intersection_y(x, angle, radius, I.pixel_size, wscale, nax1)
         for i in range(max(yᵤ,1), min(yₒ,nax1))
-            y = (i - nax1 / 2) * I.pixel_size
+            y = (i - nax1 / 2 - 0.5) * I.pixel_size
             xyᵤ, xyₒ = itegration_bound(x, y, angle, radius, I.pixel_size, width)
             P += compute_partial_area(I.data[i, j], xyᵤ, xyₒ, angle, I.pixel_size)
         end
@@ -82,10 +82,10 @@ function integrate_vertical_area_first(I::Intensity, radius::Float64, angle::Flo
     P = 0.0
     (nax1, nax2) = size(I.data)
     for i in axes(I.data, 1)
-        y = (i - nax1 / 2) * I.pixel_size
+        y = (i - nax1 / 2 - 0.5) * I.pixel_size
         xₒ, xᵤ = intersection_x(y, angle, radius, I.pixel_size, wscale, nax1)
         for j in range(max(xᵤ,1), min(xₒ,nax2))
-            x = (j - nax2 / 2) * I.pixel_size
+            x = (j - nax2 / 2 - 0.5) * I.pixel_size
             xyᵤ, xyₒ = itegration_bound(x, y, angle, radius, I.pixel_size, width)
             P += compute_partial_area(I.data[i, j], xyᵤ, xyₒ, angle, I.pixel_size)
         end
@@ -96,16 +96,16 @@ end
 function intersection_y(x::Float64, ψ::Float64, l::Float64, scale::Float64, wscale::Float64, nax1::Int64)
     η = (x + l * sin(ψ)) / cos(ψ)
     y = (l * cos(ψ) + η * sin(ψ)) / scale + nax1 / 2
-    yₒ = Int(floor(y + wscale + 0.5))
-    yᵤ = Int(ceil(y - wscale - 0.5))
+    yₒ = Int(floor(y + wscale + nax1))
+    yᵤ = Int(ceil(y - wscale - nax1))
     return yₒ, yᵤ
 end
 
 function intersection_x(y::Float64, ψ::Float64, l::Float64, scale::Float64, wscale::Float64, nax2::Int64)
     η = (y - l * cos(ψ)) / sin(ψ)
     x = (-l * sin(ψ) + η * cos(ψ)) / scale + nax2 / 2
-    xₒ = Int(floor(x + wscale + 0.5))
-    xᵤ = Int(ceil(x - wscale - 0.5))
+    xₒ = Int(floor(x + wscale + nax2))
+    xᵤ = Int(ceil(x - wscale - nax2))
     return xₒ, xᵤ
 end
 
@@ -132,10 +132,10 @@ function integrate_horizontal_line_first(I::Intensity, radius::Float64, angle::F
     P = 0.0
     (nax1, nax2) = size(I.data)
     for j in axes(I.data, 2)
-        x = (j - nax2 / 2) * I.pixel_size
+        x = (j - nax2 / 2 - 0.5) * I.pixel_size
         yₒ, yᵤ = intersection_y(x, angle, radius, I.pixel_size, 1.0, nax1)
         for i in range(max(yᵤ,1), min(yₒ,nax1))
-            y = (i - nax1 / 2) * I.pixel_size
+            y = (i - nax1 / 2 - 0.5) * I.pixel_size
             xyₜ = intersection_t(x, y, angle)
             P += compute_partial_line(I.data[i, j], radius, xyₜ, angle, I.pixel_size)
         end
@@ -147,10 +147,10 @@ function integrate_vertical_line_first(I::Intensity, radius::Float64, angle::Flo
     P = 0.0
     (nax1, nax2) = size(I.data)
     for i in axes(I.data, 1)
-        y = (i - nax1 / 2) * I.pixel_size
+        y = (i - nax1 / 2 - 0.5) * I.pixel_size
         xₒ, xᵤ = intersection_x(y, angle, radius, I.pixel_size, 1.0, nax1)
         for j in range(max(xᵤ,1), min(xₒ,nax2))
-            x = (j - nax2 / 2) * I.pixel_size
+            x = (j - nax2 / 2 - 0.5) * I.pixel_size
             xyₜ = intersection_t(x, y, angle)
             P += compute_partial_line(I.data[i, j], radius, xyₜ, angle, I.pixel_size)
         end
