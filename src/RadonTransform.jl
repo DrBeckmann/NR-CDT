@@ -34,24 +34,29 @@ end
 function radon(image::AbstractMatrix; opt::RadonOpt=RadonOpt(0, 0, 0.0))
     p = Phantom(image)
     opt = set_auto_options(p, opt)
-    t = collect(LinRange(-1, 1, opt.radii))
-    θ = (opt.angles == 0) ? [0.0] : ((mod(opt.angles,1) != 0) ? [Float64(opt.angles)] : ((opt.angles == 1) ? [0.0] : collect(LinRange(0.0, π, opt.angles))))
-    return radon_compute(p, t, θ, opt.width)
+    return compute_radon(p, opt)
 end
 
 function set_auto_options(p::Phantom, opt::RadonOpt)
-    t = (opt.radii == 0) ? max(p.dim_x, p.dim_y) : opt.radii
-    θ = (opt.angles == 0) ? max(p.dim_x, p.dim_y) : opt.angles
-    return RadonOpt(t, θ, opt.width)
+    radii = (opt.radii == 0) ? max(p.dim_x, p.dim_y) : opt.radii
+    angles = (opt.angles == 0) ? max(p.dim_x, p.dim_y) : opt.angles
+    return RadonOpt(radii, angles, opt.width)
 end
 
-function radon_compute(I::Phantom, radii::Vector{Float64}, angles::Vector{Float64}, width::Float64)
-    S = zeros((length(radii), length(angles)))
-    for ℓ in eachindex(radii), k in eachindex(angles)
-        S[ℓ, k] = integrate_along_ray(I, radii[ℓ], angles[k], width)
+function compute_radon(p::Phantom, opt::RadonOpt)
+    (radii, angles) = (opt.radii, opt.angles)
+    s = zeros(radii, angles)
+    for ℓ in 1:radii, k in 1:angles
+        t = 2 * (ℓ - 1) / (radii - 1) - 1
+        θ = π * (k-1) / angles
+        s[ℓ, k] = integrate_along_ray(p, t, θ, opt.width)
     end
-    return S
+    return s
 end
+
+
+
+
 
 function integrate_along_ray(I::Phantom, radius::Float64, angle::Float64, width::Float64)
     if width > 0
