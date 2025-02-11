@@ -1,5 +1,6 @@
 module RadonTransform
 
+export RadonOpt
 export radon
 
 struct RadonOpt
@@ -7,9 +8,9 @@ struct RadonOpt
     angles::Int64
     width::Float64
     function RadonOpt(t, θ, w)
-        if t <= 0
+        if t < 0
             error("negative number of radii")
-        elseif θ <= 0
+        elseif θ < 0
             error("negative number of angles")
         elseif w < 0.0
             error("negative width")
@@ -17,24 +18,34 @@ struct RadonOpt
         return new(t, θ, w)
     end
 end
-struct Intensity
+
+struct Phantom
     data::Matrix{Float64}
     pixel_size::Float64
+    dim_x::Int64
+    dim_y::Int64
 end
 
-function Intensity(I::AbstractMatrix)
-    pixel_size = sqrt(2) / max(size(I)...)
-    return Intensity(I, pixel_size)    
+function Phantom(P::AbstractMatrix)
+    pixel_size = sqrt(2) / max(size(P)...)
+    return Phantom(Float64.(P), pixel_size, size(P, 2), size(P, 1))    
 end
 
-function radon(image::Matrix{Float64}, radii::Int64, angles::Real, width::Float64)
-    t = collect(LinRange(-1, 1, radii))
-    θ = (angles == 0) ? [0.0] : ((mod(angles,1) != 0) ? [Float64(angles)] : ((angles == 1) ? [0.0] : collect(LinRange(0.0, π, angles))))
-    return radon_compute(image, t, θ, width)
+function radon(image::AbstractMatrix; opt::RadonOpt=RadonOpt(0, 0, 0.0))
+    p = Phantom(image)
+    opt = set_auto_options(p, opt)
+    t = collect(LinRange(-1, 1, opt.radii))
+    θ = (opt.angles == 0) ? [0.0] : ((mod(opt.angles,1) != 0) ? [Float64(opt.angles)] : ((opt.angles == 1) ? [0.0] : collect(LinRange(0.0, π, opt.angles))))
+    return radon_compute(p, t, θ, opt.width)
 end
 
-function radon_compute(image::Matrix{Float64}, radii::Vector{Float64}, angles::Vector{Float64}, width::Float64)
-    I = Intensity(Float64.(image))
+function set_auto_options(p::Phantom, opt::RadonOpt)
+    t = (opt.radii == 0) ? max(p.dim_x, p.dim_y) : opt.radii
+    θ = (opt.angles == 0) ? max(p.dim_x, p.dim_y) : opt.angles
+    return RadonOpt(t, θ, opt.width)
+end
+
+function radon_compute(I::Phantom, radii::Vector{Float64}, angles::Vector{Float64}, width::Float64)
     S = zeros((length(radii), length(angles)))
     for ℓ in eachindex(radii), k in eachindex(angles)
         S[ℓ, k] = integrate_along_ray(I, radii[ℓ], angles[k], width)
@@ -42,15 +53,15 @@ function radon_compute(image::Matrix{Float64}, radii::Vector{Float64}, angles::V
     return S
 end
 
-function integrate_along_ray(I::Intensity, radius::Float64, angle::Float64, width::Float64)
+function integrate_along_ray(I::Phantom, radius::Float64, angle::Float64, width::Float64)
     if width > 0
-        integrate_along_area_ray(I::Intensity, radius::Float64, angle::Float64, width::Float64)
+        integrate_along_area_ray(I::Phantom, radius::Float64, angle::Float64, width::Float64)
     else 
-        integrate_along_line_ray(I::Intensity, radius::Float64, angle::Float64)
+        integrate_along_line_ray(I::Phantom, radius::Float64, angle::Float64)
     end
 end 
 
-function integrate_along_area_ray(I::Intensity, radius::Float64, angle::Float64, width::Float64)
+function integrate_along_area_ray(I::Phantom, radius::Float64, angle::Float64, width::Float64)
     if 0 <= angle < π / 4 || 3 * π / 4 <= angle < π
         return integrate_horizontal_area_first(I, radius, angle, width)
     elseif π / 4 <= angle < π / 2 || π / 2 <= angle < 3 * π / 4
@@ -58,7 +69,7 @@ function integrate_along_area_ray(I::Intensity, radius::Float64, angle::Float64,
     end
 end
 
-function integrate_horizontal_area_first(I::Intensity, radius::Float64, angle::Float64, width::Float64)
+function integrate_horizontal_area_first(I::Phantom, radius::Float64, angle::Float64, width::Float64)
     wscale = (width/2) / cos(π - angle) / I.pixel_size
     wscale = abs(wscale)
     P = 0.0
@@ -76,7 +87,7 @@ function integrate_horizontal_area_first(I::Intensity, radius::Float64, angle::F
 end
 
 
-function integrate_vertical_area_first(I::Intensity, radius::Float64, angle::Float64, width::Float64)
+function integrate_vertical_area_first(I::Phantom, radius::Float64, angle::Float64, width::Float64)
     wscale = (width/2) / sin(angle) / I.pixel_size
     wscale = abs(wscale)
     P = 0.0
@@ -120,7 +131,7 @@ function compute_partial_area(I::Float64, xyᵤ::Float64, xyₒ::Float64, ψ::Fl
     return area
 end
 
-function integrate_along_line_ray(I::Intensity, radius::Float64, angle::Float64)
+function integrate_along_line_ray(I::Phantom, radius::Float64, angle::Float64)
     if 0 <= angle < π / 4 || 3 * π / 4 <= angle < π
         return integrate_horizontal_line_first(I, radius, angle)
     elseif π / 4 <= angle < π / 2 || π / 2 <= angle < 3 * π / 4
@@ -128,7 +139,7 @@ function integrate_along_line_ray(I::Intensity, radius::Float64, angle::Float64)
     end
 end
 
-function integrate_horizontal_line_first(I::Intensity, radius::Float64, angle::Float64)
+function integrate_horizontal_line_first(I::Phantom, radius::Float64, angle::Float64)
     P = 0.0
     (nax1, nax2) = size(I.data)
     for j in axes(I.data, 2)
@@ -143,7 +154,7 @@ function integrate_horizontal_line_first(I::Intensity, radius::Float64, angle::F
     return P
 end
 
-function integrate_vertical_line_first(I::Intensity, radius::Float64, angle::Float64)
+function integrate_vertical_line_first(I::Phantom, radius::Float64, angle::Float64)
     P = 0.0
     (nax1, nax2) = size(I.data)
     for i in axes(I.data, 1)

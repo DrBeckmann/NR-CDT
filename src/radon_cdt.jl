@@ -1,5 +1,6 @@
 module radon_cdt
 
+using NormalizedRadonCDT: RadonTransform as RT
 using NormalizedRadonCDT.RadonTransform: radon as exactradon
 using Interpolations: LinearInterpolation as LinInter
 using LIBSVM, LIBLINEAR
@@ -43,13 +44,13 @@ function rcdt(ref::AbstractMatrix, tar::AbstractMatrix, angles::Real, scale_radi
 
     radii = Int(ceil(sqrt(2) * size(tar)[1]))
     
-    tar_radon = transpose(exactradon(Float64.(tar), Int64(radii*scale_radii), angles, Float64(width)))
+    tar_radon = transpose(exactradon(Float64.(tar); opt=RT.RadonOpt(Int64(radii*scale_radii), Int64(angles), Float64(width))))
 
 
     if size(unique(ref))[1] == 1
         ref_radon = ones(size(tar_radon))
     else
-        ref_radon = transpose(exactradon(Float64.(ref), Int64(radii*scale_radii), angles, Float64(width)))
+        ref_radon = transpose(exactradon(Float64.(ref); opt=RT.RadonOpt(Int64(radii*scale_radii), Int64(angles), Float64(width))))
     end
 
     tar_rcdt = zeros(size(ref_radon));
