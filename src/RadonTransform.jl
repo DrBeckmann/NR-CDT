@@ -31,6 +31,12 @@ function Phantom(P::AbstractMatrix)
     return Phantom(Float64.(P), pixel_size, size(P, 2), size(P, 1))    
 end
 
+struct Ray
+    t::Float64
+    θ::Float64
+    w::Float64
+end
+
 function radon(image::AbstractMatrix; opt::RadonOpt=RadonOpt(0, 0, 0.0))
     p = Phantom(image)
     opt = set_auto_options(p, opt)
@@ -44,12 +50,12 @@ function set_auto_options(p::Phantom, opt::RadonOpt)
 end
 
 function compute_radon(p::Phantom, opt::RadonOpt)
-    (radii, angles) = (opt.radii, opt.angles)
+    (radii, angles, w) = (opt.radii, opt.angles, opt.width)
     s = zeros(radii, angles)
     for ℓ in 1:radii, k in 1:angles
         t = 2 * (ℓ - 1) / (radii - 1) - 1
         θ = π * (k-1) / angles
-        s[ℓ, k] = integrate_along_ray(p, t, θ, opt.width)
+        s[ℓ, k] = integrate(p, Ray(t, θ, w))
     end
     return s
 end
@@ -58,11 +64,11 @@ end
 
 
 
-function integrate_along_ray(I::Phantom, radius::Float64, angle::Float64, width::Float64)
-    if width > 0
-        integrate_along_area_ray(I::Phantom, radius::Float64, angle::Float64, width::Float64)
+function integrate(I::Phantom, r::Ray)
+    if r.w > 0
+        integrate_along_area_ray(I::Phantom, r.t, r.θ, r.w)
     else 
-        integrate_along_line_ray(I::Phantom, radius::Float64, angle::Float64)
+        integrate_along_line_ray(I::Phantom, r.t, r.θ)
     end
 end 
 
