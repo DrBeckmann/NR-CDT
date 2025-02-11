@@ -1,6 +1,6 @@
 using NormalizedRadonCDT
 using Test
 
-@testset "basic tests" begin
-    @test 1.0 == 1.0
+@testset "radon transform" begin
+    include("test_radon.jl")
 end
