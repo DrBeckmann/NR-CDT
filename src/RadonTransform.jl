@@ -48,13 +48,93 @@ function determine_ray(j::Int64, k::Int64, R::RadonTransform)
     return Ray(t, θ, R.width)
 end
 
-function integrate(p::Phantom, r::Ray)
+function integrate(P::Phantom, r::Ray)
     if π / 4 <= r.θ < 3 * π / 4
-        return integrate_y_first(p, r)
+        return integrate_horizontal_ray(P, r)
     else
-        return integrate_x_first(p, r)
+        return integrate_vertical_ray(P, r)
     end
 end 
+
+function integrate_vertical_ray(P::Phantom, r::Ray)
+    S = 0.0
+    for j in axes(P.data, 1)
+        for k in horizontal_pixels(j, P, r)
+            S += integrate_pixel(j, k, P, r)
+        end
+    end
+    return S
+end
+
+function horizontal_pixels(j::Int64, P::Phantom, r::Ray)
+    (cos_θ, sin_θ) = (cos(r.θ), sin(r.θ))
+    y = index_to_y_coordinate(j, P)
+    τ = (r.t * sin_θ - y) / cos_θ
+    x = r.t * cos_θ + τ * sin_θ
+    x_width = cos_θ * r.w
+    first_index = Int64(floor(x_coordinate_to_index(x - x_width, P)))
+    last_index = Int64(ceil(x_coordinate_to_index(x + x_width, P)))
+    return max(first_index, 1):min(last_index, P.dim_x)
+end
+
+function integrate_horizontal_ray(P::Phantom, r::Ray)
+    S = 0.0
+    for k in axes(P.data, 2)
+        for j in vertical_pixels(k, P, r)
+            S += integrate_pixel(j, k, P, r)
+        end
+    end
+    return S
+end
+
+function vertical_pixels(k::Int64, P::Phantom, r::Ray)
+    (cos_θ, sin_θ) = (cos(r.θ), sin(r.θ))
+    x = index_to_x_coordinate(k, P)
+    τ = (x - r.t * cos_θ) / sin_θ
+    y = r.t * sin_θ - τ * cos_θ
+    y_width = sin_θ * r.w
+    first_index = Int64(floor(y_coordinate_to_index(y - y_width, P)))
+    last_index = Int64(ceil(y_coordinate_to_index(y + y_width, P)))
+    return max(first_index, 1):min(last_index, P.dim_y)
+end
+
+function integrate_pixel(j::Int64, k::Int64, P::Phantom, r::Ray)
+    t_pixel = t_coordinate(j, k, P, r)
+    weight = compute_unit_pixel_line((r.t - t_pixel) / P.pixel_size, r.θ) 
+    return weight * P.pixel_size * P.data[j, k]
+end
+
+function index_to_x_coordinate(k::Int64, P::Phantom)
+    return (k - (P.dim_x + 1) / 2) * P.pixel_size
+end
+
+function x_coordinate_to_index(x::Float64, P::Phantom)
+    return x / P.pixel_size + (P.dim_x + 1) / 2
+end
+
+function index_to_y_coordinate(j::Int64, P::Phantom)
+    return ((P.dim_y + 1) / 2 - j) * P.pixel_size
+end
+
+function y_coordinate_to_index(y::Float64, P::Phantom)
+    return (P.dim_y + 1) / 2 - y / P.pixel_size
+end
+
+function t_coordinate(j::Int64, k::Int64, P::Phantom, r::Ray)
+    x = index_to_x_coordinate(k, P)
+    y = index_to_y_coordinate(j, P)
+    return x * cos(r.θ) + y * sin(r.θ)
+end
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -102,13 +182,6 @@ function integrate_vertical_area_first(I::Phantom, radius::Float64, angle::Float
     return P ./ width
 end
 
-function intersection_y(x::Float64, ψ::Float64, l::Float64, scale::Float64, wscale::Float64, nax1::Int64)
-    η = (x + l * sin(ψ)) / cos(ψ)
-    y = (l * cos(ψ) + η * sin(ψ)) / scale + nax1 / 2
-    yₒ = Int(floor(y + wscale + nax1))
-    yᵤ = Int(ceil(y - wscale - nax1))
-    return yₒ, yᵤ
-end
 
 function intersection_x(y::Float64, ψ::Float64, l::Float64, scale::Float64, wscale::Float64, nax2::Int64)
     η = (y - l * cos(ψ)) / sin(ψ)
@@ -131,53 +204,13 @@ end
 
 function integrate_along_line_ray(I::Phantom, radius::Float64, angle::Float64)
     if 0 <= angle < π / 4 || 3 * π / 4 <= angle < π
-        return integrate_x_first(I, radius, angle)
+        return integrate_vertical_ray(I, radius, angle)
     elseif π / 4 <= angle < π / 2 || π / 2 <= angle < 3 * π / 4
-        return integrate_y_first(I, radius, angle)
+        return integrate_horizontal_ray(I, radius, angle)
     end
 end
 
-function integrate_x_first(I::Phantom, r::Ray)
-    (radius, angle) = (r.t, r.θ)
-    P = 0.0
-    (nax1, nax2) = size(I.data)
-    for j in axes(I.data, 2)
-        x = (j - nax2 / 2 - 0.5) * I.pixel_size
-        yₒ, yᵤ = intersection_y(x, angle, radius, I.pixel_size, 1.0, nax1)
-        for i in range(max(yᵤ,1), min(yₒ,nax1))
-            y = (i - nax1 / 2 - 0.5) * I.pixel_size
-            xyₜ = intersection_t(x, y, angle)
-            P += compute_partial_line(I.data[i, j], radius, xyₜ, angle, I.pixel_size)
-        end
-    end
-    return P
-end
 
-function integrate_y_first(I::Phantom, r::Ray)
-    (radius, angle) = (r.t, r.θ)
-    P = 0.0
-    (nax1, nax2) = size(I.data)
-    for i in axes(I.data, 1)
-        y = (i - nax1 / 2 - 0.5) * I.pixel_size
-        xₒ, xᵤ = intersection_x(y, angle, radius, I.pixel_size, 1.0, nax1)
-        for j in range(max(xᵤ,1), min(xₒ,nax2))
-            x = (j - nax2 / 2 - 0.5) * I.pixel_size
-            xyₜ = intersection_t(x, y, angle)
-            P += compute_partial_line(I.data[i, j], radius, xyₜ, angle, I.pixel_size)
-        end
-    end
-    return P
-end
-
-function intersection_t(x::Float64, y::Float64, ψ::Float64)
-    xyₜ = -x * sin(ψ) + y * cos(ψ)
-    return xyₜ
-end
-
-function compute_partial_line(I::Float64, l::Float64, xyₜ::Float64, ψ::Float64, scale::Float64)
-    line = compute_unit_pixel_line((l - xyₜ) / scale, ψ) * scale * I
-    return line
-end
 
 function compute_unit_pixel_area(t::Float64, ψ::Float64)
     ψ = mod(ψ, π / 2)
