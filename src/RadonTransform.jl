@@ -71,7 +71,7 @@ function horizontal_pixels(j::Int64, P::Phantom, r::Ray)
     y = index_to_y_coordinate(j, P)
     τ = (r.t * sin_θ - y) / cos_θ
     x = r.t * cos_θ + τ * sin_θ
-    x_width = cos_θ * r.w
+    x_width = abs(r.w / cos_θ / 2)
     first_index = Int64(floor(x_coordinate_to_index(x - x_width, P)))
     last_index = Int64(ceil(x_coordinate_to_index(x + x_width, P)))
     return max(first_index, 1):min(last_index, P.dim_x)
@@ -92,9 +92,9 @@ function vertical_pixels(k::Int64, P::Phantom, r::Ray)
     x = index_to_x_coordinate(k, P)
     τ = (x - r.t * cos_θ) / sin_θ
     y = r.t * sin_θ - τ * cos_θ
-    y_width = sin_θ * r.w
-    first_index = Int64(floor(y_coordinate_to_index(y - y_width, P)))
-    last_index = Int64(ceil(y_coordinate_to_index(y + y_width, P)))
+    y_width = abs(r.w / sin_θ / 2)
+    first_index = Int64(floor(y_coordinate_to_index(y + y_width, P)))
+    last_index = Int64(ceil(y_coordinate_to_index(y - y_width, P)))
     return max(first_index, 1):min(last_index, P.dim_y)
 end
 
