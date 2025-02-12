@@ -116,8 +116,9 @@ end
 
 function integrate_pixel(j::Int64, k::Int64, P::Phantom, r::Ray)
     unit_r = select_unit_ray(j, k, P, r)
-    weight = integrate_unit_pixel(unit_r) 
-    return weight * P.pixel_size * P.data[j, k]
+    weight = integrate_unit_pixel(unit_r)
+    scale = (r.w == 0.0) ? P.pixel_size : P.pixel_size^2 / r.w
+    return weight * scale * P.data[j, k]
 end
 
 function select_unit_ray(j::Int64, k::Int64, P::Phantom, r::Ray)
@@ -135,12 +136,11 @@ function t_coordinate(j::Int64, k::Int64, P::Phantom, r::Ray)
     return x * cos(r.θ) + y * sin(r.θ)
 end
 
-
 function integrate_unit_pixel(r::Ray)
     if r.w == 0.0
         return line_integral_unit_pixel(r.t, r.θ)
     else
-        # Area integral
+        return area_integral_unit_pixel(r.t, r.θ, r.w)
     end
 end
 
@@ -163,6 +163,29 @@ function line_integral_unit_pixel(t::Float64, θ::Float64)
     end
 end
 
+function area_integral_unit_pixel(t::Float64, θ::Float64, w::Float64)
+    return (anti_derivative_area_integral(t + w / 2, θ) - anti_derivative_area_integral(t - w / 2, θ))
+end
+
+function anti_derivative_area_integral(t::Float64, θ::Float64)
+    area_triangle = tan(θ) / 2
+    area_parallelogram = 1 - tan(θ)
+    t1 = -(cos(θ) + sin(θ)) / 2
+    t2 = (sin(θ) - cos(θ)) / 2
+    t3 = -t2
+    t4 = -t1
+    if t <= t1
+        return 0.0
+    elseif t <= t2
+        return area_triangle * ((t - t1) / (t2 - t1))^2
+    elseif t <= t3
+        return area_triangle + area_parallelogram * (t - t2) / (t3 - t2)
+    elseif t <= t4
+        return 1 - area_triangle * ((t - t4) / (t4 - t3))^2
+    else
+        return 1.0
+    end
+end
 
 
 
@@ -192,7 +215,7 @@ function integrate_horizontal_area_first(I::Phantom, radius::Float64, angle::Flo
         yₒ, yᵤ = intersection_y(x, angle, radius, I.pixel_size, wscale, nax1)
         for i in range(max(yᵤ,1), min(yₒ,nax1))
             y = (i - nax1 / 2 - 0.5) * I.pixel_size
-            xyᵤ, xyₒ = itegration_bound(x, y, angle, radius, I.pixel_size, width)
+            xyᵤ, area_integral_unit_pixelnd(x, y, angle, radius, I.pixel_size, width)
             P += compute_partial_area(I.data[i, j], xyᵤ, xyₒ, angle, I.pixel_size)
         end
     end
@@ -210,7 +233,7 @@ function integrate_vertical_area_first(I::Phantom, radius::Float64, angle::Float
         xₒ, xᵤ = intersection_x(y, angle, radius, I.pixel_size, wscale, nax1)
         for j in range(max(xᵤ,1), min(xₒ,nax2))
             x = (j - nax2 / 2 - 0.5) * I.pixel_size
-            xyᵤ, xyₒ = itegration_bound(x, y, angle, radius, I.pixel_size, width)
+            xyᵤ, area_integral_unit_pixelnd(x, y, angle, radius, I.pixel_size, width)
             P += compute_partial_area(I.data[i, j], xyᵤ, xyₒ, angle, I.pixel_size)
         end
     end
@@ -226,53 +249,4 @@ function intersection_x(y::Float64, ψ::Float64, l::Float64, scale::Float64, wsc
     return xₒ, xᵤ
 end
 
-function itegration_bound(x::Float64, y::Float64, ψ::Float64, l::Float64, scale::Float64, width::Float64)
-    xyₜ = -x * sin(ψ) + y * cos(ψ)
-    xyᵤ, xyₒ = (l - xyₜ - width / 2) / scale, (l - xyₜ + width / 2) / scale
-    return xyᵤ, xyₒ
-end
-
-function compute_partial_area(I::Float64, xyᵤ::Float64, xyₒ::Float64, ψ::Float64, scale::Float64)
-    area = (compute_unit_pixel_area(xyₒ, ψ) - compute_unit_pixel_area(xyᵤ, ψ)) * scale^2 * I
-    return area
-end
-
-function integrate_along_line_ray(I::Phantom, radius::Float64, angle::Float64)
-    if 0 <= angle < π / 4 || 3 * π / 4 <= angle < π
-        return integrate_vertical_ray(I, radius, angle)
-    elseif π / 4 <= angle < π / 2 || π / 2 <= angle < 3 * π / 4
-        return integrate_horizontal_ray(I, radius, angle)
-    end
-end
-
-
-
-function compute_unit_pixel_area(t::Float64, ψ::Float64)
-    ψ = mod(ψ, π / 2)
-    if 0 <= ψ < π/4
-        return compute_unit_pixel_area_octant(t, ψ)
-    elseif π / 4 <= ψ < π / 2
-        return compute_unit_pixel_area_octant(t, π / 2 - ψ)
-    end    
-end
-
-function compute_unit_pixel_area_octant(t::Float64, ψ::Float64)
-    area_triangle = tan(ψ) / 2
-    area_parallogram = 1 - tan(ψ)
-    t1 = -(cos(ψ) + sin(ψ)) / 2
-    t2 = (sin(ψ) - cos(ψ)) / 2
-    t3 = -t2
-    t4 = -t1
-    if t <= t1
-        return 0.0
-    elseif t <= t2
-        return area_triangle * ((t - t1) / (t2 - t1))^2
-    elseif t <= t3
-        return area_triangle + area_parallogram * (t - t2) / (t3 - t2)
-    elseif t <= t4
-        return 1 - area_triangle * ((t - t4) / (t4 - t3))^2
-    else
-        return 1.0
-    end
-end
 
