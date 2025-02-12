@@ -44,7 +44,7 @@ end
 
 function determine_ray(j::Int64, k::Int64, R::RadonTransform)
     t = 2 * (j - 1) / (R.radii - 1) - 1
-    θ = π * (k-1) / R.angles
+    θ = π * (k - 1) / R.angles
     return Ray(t, θ, R.width)
 end
 
@@ -98,12 +98,6 @@ function vertical_pixels(k::Int64, P::Phantom, r::Ray)
     return max(first_index, 1):min(last_index, P.dim_y)
 end
 
-function integrate_pixel(j::Int64, k::Int64, P::Phantom, r::Ray)
-    t_pixel = t_coordinate(j, k, P, r)
-    weight = compute_unit_pixel_line((r.t - t_pixel) / P.pixel_size, r.θ) 
-    return weight * P.pixel_size * P.data[j, k]
-end
-
 function index_to_x_coordinate(k::Int64, P::Phantom)
     return (k - (P.dim_x + 1) / 2) * P.pixel_size
 end
@@ -120,6 +114,21 @@ function y_coordinate_to_index(y::Float64, P::Phantom)
     return (P.dim_y + 1) / 2 - y / P.pixel_size
 end
 
+function integrate_pixel(j::Int64, k::Int64, P::Phantom, r::Ray)
+    unit_r = select_unit_ray(j, k, P, r)
+    weight = integrate_unit_pixel(unit_r) 
+    return weight * P.pixel_size * P.data[j, k]
+end
+
+function select_unit_ray(j::Int64, k::Int64, P::Phantom, r::Ray)
+    t_pixel = t_coordinate(j, k, P, r)
+    unit_t = (r.t - t_pixel) / P.pixel_size
+    unit_θ = mod(r.θ, π / 2)
+    unit_θ = (0 <= unit_θ < π/4) ? unit_θ : π / 2 - unit_θ
+    unit_w = r.w / P.pixel_size
+    return Ray(unit_t, unit_θ, unit_w)
+end
+
 function t_coordinate(j::Int64, k::Int64, P::Phantom, r::Ray)
     x = index_to_x_coordinate(k, P)
     y = index_to_y_coordinate(j, P)
@@ -127,6 +136,32 @@ function t_coordinate(j::Int64, k::Int64, P::Phantom, r::Ray)
 end
 
 
+function integrate_unit_pixel(r::Ray)
+    if r.w == 0.0
+        return line_integral_unit_pixel(r.t, r.θ)
+    else
+        # Area integral
+    end
+end
+
+function line_integral_unit_pixel(t::Float64, θ::Float64)
+    line = 1 / cos(θ)
+    t1 = -(cos(θ) + sin(θ)) / 2
+    t2 = (sin(θ) - cos(θ)) / 2
+    t3 = -t2
+    t4 = -t1
+    if t <= t1
+        return 0.0
+    elseif t <= t2
+        return line * (t - t1) / (t2 - t1)
+    elseif t <= t3
+        return line
+    elseif t <= t4
+        return line * (t4 - t) / (t4 - t3)
+    else
+        return 0.0
+    end
+end
 
 
 
@@ -241,30 +276,3 @@ function compute_unit_pixel_area_octant(t::Float64, ψ::Float64)
     end
 end
 
-function compute_unit_pixel_line(t::Float64, ψ::Float64)
-    ψ = mod(ψ, π / 2)
-    if 0 <= ψ < π/4
-        return compute_unit_pixel_line_octant(t, ψ)
-    elseif π / 4 <= ψ < π / 2
-        return compute_unit_pixel_line_octant(t, π / 2 - ψ)
-    end    
-end
-
-function compute_unit_pixel_line_octant(t::Float64, ψ::Float64)
-    line = 1 / cos(ψ)
-    t1 = -(cos(ψ) + sin(ψ)) / 2
-    t2 = (sin(ψ) - cos(ψ)) / 2
-    t3 = -t2
-    t4 = -t1
-    if t <= t1
-        return 0.0
-    elseif t <= t2
-        return line * (t - t1) / (t2 - t1)
-    elseif t <= t3
-        return line
-    elseif t <= t4
-        return line * (t4 - t) / (t4 - t3)
-    else
-        return 0.0
-    end
-end
