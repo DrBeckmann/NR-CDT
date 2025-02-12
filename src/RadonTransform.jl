@@ -33,19 +33,19 @@ struct Ray
 end
 
 function (R::RadonTransform)(image::AbstractMatrix)
-    p = Phantom(image)
-    return compute_radon(p, R)
+    P = Phantom(image)
+    S = zeros(R.radii, R.angles)
+    for j in axes(S, 1), k in axes(S, 2)
+        r = determine_ray(j, k, R)
+        S[j, k] = integrate(P, r)
+    end
+    return S
 end
 
-function compute_radon(p::Phantom, opt::RadonTransform)
-    (radii, angles, w) = (opt.radii, opt.angles, opt.width)
-    s = zeros(radii, angles)
-    for ℓ in 1:radii, k in 1:angles
-        t = 2 * (ℓ - 1) / (radii - 1) - 1
-        θ = π * (k-1) / angles
-        s[ℓ, k] = integrate(p, Ray(t, θ, w))
-    end
-    return s
+function determine_ray(j::Int64, k::Int64, R::RadonTransform)
+    t = 2 * (j - 1) / (R.radii - 1) - 1
+    θ = π * (k-1) / R.angles
+    return Ray(t, θ, R.width)
 end
 
 function integrate(p::Phantom, r::Ray)
