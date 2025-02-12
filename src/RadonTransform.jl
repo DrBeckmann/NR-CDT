@@ -1,21 +1,16 @@
-module RadonTransform
-
-export RadonOpt
-export radon
-
-struct RadonOpt
+struct RadonTransform
     radii::Int64
     angles::Int64
     width::Float64
-    function RadonOpt(t, θ, w)
-        if t < 0
-            error("negative number of radii")
-        elseif θ < 0
-            error("negative number of angles")
-        elseif w < 0.0
+    function RadonTransform(radii, angles, width)
+        if radii <= 0
+            error("non-positive number of radii")
+        elseif angles <= 0
+            error("non-positive number of angles")
+        elseif width < 0.0
             error("negative width")
         end 
-        return new(t, θ, w)
+        return new(radii, angles, width)
     end
 end
 
@@ -26,9 +21,9 @@ struct Phantom
     dim_y::Int64
 end
 
-function Phantom(P::AbstractMatrix)
-    pixel_size = sqrt(2) / max(size(P)...)
-    return Phantom(Float64.(P), pixel_size, size(P, 2), size(P, 1))    
+function Phantom(image::AbstractMatrix)
+    pixel_size = sqrt(2) / max(size(image)...)
+    return Phantom(Float64.(image), pixel_size, size(image, 2), size(image, 1))    
 end
 
 struct Ray
@@ -37,19 +32,12 @@ struct Ray
     w::Float64
 end
 
-function radon(image::AbstractMatrix; opt::RadonOpt=RadonOpt(0, 0, 0.0))
+function (R::RadonTransform)(image::AbstractMatrix)
     p = Phantom(image)
-    opt = set_auto_options(p, opt)
-    return compute_radon(p, opt)
+    return compute_radon(p, R)
 end
 
-function set_auto_options(p::Phantom, opt::RadonOpt)
-    radii = (opt.radii == 0) ? max(p.dim_x, p.dim_y) : opt.radii
-    angles = (opt.angles == 0) ? max(p.dim_x, p.dim_y) : opt.angles
-    return RadonOpt(radii, angles, opt.width)
-end
-
-function compute_radon(p::Phantom, opt::RadonOpt)
+function compute_radon(p::Phantom, opt::RadonTransform)
     (radii, angles, w) = (opt.radii, opt.angles, opt.width)
     s = zeros(radii, angles)
     for ℓ in 1:radii, k in 1:angles
@@ -246,6 +234,4 @@ function compute_unit_pixel_line_octant(t::Float64, ψ::Float64)
     else
         return 0.0
     end
-end
-
 end
