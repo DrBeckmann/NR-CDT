@@ -36,19 +36,19 @@ function (R::RadonTransform)(image::AbstractMatrix)
     P = Phantom(image)
     S = zeros(R.radii, R.angles)
     for j in axes(S, 1), k in axes(S, 2)
-        r = determine_ray(j, k, R)
-        S[j, k] = integrate(P, r)
+        r = determine_corresponding_ray(j, k, R)
+        S[j, k] = integrate_along_ray(P, r)
     end
     return S
 end
 
-function determine_ray(j::Int64, k::Int64, R::RadonTransform)
+function determine_corresponding_ray(j::Int64, k::Int64, R::RadonTransform)
     t = 2 * (j - 1) / (R.radii - 1) - 1
     θ = π * (k - 1) / R.angles
     return Ray(t, θ, R.width)
 end
 
-function integrate(P::Phantom, r::Ray)
+function integrate_along_ray(P::Phantom, r::Ray)
     if π / 4 <= r.θ < 3 * π / 4
         return integrate_horizontal_ray(P, r)
     else
@@ -60,7 +60,7 @@ function integrate_vertical_ray(P::Phantom, r::Ray)
     S = 0.0
     for j in axes(P.data, 1)
         for k in horizontal_pixels(j, P, r)
-            S += integrate_pixel(j, k, P, r)
+            S += integrate_pixel_along_ray(j, k, P, r)
         end
     end
     return S
@@ -81,7 +81,7 @@ function integrate_horizontal_ray(P::Phantom, r::Ray)
     S = 0.0
     for k in axes(P.data, 2)
         for j in vertical_pixels(k, P, r)
-            S += integrate_pixel(j, k, P, r)
+            S += integrate_pixel_along_ray(j, k, P, r)
         end
     end
     return S
@@ -114,15 +114,15 @@ function y_coordinate_to_index(y::Float64, P::Phantom)
     return (P.dim_y + 1) / 2 - y / P.pixel_size
 end
 
-function integrate_pixel(j::Int64, k::Int64, P::Phantom, r::Ray)
+function integrate_pixel_along_ray(j::Int64, k::Int64, P::Phantom, r::Ray)
     unit_r = select_unit_ray(j, k, P, r)
-    weight = integrate_unit_pixel(unit_r)
+    weight = integrate_unit_pixel_along_ray(unit_r)
     scale = (r.w == 0.0) ? P.pixel_size : P.pixel_size^2 / r.w
     return weight * scale * P.data[j, k]
 end
 
 function select_unit_ray(j::Int64, k::Int64, P::Phantom, r::Ray)
-    t_pixel = t_coordinate(j, k, P, r)
+    t_pixel = index_to_t_coordinate(j, k, P, r)
     unit_t = (r.t - t_pixel) / P.pixel_size
     unit_θ = mod(r.θ, π / 2)
     unit_θ = (0 <= unit_θ < π/4) ? unit_θ : π / 2 - unit_θ
@@ -130,13 +130,13 @@ function select_unit_ray(j::Int64, k::Int64, P::Phantom, r::Ray)
     return Ray(unit_t, unit_θ, unit_w)
 end
 
-function t_coordinate(j::Int64, k::Int64, P::Phantom, r::Ray)
+function index_to_t_coordinate(j::Int64, k::Int64, P::Phantom, r::Ray)
     x = index_to_x_coordinate(k, P)
     y = index_to_y_coordinate(j, P)
     return x * cos(r.θ) + y * sin(r.θ)
 end
 
-function integrate_unit_pixel(r::Ray)
+function integrate_unit_pixel_along_ray(r::Ray)
     if r.w == 0.0
         return line_integral_unit_pixel(r.t, r.θ)
     else
