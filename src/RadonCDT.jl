@@ -1,56 +1,38 @@
-function signal_to_pdf(signal::AbstractArray, eps::Real)
-
-    if sum(signal) > 0
-        pdf = signal./sum(signal)
-    else 
-        pdf = signal
+struct RadonCDT 
+    quantiles::Int64
+    Radon::RadonTransform
+    signal_raising::Float64
+    function RadonCDT(q, R, sr)
+        if q <= 0
+            error("non-positive number of quantiles") 
+        elseif sr < 0.0
+            error("negative signal raising")
+        end
+        return new(q, R, sr)
     end
-    pdf = pdf .+ eps
-    pdf = pdf ./ sum(pdf)
-    return pdf
 end
 
-function cdt(x₀::AbstractArray, s₀::AbstractArray, x₁::AbstractArray, s₁::AbstractArray)
-    s₀ = signal_to_pdf(s₀, 1e-15)
-    s₁ = signal_to_pdf(s₁, 1e-15)
-    r = minimum(abs.(x₀ .- circshift(x₀, 1)))
-    cum₀ = cumsum(s₀)
-    cum₁ = cumsum(s₁)
+RadonCDT(q::Int64, R::RadonTransform) = RadonCDT(q, R, 1e-13)
 
-    if size(unique(s₀))[1] == 1
-        s_hat_inter = LinearInterpolation(cum₁, x₁)
-        # xnew₀ = ifelse.(x₀ .< minimum(cum₁), minimum(cum₁), ifelse.(x₀ .> maximum(cum₁), maximum(cum₁), x₀))
-        # xnew = ifelse.(cum₀ .< minimum(cum₁), minimum(cum₁), ifelse.(cum₀ .> maximum(cum₁[end-1]), maximum(cum₁[end-1]), cum₀))
-        xnew = collect(LinRange(0,1,size(cum₀)[1]+2))[2:end-1]
-        s_hat = s_hat_inter(xnew)
-    else
-        s_hat_inter = LinearInterpolation(r .* cum₁, x₁)
-        s_hat = s_hat_inter(r .* cum₀)
-    end 
-
-    return s_hat
+function (RCDT::RadonCDT)(image::AbstractMatrix)
+    S = RCDT.Radon(image)
+    Q = zeros(RCDT.quantiles, RCDT.Radon.angles)
+    for j in axes(Q, 1)
+        Q[j, :] = cdt(S[j, :], RCDT)
+    end
+    return Q
 end
 
-function rcdt(ref::AbstractMatrix, tar::AbstractMatrix, angles::Real, scale_radii::Integer, width::Real)
+function cdt(s::Vector{Float64}, RCDT::RadonCDT)
+    p = signal_to_density(s, RCDT.signal_raising)
+    P = cumsum(p)
+    s_grid = collect(LinRange(-1, 1, length(s)))
+    q_grid = collect(LinRange(0, 1, RCDT.quantiles +2))[2:end - 1]
+    q = LinearInterpolation(P, s_grid)
+    return q(q_grid)
+end
 
-    radii = Int(ceil(sqrt(2) * size(tar)[1]))
-    
-    tar_radon = transpose(exactradon(Float64.(tar); opt=RT.RadonOpt(Int64(radii*scale_radii), Int64(angles), Float64(width))))
-
-
-    if size(unique(ref))[1] == 1
-        ref_radon = ones(size(tar_radon))
-    else
-        ref_radon = transpose(exactradon(Float64.(ref); opt=RT.RadonOpt(Int64(radii*scale_radii), Int64(angles), Float64(width))))
-    end
-
-    tar_rcdt = zeros(size(ref_radon));
-    x_ref = collect(LinRange(0, 1, size(ref_radon)[2]))
-    x_tar = collect(LinRange(-1, 1, size(tar_radon)[2]))
-    
-    for i in 1:size(ref_radon)[1]
-        tar_rcdt[i, :] = cdt(x_ref, ones(size(ref_radon)[2])/size(ref_radon)[2], x_tar, tar_radon[i, :])
-    end
-
-    return tar_rcdt, tar_radon
+function signal_to_density(s::Vector{Float64}, ϵ::Float64)
+    p = s .+ ϵ
+    return p ./= sum(p)
 end
