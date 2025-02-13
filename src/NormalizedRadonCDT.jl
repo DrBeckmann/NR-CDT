@@ -1,6 +1,7 @@
 module NormalizedRadonCDT
 
 using Interpolations: LinearInterpolation
+using Statistics
 
 export TestImages
 export RadonCDT, RadonTransform

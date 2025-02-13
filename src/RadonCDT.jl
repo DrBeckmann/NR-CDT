@@ -1,3 +1,35 @@
+struct MaxNormRadonCDT
+    RCDT::RadonCDT
+end
+
+function (mNRCDT::MaxNormRadonCDT)(image::AbstractMatrix)
+    NRCDT = NormRadonCDT(mNRCDT.RCDT)
+    nrcdt = NRCDT(image)
+    mnrcdt = dropdims(maximum(nrcdt, dims=2), dims=2)
+    return mnrcdt
+end
+
+struct MeanNormRadonCDT
+    RCDT::RadonCDT
+end
+
+function (aNRCDT::MeanNormRadonCDT)(image::AbstractMatrix)
+    NRCDT = NormRadonCDT(aNRCDT.RCDT)
+    nrcdt = NRCDT(image)
+    anrcdt = dropdims(mean(nrcdt, dims=2), dims=2)
+    return anrcdt
+end
+
+struct NormRadonCDT
+    RCDT::RadonCDT
+end
+
+function (NRCDT::NormRadonCDT)(image::AbstractMatrix)
+    rcdt = NRCDT.RCDT(image)
+    nrcdt = (rcdt .- mean(rcdt, dims=1)) ./ std(data_rcdt, dims=1)
+    return nrcdt
+end
+
 struct RadonCDT 
     quantiles::Int64
     Radon::RadonTransform

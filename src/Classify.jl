@@ -84,33 +84,6 @@ end;
 
 #####
 #####
-#
-# help functions
-#   - NR_CDT
-#   - mNR_CDT
-#
-#####
-#####
-
-function NR_CDT(data_rcdt)
-    data_normalized = (data_rcdt .- mean(data_rcdt, dims=2))./sqrt.(var(data_rcdt, dims=2))
-    return data_normalized
-end
-
-function mNR_CDT(data_rcdt)
-    data_normalized = (data_rcdt .- mean(data_rcdt, dims=2))./sqrt.(var(data_rcdt, dims=2))
-    data_max_normalized = dropdims(maximum(data_normalized, dims=3), dims=3)
-    return data_max_normalized
-end
-
-function aNR_CDT(data_rcdt)
-    data_normalized = (data_rcdt .- mean(data_rcdt, dims=2))./sqrt.(var(data_rcdt, dims=2))
-    data_mean_normalized = dropdims(mean(data_normalized, dims=3), dims=3)
-    return data_mean_normalized
-end
-
-#####
-#####
 
 function gen_rcdt_temp(ref, temp, num_angles, scale_radii, width)
     gen_rcdt_temp_ini = transpose(rcdt(ref, temp[1,:,:], num_angles, scale_radii, width)[1])
