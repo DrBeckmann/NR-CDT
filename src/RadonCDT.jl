@@ -1,18 +1,13 @@
 struct RadonCDT 
     quantiles::Int64
     Radon::RadonTransform
-    signal_raising::Float64
-    function RadonCDT(q, R, sr)
+    function RadonCDT(q, R)
         if q <= 0
-            error("non-positive number of quantiles") 
-        elseif sr < 0.0
-            error("negative signal raising")
+            error("non-positive number of quantiles")
         end
-        return new(q, R, sr)
+        return new(q, R)
     end
 end
-
-RadonCDT(q::Int64, R::RadonTransform) = RadonCDT(q, R, 1e-13)
 
 function (RCDT::RadonCDT)(image::AbstractMatrix)
     S = RCDT.Radon(image)
@@ -24,7 +19,7 @@ function (RCDT::RadonCDT)(image::AbstractMatrix)
 end
 
 function cdt(s::Vector{Float64}, RCDT::RadonCDT)
-    p = signal_to_density(s, RCDT.signal_raising)
+    p = signal_to_density(s)
     P = cumsum(p)
     s_grid = collect(LinRange(-1, 1, length(s)))
     q_grid = collect(LinRange(0, 1, RCDT.quantiles +2))[2:end - 1]
@@ -32,9 +27,8 @@ function cdt(s::Vector{Float64}, RCDT::RadonCDT)
     return q(q_grid)
 end
 
-function signal_to_density(s::Vector{Float64}, ϵ::Float64)
-    p = s .+ ϵ
-    return p ./= sum(p)
+function signal_to_density(s::Vector{Float64})
+    return s ./= sum(s)
 end
 
 struct NormRadonCDT
