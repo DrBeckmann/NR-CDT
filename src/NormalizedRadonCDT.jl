@@ -4,6 +4,7 @@ using Interpolations: LinearInterpolation
 using Statistics
 
 export TestImages
+export NormRadonCDT, MaxNormRadonCDT, MeanNormRadonCDT
 export RadonCDT, RadonTransform
 #export radon_cdt
 
