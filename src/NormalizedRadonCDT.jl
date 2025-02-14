@@ -13,6 +13,7 @@ export RadonCDT, RadonTransform
 include("TestImages.jl")
 include("RadonTransform.jl")
 include("RadonCDT.jl")
+include("DataTransformations.jl")
 #include("Temp.jl")
 #include("Data.jl")
 #include("Classify.jl")

@@ -1,4 +1,87 @@
-using Random, Statistics, Distributions, ImageTransformations, Images, Rotations, Augmentor, CoordinateTransformations
+module DataTransformations
+
+using Random, Images
+using Augmentor
+# using Statistics, ImageTransformations, Distributions, Rotations, CoordinateTransformations
+
+struct RandomAffineTransformation
+    scaling_x::Tuple{Float64, Float64}
+    scaling_y::Tuple{Float64, Float64}
+    rotating::Tuple{Float64, Float64}
+    shearing_x::Tuple{Float64, Float64}
+    shearing_y::Tuple{Float64, Float64}
+    translating_x::Tuple{Float64, Float64}
+    translating_y::Tuple{Float64, Float64}
+    function RandomAffineTransformation(scx, scy, rot, shx, shy, tax, tay)
+        if !(0 <= scx[1] <= scx[2]) 
+            error("inconsistent x scaling")
+        elseif !(0 <= scy[1] <= scy[2]) 
+            error("inconsistent y scaling")
+        elseif !(rot[1] <= rot[2]) 
+            error("inconsistent rotating")
+        elseif !(shx[1] <= shx[2]) 
+            error("inconsistent x shearing")
+        elseif !(shy[1] <= shy[2]) 
+            error("inconsistent y shearing")
+        elseif !(tax[1] <= tax[2]) 
+            error("inconsistent x translating")
+        elseif !(tay[1] <= tay[2]) 
+            error("inconsistent y translating")
+        end
+        return new(scx, scy, rot, shx, shy, tax, tay)
+    end
+end
+
+function RandomAffineTransformation(;
+    scale::Tuple{Float64, Float64}=(1.0, 1.0),
+    rotate::Tuple{Float64, Float64}=(0.0, 0.0),
+    shear_x::Tuple{Float64, Float64}=(0.0, 0.0),
+    shear_y::Tuple{Float64, Float64}=(0.0, 0.0),
+    shift_x::Tuple{Float64, Float64}=(0.0, 0.0),
+    shift_y::Tuple{Float64, Float64}=(0.0, 0.0)
+)
+    return RandomAffineTransformation(scale, rotate, shear_x, shear_y, shift_x, shift_y)
+end
+
+function (A::RandomAffineTransformation)(image::AbstractMatrix)
+    I = Gray{Float64}.(image)
+    I = scaling(I, randu(A.scaling_x), randu(A.scaling_y))
+    I = rotate(I, randu(A.rotating))
+    I = shear(I, randu(A.shearing_x), randu(A.shearing_y))
+    I = translate(I, randi(A.translating_x), randi(A.translating_y))
+    return I
+end
+
+function randu(bounds::Tuple{Float64, Float64})
+    (a, b) = bounds
+    return (b - a) * rand() + a
+end
+
+function randi(bounds::Tuple{Int64, Int64})
+    (a, b) = bounds
+    return rand(a:b)
+end
+
+function scaling(I::Matrix{Gray{Float64}}, sx::Float64, sy::Float64)
+    return augment(I, Zoom(sy, sx))
+end
+
+function rotate(I::Matrix{Gray{Float64}}, α::Float64)
+    s = size(I)
+    return augment(I, Rotate(α) |> CropSize(s))
+end
+
+function shear(I::Matrix{Gray{Float64}}, α::Float64, β::Float64)
+    s = size(I)
+    return augment(I, ShearX(α) |> ShearY(β) |> CropSize(s))
+end
+
+function translate(I::Matrix{Gray{Float64}}, x::Int64, y::Int64)
+    return circshift(I, (y, x))
+end
+
+
+
 
 function random_mask(shape, num_pos_min, num_pos_max, width, length_max, seed)
     
@@ -40,53 +123,8 @@ function random_mask(shape, num_pos_min, num_pos_max, width, length_max, seed)
     return mask
 end;
 
-function random_image_distortion(image, image_size, scale_bounds, angle_bounds, shear_bounds, shift_bounds_x, shift_bounds_y, noise_bounds, seed)
 
-    Random.seed!(seed);
-
-    # Scale
-    if scale_bounds[2] > scale_bounds[1]
-        scale = round(rand(Uniform(scale_bounds[1], scale_bounds[2])), digits=2);
-        img = imresize(image, ratio=scale);
-        if scale <= 1.0
-            image = zeros((image_size,size(image)[2]));
-            a = Int(round((image_size - size(img)[2])/2));
-            image[a+1:size(img)[1]+a,a+1:size(img)[2]+a] = img;
-        else
-            image = zeros(image_size, image_size);
-            x = Int(round(size(img)[1]/2));
-            y = Int(round(size(img)[2]/2));
-            a = Int(round(size(image)[1]/2));
-            image = img[x-a:x+a, y-a:y+a];
-        end
-    end
-    # Rotate
-    if angle_bounds[2] > angle_bounds[1]
-        image = Array{Gray{N0f8},2}(image)
-        angle = rand(Uniform(angle_bounds[1], angle_bounds[2]));
-        trfm = recenter(RotMatrix(angle), (Int(round(size(image)[1]/2)), Int(round(size(image)[2]/2))));
-        image = imresize(warp(image, trfm), (image_size, image_size));
-        image = Gray.(image)
-    end
-    # Shear
-    if shear_bounds[2] > shear_bounds[1]
-        image = imresize(augment(image, ShearX(shear_bounds[1]:shear_bounds[2])), (image_size, image_size));
-        image = imresize(augment(image, ShearY(shear_bounds[1]:shear_bounds[2])), (image_size, image_size));
-    end
-    # Shift
-    if shift_bounds_x[2] > shift_bounds_x[1]
-        shift_x = rand(shift_bounds_x[1]: shift_bounds_x[2]);
-    else
-        shift_x = 0
-    end
-    if shift_bounds_y[2] > shift_bounds_y[1]
-        shift_y = rand(shift_bounds_y[1]: shift_bounds_y[2]);
-    else
-        shift_y = 0
-    end
-    image = circshift(image, (shift_x, shift_y));
-    image = imresize(image, (image_size,image_size));
-
+#=
     # Noise
     if noise_bounds != 0
         mask = random_mask(size(image), noise_bounds[1], noise_bounds[2], noise_bounds[3], noise_bounds[4], seed);
@@ -94,7 +132,7 @@ function random_image_distortion(image, image_size, scale_bounds, angle_bounds, 
         image = imresize(image, (image_size,image_size));
     end
     return image
-end;
+=#
 
 function nonlinear_distortion(img::AbstractMatrix, amplitude::Float64, frequency::Float64)
     rows, cols = size(img)
@@ -302,3 +340,5 @@ function view_data()
     display(plt)
     plot(plt...)
 end;
+
+end
