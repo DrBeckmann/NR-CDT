@@ -43,7 +43,7 @@ function (R::RadonTransform)(image::AbstractMatrix)
 end
 
 function determine_corresponding_ray(j::Int64, k::Int64, R::RadonTransform)
-    t = 2 * (j - 1) / (R.radii - 1) - 1
+    t = (2 + R.width) * (j - 1) / (R.radii - 1) - 1 - R.width / 2
     θ = π * (k - 1) / R.angles
     return Ray(t, θ, R.width)
 end
