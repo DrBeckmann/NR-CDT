@@ -10,8 +10,8 @@ struct RandomAffineTransformation
     rotating::Tuple{Float64, Float64}
     shearing_x::Tuple{Float64, Float64}
     shearing_y::Tuple{Float64, Float64}
-    translating_x::Tuple{Float64, Float64}
-    translating_y::Tuple{Float64, Float64}
+    translating_x::Tuple{Int64, Int64}
+    translating_y::Tuple{Int64, Int64}
     function RandomAffineTransformation(scx, scy, rot, shx, shy, tax, tay)
         if !(0 <= scx[1] <= scx[2]) 
             error("inconsistent x scaling")
@@ -33,14 +33,15 @@ struct RandomAffineTransformation
 end
 
 function RandomAffineTransformation(;
-    scale::Tuple{Float64, Float64}=(1.0, 1.0),
+    scale_x::Tuple{Float64, Float64}=(1.0, 1.0),
+    scale_y::Tuple{Float64, Float64}=(1.0, 1.0),
     rotate::Tuple{Float64, Float64}=(0.0, 0.0),
     shear_x::Tuple{Float64, Float64}=(0.0, 0.0),
     shear_y::Tuple{Float64, Float64}=(0.0, 0.0),
-    shift_x::Tuple{Float64, Float64}=(0.0, 0.0),
-    shift_y::Tuple{Float64, Float64}=(0.0, 0.0)
+    shift_x::Tuple{Int64, Int64}=(0, 0),
+    shift_y::Tuple{Int64, Int64}=(0, 0)
 )
-    return RandomAffineTransformation(scale, rotate, shear_x, shear_y, shift_x, shift_y)
+    return RandomAffineTransformation(scale_x, scale_y, rotate, shear_x, shear_y, shift_x, shift_y)
 end
 
 function (A::RandomAffineTransformation)(image::AbstractMatrix)
@@ -77,7 +78,7 @@ function shear(I::Matrix{Gray{Float64}}, α::Float64, β::Float64)
 end
 
 function translate(I::Matrix{Gray{Float64}}, x::Int64, y::Int64)
-    return circshift(I, (y, x))
+    return circshift(I, (-y, x))
 end
 
 

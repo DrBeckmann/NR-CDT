@@ -6,6 +6,7 @@ using Statistics
 export TestImages
 export NormRadonCDT, MaxNormRadonCDT, MeanNormRadonCDT
 export RadonCDT, RadonTransform
+export RandomAffineTransformation
 #export radon_cdt
 
 #using Base.Threads

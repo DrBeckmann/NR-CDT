@@ -224,7 +224,7 @@ end
 function extract_luxor_drawing()
     image = image_as_matrix()
     finish()
-    return Gray.(image)
+    return Gray{Float64}.(image)
 end
 
 end
