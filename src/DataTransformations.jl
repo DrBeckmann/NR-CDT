@@ -1,6 +1,6 @@
 module DataTransformations
 
-using Random, Images
+using Random, Images, Luxor
 using Augmentor
 # using Statistics, ImageTransformations, Distributions, Rotations, CoordinateTransformations
 
@@ -81,59 +81,124 @@ function translate(I::Matrix{Gray{Float64}}, x::Int64, y::Int64)
     return circshift(I, (-y, x))
 end
 
+abstract type AbstractNoise end
 
+struct MikadoNoise <: AbstractNoise
+    sticks::Tuple{Int64, Int64}
+    length::Tuple{Float64, Float64}
+    width::Tuple{Float64, Float64}
+end
 
+function (N::MikadoNoise)(image::AbstractMatrix)
+    I = Gray{Float64}.(image)
+    E = render_noise(N, size(I))
+    return max.(I, E)
+end
 
-function random_mask(shape, num_pos_min, num_pos_max, width, length_max, seed)
-    
-    Random.seed!(seed)
+struct SaltNoise <: AbstractNoise
+    dots::Tuple{Int64, Int64}
+    width::Tuple{Float64, Float64}
+end
 
-    mask = zeros(shape)
-    num_pos = rand(num_pos_min: num_pos_max + 1)
-    for i in 1:num_pos
-        row_pos = rand(10: shape[:1]-10)
-        col_pos = rand(10: shape[:2]-10)
-        length = rand(1: length_max + 1)
-        case = rand(0:4)
-        if case == 0
-            # vertical
-            mask[row_pos: row_pos + length, col_pos: col_pos + width] .= 1
-        elseif case == 1
-            # horizontal
-            mask[row_pos: row_pos + width, col_pos: col_pos + length] .= 1
-        elseif case == 2
-            # diagonal down
-            for i in 1:length 
-                try
-                    mask[row_pos + i, col_pos + i*Int(round(width/2)): col_pos + i*Int(round(width/2)) + width] .= 1
-                catch
-                    break
-                end
-            end
-        elseif case == 3
-            # diagonal up
-            for i in 1:length 
-                try
-                    mask[row_pos - i, col_pos + i*Int(round(width/2)): col_pos + i*Int(round(width/2)) + width] .= 1
-                catch
-                    break
-                end
-            end
-        end
+function (N::SaltNoise)(image::AbstractMatrix)
+    I = Gray{Float64}.(image)
+    E = render_noise(N, size(I))
+    return max.(I, E)
+end
+
+struct BarNoise <: AbstractNoise
+    bars::Tuple{Int64, Int64}
+    width::Tuple{Float64, Float64}
+end
+
+function (N::BarNoise)(image::AbstractMatrix)
+    I = Gray{Float64}.(image)
+    E = 1.0 .- render_noise(N, size(I))
+    return min.(I, E)
+end
+
+function render_noise(noise::AbstractNoise, size::Tuple{Integer,Integer})
+    initiate_luxor_drawing(size)
+    luxor_draw(noise)
+    return extract_luxor_drawing()
+end
+
+function initiate_luxor_drawing(size::Tuple{Integer,Integer})
+    (x, y) = size
+    Drawing(x, y, :png)
+    origin()
+    background("black")
+    sethue("white")
+    Luxor.scale(x / 2, y / 2)
+    return nothing
+end
+
+function luxor_draw(noise::MikadoNoise)
+    for _ in 1:randi(noise.sticks) 
+        luxor_draw_stick(noise)
     end
-    return mask
-end;
+    return nothing
+end
 
+function luxor_draw_stick(noise::MikadoNoise)
+    direction = rand([:vertical, :horizontal, :diagonal_up, :diagonal_down])
+    length = randu(noise.length)
+    setline(randu(noise.width))
+    stick_path(direction, length)
+    strokepath()    
+end
 
-#=
-    # Noise
-    if noise_bounds != 0
-        mask = random_mask(size(image), noise_bounds[1], noise_bounds[2], noise_bounds[3], noise_bounds[4], seed);
-        image = image + mask
-        image = imresize(image, (image_size,image_size));
+function stick_path(direction::Symbol, length::Float64)
+    (x, y) = (2 - length) .* (rand(2) .- 0.5) 
+    if direction==:vertical
+        move(Point(x, y + length / 2))
+        line(Point(x, y - length / 2))
+    elseif direction==:horizontal
+        move(Point(x + length / 2, y))
+        line(Point(x - length / 2, y))
+    elseif direction==:diagonal_up
+        move(Point(x - length / 2sqrt(2), y - length / 2sqrt(2)))
+        line(Point(x + length / 2sqrt(2), y + length / 2sqrt(2)))
+    elseif direction==:diagonal_down
+        move(Point(x - length / 2sqrt(2), y + length / 2sqrt(2)))
+        line(Point(x + length / 2sqrt(2), y - length / 2sqrt(2)))
+    end   
+end
+
+function luxor_draw(noise::SaltNoise)
+    for _ in 1:randi(noise.dots) 
+        luxor_draw_dot(noise)
     end
-    return image
-=#
+    return nothing
+end
+
+function luxor_draw_dot(noise::SaltNoise)
+    width = randu(noise.width)
+    (x, y) = (2 - width) .* (rand(2) .- 0.5) 
+    circle(Point(x, y), width / 2; action=:fill)
+end
+
+function luxor_draw(noise::BarNoise)
+    for _ in 1:randi(noise.bars) 
+        luxor_draw_bar(noise)
+    end
+    return nothing
+end
+
+function luxor_draw_bar(noise::BarNoise)
+    width = randu(noise.width)
+    x = (2 - width) * (rand() - 0.5)
+    setline(width)
+    move(Point(x, 1.0))
+    line(Point(x, -1.0))
+    strokepath()
+end
+
+function extract_luxor_drawing()
+    image = image_as_matrix()
+    finish()
+    return Gray{Float64}.(image)
+end
 
 function nonlinear_distortion(img::AbstractMatrix, amplitude::Float64, frequency::Float64)
     rows, cols = size(img)
@@ -171,32 +236,7 @@ function nonlinear_distortion(img::AbstractMatrix, amplitude::Float64, frequency
     return distorted_img
 end
 
-function random_int_pair(range::UnitRange{Int})
-    x = rand(range)
-    y = rand(range)
-    return (x, y)
-end
-
-function impulsive_distortion(img::AbstractMatrix, freg::Float64, amp::Int, num::Int)
-    rows, cols = size(img)
-    distorted_img = zeros(eltype(img), rows, cols)
-
-
-	for k in 1:num
-		(i,j) = random_int_pair(amp+1:cols-amp-1)
-		for k in -amp:amp
-			for l in -amp:amp
-				# distorted_img[i+k,j+l] += 1/(k^2*freg+l^2*freg+1)
-				distorted_img[i+k,j+l] += exp(-(k^2*freg+l^2*freg))
-			end
-		end
-	end
-
-	distorted_img += img
-
-    return distorted_img
-end
-
+#=
 function temp_distortion(temp, noise)
 	nonlinear_noise = noise[1]
 	impulsive_noise = noise[2]
@@ -216,6 +256,7 @@ function temp_distortion(temp, noise)
 
 	return temp
 end
+=#
 
 function bar_distortion(img::AbstractMatrix)
     size_img = size(img)[1]

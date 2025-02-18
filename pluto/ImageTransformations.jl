@@ -44,6 +44,27 @@ A(I)
 # ╔═╡ 6bb6eee8-9510-478c-9886-994d45a26a66
 A(A(A(I)))
 
+# ╔═╡ b342fa1b-5f2b-4985-afbf-e486c9c8f248
+N = DataTransformations.MikadoNoise((10,15), (0.125,0.25), (1.5,2.5))
+
+# ╔═╡ de663f10-7987-4793-be78-52bc4f087fbb
+N(I)
+
+# ╔═╡ fc0fb8f7-fc6a-4f72-9416-876edc07544f
+S = DataTransformations.SaltNoise((10,15), (3/128, 4/128))
+
+# ╔═╡ d5c7e146-db95-4b60-bc29-c2deae79e4bd
+S(I)
+
+# ╔═╡ 6ad576a6-3ade-4d81-912b-cf567b8c2f2d
+B = DataTransformations.BarNoise((2,6),(2.0, 3.0))
+
+# ╔═╡ 83b76372-30af-48e8-9cde-09d8d4ded334
+B(I)
+
+# ╔═╡ 32ed4efd-3ecc-4ec5-a448-4340fcb42ed9
+N(S(B(A(I))))
+
 # ╔═╡ Cell order:
 # ╠═8cbe0300-edff-11ef-2fad-d3b8cca171a9
 # ╠═8ab0ffae-2f4c-4b8b-b201-7f86d9ef25ac
@@ -56,3 +77,10 @@ A(A(A(I)))
 # ╠═773832af-9099-4dcf-bd1b-c82baaa83424
 # ╠═02e4f53d-992b-4701-9732-537c8023f1be
 # ╠═6bb6eee8-9510-478c-9886-994d45a26a66
+# ╠═b342fa1b-5f2b-4985-afbf-e486c9c8f248
+# ╠═de663f10-7987-4793-be78-52bc4f087fbb
+# ╠═fc0fb8f7-fc6a-4f72-9416-876edc07544f
+# ╠═d5c7e146-db95-4b60-bc29-c2deae79e4bd
+# ╠═6ad576a6-3ade-4d81-912b-cf567b8c2f2d
+# ╠═83b76372-30af-48e8-9cde-09d8d4ded334
+# ╠═32ed4efd-3ecc-4ec5-a448-4340fcb42ed9
