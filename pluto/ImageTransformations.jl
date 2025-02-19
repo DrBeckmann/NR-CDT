@@ -65,6 +65,15 @@ B(I)
 # ╔═╡ 32ed4efd-3ecc-4ec5-a448-4340fcb42ed9
 N(S(B(A(I))))
 
+# ╔═╡ 2349961b-3a2d-46a3-9225-84786050cbef
+E = DataTransformations.ElasticNoise(amplitude_x=(15.0, 15.0), amplitude_y=(5.0, 5.0))
+
+# ╔═╡ b9d24f03-fe34-4b62-8709-b84b0b01c3c4
+E(I)
+
+# ╔═╡ 9b1fe40b-f34c-4cc3-99fa-29b2b72b1df2
+N(S(B(A(E(I)))))
+
 # ╔═╡ Cell order:
 # ╠═8cbe0300-edff-11ef-2fad-d3b8cca171a9
 # ╠═8ab0ffae-2f4c-4b8b-b201-7f86d9ef25ac
@@ -84,3 +93,6 @@ N(S(B(A(I))))
 # ╠═6ad576a6-3ade-4d81-912b-cf567b8c2f2d
 # ╠═83b76372-30af-48e8-9cde-09d8d4ded334
 # ╠═32ed4efd-3ecc-4ec5-a448-4340fcb42ed9
+# ╠═2349961b-3a2d-46a3-9225-84786050cbef
+# ╠═b9d24f03-fe34-4b62-8709-b84b0b01c3c4
+# ╠═9b1fe40b-f34c-4cc3-99fa-29b2b72b1df2

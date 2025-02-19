@@ -248,73 +248,79 @@ function extract_luxor_drawing()
     return Gray{Float64}.(image)
 end
 
-function nonlinear_distortion(img::AbstractMatrix, amplitude::Float64, frequency::Float64)
-    rows, cols = size(img)
-    distorted_img = zeros(eltype(img), rows, cols)
-
-	amplitude = amplitude*rand(1)[1]
-	frequency = frequency*rand(1)[1]
-
-    for i in 1:rows
-        for j in 1:cols
-            # Compute the new coordinates using a sinusoidal distortion
-            new_i = clamp(i + amplitude * sin(2π * frequency * j / cols), 1, rows)
-            new_j = clamp(j + amplitude * cos(2π * frequency * i / rows), 1, cols)
-
-            # Perform bilinear interpolation
-            top = floor(Int, new_i)
-            bottom = ceil(Int, new_i)
-            left = floor(Int, new_j)
-            right = ceil(Int, new_j)
-
-            weight_tl = (bottom - new_i) * (right - new_j)
-            weight_tr = (bottom - new_i) * (new_j - left)
-            weight_bl = (new_i - top) * (right - new_j)
-            weight_br = (new_i - top) * (new_j - left)
-
-            # Assign interpolated value
-            distorted_img[i, j] = 
-                weight_tl * img[top, left] +
-                weight_tr * img[top, right] +
-                weight_bl * img[bottom, left] +
-                weight_br * img[bottom, right]
+struct ElasticNoise
+    amplitude_x::Tuple{Float64, Float64}
+    amplitude_y::Tuple{Float64, Float64}
+    frequency_x::Tuple{Float64, Float64}
+    frequency_y::Tuple{Float64, Float64}
+    phase_x::Tuple{Float64, Float64}
+    phase_y::Tuple{Float64, Float64}
+    function ElasticNoise(ax, ay, fx, fy, px, py)
+        if !(0 <= ax[1] <= ax[2]) 
+            error("inconsistent x amplitude")
+        elseif !(0 <= ay[1] <= ay[2]) 
+            error("inconsistent y amplitude")
+        elseif !(0 <= fx[1] <= fx[2]) 
+            error("inconsistent x frequency")
+        elseif !(0 <= fy[1] <= fy[2]) 
+            error("inconsistent y frequency")
+        elseif !(px[1] <= px[2]) 
+            error("inconsistent x phase")
+        elseif !(py[1] <= py[2]) 
+            error("inconsistent y phase")
         end
+        return new(ax, ay, fx, fy, px, py)
     end
-
-    return distorted_img
 end
 
-#=
-function temp_distortion(temp, noise)
-	nonlinear_noise = noise[1]
-	impulsive_noise = noise[2]
-    bar_noise = noise[3]
-
-	if nonlinear_noise[1] != 0
-		temp = nonlinear_distortion(temp, nonlinear_noise[1], nonlinear_noise[2])
-	end
-
-	if impulsive_noise[1] != 0
-		temp = impulsive_distortion(temp, impulsive_noise[1], Int(impulsive_noise[2]), Int(impulsive_noise[3]))
-	end
-
-    if bar_noise[1] != 0
-		temp = bar_distortion(temp)
-	end
-
-	return temp
+function ElasticNoise(;
+    amplitude_x::Tuple{Float64, Float64}=(0.0, 0.0),
+    amplitude_y::Tuple{Float64, Float64}=(0.0, 0.0),
+    frequency_x::Tuple{Float64, Float64}=(1.0, 1.0),
+    frequency_y::Tuple{Float64, Float64}=(1.0, 1.0),
+    phase_x::Tuple{Float64, Float64}=(0.0, 0.0),
+    phase_y::Tuple{Float64, Float64}=(0.0, 0.0),
+)
+    return ElasticNoise(amplitude_x, amplitude_y, frequency_x, frequency_y, phase_x, phase_y)
 end
-=#
 
-function bar_distortion(img::AbstractMatrix)
-    size_img = size(img)[1]
-    for k in 1:10
-        k = rand(10:size_img-10)
-        img[:,k:k+3] = zeros(size_img,4)
+function (N::ElasticNoise)(image::AbstractMatrix)
+    I = Gray{Float64}.(image)
+    dim_y, dim_x = size(I)
+    J = zero(I)
+	ax = randu(N.amplitude_x)
+    ay = randu(N.amplitude_y)
+	fx = randu(N.frequency_x)
+	fy = randu(N.frequency_y)
+    px = randu(N.phase_x)
+    py = randu(N.phase_y)
+    for j in axes(I, 1), k in axes(I, 2)
+        x = k + ax * sin(2π * fx * j / dim_y + px)
+        y = j + ay * cos(2π * fy * k / dim_x + py)
+        J[j, k] = periodic_bilinear_interpolation(x, y, I) 
     end
-    return img
+    return J
 end
 
+function periodic_bilinear_interpolation(x::Float64, y::Float64, I::Matrix{Gray{Float64}})
+    (dim_y, dim_x) = size(I)
+    x₁ = floor(Int64, x)
+    x₂ = x₁ + 1
+    y₁ = floor(Int64, y)
+    y₂ = y₁ + 1    
+    z = (x₂ - x) * (y₂ - y) * I[periodic_index(y₁, dim_y), periodic_index(x₁, dim_x)]
+    z += (x₂ - x) * (y - y₁) * I[periodic_index(y₂, dim_y), periodic_index(x₁, dim_x)]
+    z += (x - x₁) * (y₂ - y) * I[periodic_index(y₁, dim_y), periodic_index(x₂, dim_x)]
+    z += (x - x₁) * (y - y₁) * I[periodic_index(y₂, dim_y), periodic_index(x₂, dim_x)]
+    return z
+end
+
+function periodic_index(j::Int64, dim::Int64)
+    return mod(j - 1, dim) + 1
+end
+
+
+###### -> move to pluto
 function gen_dataset(template, label, image_size, size_data, parameters, parameters_non_aff, seed)
 
     scale_bounds = parameters[1];
