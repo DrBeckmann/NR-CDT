@@ -116,6 +116,21 @@ end
 struct SaltNoise <: AbstractNoise
     dots::Tuple{Int64, Int64}
     width::Tuple{Float64, Float64}
+    function SaltNoise(d, w)
+        if !(0 <= d[1] <= d[2]) 
+            error("inconsistent dot number")
+        elseif !(0 <= w[1] <= w[2]) 
+            error("inconsistent width")
+        end
+        return new(d, w)
+    end
+end
+
+function SaltNoise(;
+    dots::Tuple{Int64, Int64}=(10, 15),
+    width::Tuple{Float64, Float64}=(1e-5, 1e-5)
+)
+    return SaltNoise(dots, width)
 end
 
 function (N::SaltNoise)(image::AbstractMatrix)
