@@ -142,6 +142,21 @@ end
 struct BarNoise <: AbstractNoise
     bars::Tuple{Int64, Int64}
     width::Tuple{Float64, Float64}
+    function BarNoise(b, w)
+        if !(0 <= b[1] <= b[2]) 
+            error("inconsistent bar number")
+        elseif !(0 <= w[1] <= w[2]) 
+            error("inconsistent width")
+        end
+        return new(b, w)
+    end
+end
+
+function BarNoise(;
+    bars::Tuple{Int64, Int64}=(2, 5),
+    width::Tuple{Float64, Float64}=(2.0, 2.0)
+)
+    return BarNoise(bars, width)
 end
 
 function (N::BarNoise)(image::AbstractMatrix)
