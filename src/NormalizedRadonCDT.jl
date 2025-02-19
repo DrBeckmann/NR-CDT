@@ -1,17 +1,22 @@
 module NormalizedRadonCDT
 
-export TestImages
-export RadonTransform
-export radon_cdt
+using Interpolations: LinearInterpolation
+using Statistics
 
-using FFTW
-using Base.Threads
+export TestImages
+export NormRadonCDT, MaxNormRadonCDT, MeanNormRadonCDT
+export RadonCDT, RadonTransform
+export RandomAffineTransformation
+#export radon_cdt
+
+#using Base.Threads
 
 include("TestImages.jl")
 include("RadonTransform.jl")
-include("radon_cdt.jl")
-include("Temp.jl")
-include("Data.jl")
-include("Classify.jl")
+include("RadonCDT.jl")
+include("DataTransformations.jl")
+#include("Temp.jl")
+#include("Data.jl")
+#include("Classify.jl")
 
 end

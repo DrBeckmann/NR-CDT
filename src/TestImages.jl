@@ -2,13 +2,6 @@ module TestImages
 
 using Images
 using Luxor
-using FFTW
-using JLD2
-using Random
-using Statistics
-using Distributions
-using ImageTransformations
-using Images
 
 export Circle, Empty, Polygon, Square, Star, Triangle
 export OrbAndCross, Shield
@@ -231,7 +224,7 @@ end
 function extract_luxor_drawing()
     image = image_as_matrix()
     finish()
-    return Gray.(image)
+    return Gray{Float64}.(image)
 end
 
 end

@@ -1,450 +1,153 @@
-module RadonTransform
-
-export radon
-
-using FFTW
-
-#=
-
-function radon(image::AbstractMatrix, radii::Integer, angles::Integer, width::Real)
-    if angles > 1
-        ψ = LinRange(0, π, angles)
-    elseif angles == 1
-        ψ = LinRange(0, 0, angles)
-    end
-    t = LinRange(-1, 1, radii)
-    if width > 1e-8
-        return radon_area(Float64.(image), ψ, t, width)
-    else
-        return radon_line(Float64.(image), ψ, t)
+struct RadonTransform
+    radii::Int64
+    angles::Int64
+    width::Float64
+    function RadonTransform(radii, angles, width)
+        if radii <= 0
+            error("non-positive number of radii")
+        elseif angles <= 0
+            error("non-positive number of angles")
+        elseif width < 0.0
+            error("negative width")
+        end 
+        return new(radii, angles, width)
     end
 end
 
-function radon_area_slow(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, width::Real)
-    P = zeros(eltype(I), length(t), length(θ))
-    ax1, ax2 = axes(I)
-
-    nax1, nax2 = length(ax1), length(ax2)
-    scale = sqrt(2) / max(nax1, nax2)
-    for j in ax2, i in ax1
-        x = (j - nax2 / 2) * scale
-        y = (i - nax1 / 2) * scale
-        for (k, θₖ) in enumerate(θ)
-            for (ℓ, tₗ) in enumerate(t)
-                xyt = -x * sin(θₖ) + y * cos(θₖ)
-                P[ℓ, k] += (compute_unit_pixel_area((tₗ - xyt + width / 2) / scale, θₖ) - compute_unit_pixel_area((tₗ - xyt - width / 2) / scale, θₖ)) * scale^2 * I[i, j]
-            end
-        end
-    end
-
-    return P ./ width
-end
-
-function radon_area(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange, width::Real)
-    P = zeros(eltype(I), length(t), length(θ))
-    ax1, ax2 = axes(I)
-
-    nax1, nax2 = length(ax1), length(ax2)
-    scale = sqrt(2) / max(nax1, nax2)
-    for (ℓ, tₗ) in enumerate(t)
-        for (k, θₖ) in enumerate(θ)
-            if 0 <= θₖ < π / 4 || 3 * π / 4 <= θₖ < π
-                wscale = (width/2) / cos(π - θₖ) / scale
-                wscale = abs(wscale)
-                for j in ax2
-                    x = (j - nax2 / 2) * scale
-                    yₒ, yᵤ = intersection_y(x, θₖ, tₗ, scale, wscale, nax1)
-                    for i in range(max(yᵤ,1), min(yₒ,nax1))
-                        y = (i - nax1 / 2) * scale
-                        xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
-                        P[ℓ, k] += compute_partial_area(I[i, j], xyᵤ, xyₒ, θₖ, scale)
-                    end
-                end
-            elseif π / 4 <= θₖ < π / 2 || π / 2 <= θₖ < 3 * π / 4
-                wscale = (width/2) / sin(θₖ) / scale
-                wscale = abs(wscale)
-                for i in ax1
-                    y = (i - nax1 / 2) * scale
-                    xₒ, xᵤ = intersection_x(y, θₖ, tₗ, scale, wscale, nax1)
-                    for j in range(max(xᵤ,1), min(xₒ,nax2))
-                        x = (j - nax2 / 2) * scale
-                        xyᵤ, xyₒ = itegration_bound(x, y, θₖ, tₗ, scale, width)
-                        P[ℓ, k] += compute_partial_area(I[i, j], xyᵤ, xyₒ, θₖ, scale)
-                    end
-                end
-            end
-        end
-    end
-
-    return P ./ width
-end
-
-function intersection_y(x::Real, ψ::Real, l::Real, scale::Real, wscale::Real, nax1::Real)
-    η = (x + l * sin(ψ)) / cos(ψ)
-    y = (l * cos(ψ) + η * sin(ψ)) / scale + nax1 / 2
-    yₒ = Int(floor(y + wscale + 0.5))
-    yᵤ = Int(ceil(y - wscale - 0.5))
-
-    return yₒ, yᵤ
-end
-
-function intersection_x(y::Real, ψ::Real, l::Real, scale::Real, wscale::Real, nax2::Real)
-    η = (y - l * cos(ψ)) / sin(ψ)
-    x = (-l * sin(ψ) + η * cos(ψ)) / scale + nax2 / 2
-    xₒ = Int(floor(x + wscale + 0.5))
-    xᵤ = Int(ceil(x - wscale - 0.5))
-
-    return xₒ, xᵤ
-end
-
-function itegration_bound(x::Real, y::Real, ψ::Real, l::Real, scale::Real, width::Real)
-    xyₜ = -x * sin(ψ) + y * cos(ψ)
-    xyᵤ, xyₒ = (l - xyₜ - width / 2) / scale, (l - xyₜ + width / 2) / scale
-
-    return xyᵤ, xyₒ
-end
-
-function compute_partial_area(I::Real, xyᵤ::Real, xyₒ::Real, ψ::Real, scale::Real)
-    area = (compute_unit_pixel_area(xyₒ, ψ) - compute_unit_pixel_area(xyᵤ, ψ)) * scale^2 * I
-
-    return area
-end
-
-
-function radon_line_slow(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
-    P = zeros(eltype(I), length(t), length(θ))
-    ax1, ax2 = axes(I)
-
-    nax1, nax2 = length(ax1), length(ax2)
-    scale = sqrt(2) / max(nax1, nax2)
-    for j in ax2, i in ax1
-        x = (j - nax2 / 2) * scale
-        y = (i - nax1 / 2) * scale
-        for (k, θₖ) in enumerate(θ)
-            for (ℓ, tₗ) in enumerate(t)
-                xyt = -x * sin(θₖ) + y * cos(θₖ)
-                P[ℓ, k] += compute_unit_pixel_line((tₗ - xyt) / scale, θₖ) * scale * I[i, j]
-            end
-        end
-    end
-
-    return P
-end
-
-function radon_line(I::AbstractMatrix, θ::AbstractRange, t::AbstractRange)
-    P = zeros(eltype(I), length(t), length(θ))
-    ax1, ax2 = axes(I)
-
-    nax1, nax2 = length(ax1), length(ax2)
-    scale = sqrt(2) / max(nax1, nax2)
-    for (ℓ, tₗ) in enumerate(t)
-        for (k, θₖ) in enumerate(θ)
-            if 0 <= θₖ < π / 4 || 3 * π / 4 <= θₖ < π
-                for j in ax2
-                    x = (j - nax2 / 2) * scale
-                    yₒ, yᵤ = intersection_y(x, θₖ, tₗ, scale, 1, nax1)
-                    for i in range(max(yᵤ,1), min(yₒ,nax1))
-                        y = (i - nax1 / 2) * scale
-                        xyₜ = intersection_t(x, y, θₖ)
-                        P[ℓ, k] += compute_partial_line(I[i, j], tₗ, xyₜ, θₖ, scale)
-                    end
-                end
-            elseif π / 4 <= θₖ < π / 2 || π / 2 <= θₖ < 3 * π / 4
-                for i in ax1
-                    y = (i - nax1 / 2) * scale
-                    xₒ, xᵤ = intersection_x(y, θₖ, tₗ, scale, 1, nax1)
-                    for j in range(max(xᵤ,1), min(xₒ,nax2))
-                        x = (j - nax2 / 2) * scale
-                        xyₜ = intersection_t(x, y, θₖ)
-                        P[ℓ, k] += compute_partial_line(I[i, j], tₗ, xyₜ, θₖ, scale)
-                    end
-                end
-            end
-        end
-    end
-
-    return P
-end
-
-function intersection_t(x::Real, y::Real, ψ::Real)
-    xyₜ = -x * sin(ψ) + y * cos(ψ)
-
-    return xyₜ
-end
-
-function compute_partial_line(I::Real, l::Real, xyₜ::Real, ψ::Real, scale::Real)
-    line = compute_unit_pixel_line((l - xyₜ) / scale, ψ) * scale * I
-
-    return line
-end
-
-function compute_unit_pixel_area(t::Real, ψ::Real)
-    ψ = mod(ψ, π / 2)
-    if 0 <= ψ < π/4
-        return compute_unit_pixel_area_octant(t, ψ)
-    elseif π / 4 <= ψ < π / 2
-        return compute_unit_pixel_area_octant(t, π / 2 - ψ)
-    end    
-end
-
-function compute_unit_pixel_area_octant(t::Real, ψ::Real)
-    area_triangle = tan(ψ) / 2
-    area_parallogram = 1 - tan(ψ)
-    t1 = -(cos(ψ) + sin(ψ)) / 2
-    t2 = (sin(ψ) - cos(ψ)) / 2
-    t3 = -t2
-    t4 = -t1
-    if t <= t1
-        return 0.0
-    elseif t <= t2
-        return area_triangle * ((t - t1) / (t2 - t1))^2
-    elseif t <= t3
-        return area_triangle + area_parallogram * (t - t2) / (t3 - t2)
-    elseif t <= t4
-        return 1 - area_triangle * ((t - t4) / (t4 - t3))^2
-    else
-        return 1.0
-    end
-end
-
-function compute_unit_pixel_line(t::Real, ψ::Real)
-    ψ = mod(ψ, π / 2)
-    if 0 <= ψ < π/4
-        return compute_unit_pixel_line_octant(t, ψ)
-    elseif π / 4 <= ψ < π / 2
-        return compute_unit_pixel_line_octant(t, π / 2 - ψ)
-    end    
-end
-
-function compute_unit_pixel_line_octant(t::Real, ψ::Real)
-    line = 1 / cos(ψ)
-    t1 = -(cos(ψ) + sin(ψ)) / 2
-    t2 = (sin(ψ) - cos(ψ)) / 2
-    t3 = -t2
-    t4 = -t1
-    if t <= t1
-        return 0.0
-    elseif t <= t2
-        return line * (t - t1) / (t2 - t1)
-    elseif t <= t3
-        return line
-    elseif t <= t4
-        return line * (t4 - t) / (t4 - t3)
-    else
-        return 0.0
-    end
-end
-
-=#
-
-struct Intensity
+struct Phantom
     data::Matrix{Float64}
     pixel_size::Float64
+    dim_x::Int64
+    dim_y::Int64
 end
 
-
-function Intensity(I::AbstractMatrix)
-    pixel_size = sqrt(2) / max(size(I)...)
-    return Intensity(I, pixel_size)    
+function Phantom(image::AbstractMatrix)
+    pixel_size = sqrt(2) / max(size(image)...)
+    return Phantom(Float64.(image), pixel_size, size(image, 2), size(image, 1))    
 end
 
-struct Sinogram
-    data::Matrix{Float64}
-    radii::Vector{Float64}
-    angles::Vector{Float64}
-    width::Float64
-    Sinogram(S, t, θ, w) = (w < 0) ? error("negative width") : new(S, t, θ, w)
+struct Ray
+    t::Float64
+    θ::Float64
+    w::Float64
 end
 
-function Sinogram(t::Vector{Float64}, θ::Vector{Float64}, w::Float64)
-    S = zeros((length(t), length(θ)))
-    return Sinogram(S, t, θ, w)
-end
-
-function radon(image::Matrix{Float64}, radii::Int64, angles::Real, width::Float64)
-    t = collect(LinRange(-1, 1, radii))
-    θ = (angles == 0) ? [0.0] : ((mod(angles,1) != 0) ? [Float64(angles)] : ((angles == 1) ? [0.0] : collect(LinRange(0.0, π, angles))))
-    return radon_compute(image, t, θ, width)
-end
-
-function radon_compute(image::Matrix{Float64}, radii::Vector{Float64}, angles::Vector{Float64}, width::Float64)
-    I = Intensity(Float64.(image))
-    S = zeros((length(radii), length(angles)))
-    for ℓ in eachindex(radii), k in eachindex(angles)
-        S[ℓ, k] = integrate_along_ray(I, radii[ℓ], angles[k], width)
+function (R::RadonTransform)(image::AbstractMatrix)
+    P = Phantom(image)
+    S = zeros(R.radii, R.angles)
+    for j in axes(S, 1), k in axes(S, 2)
+        r = determine_corresponding_ray(j, k, R)
+        S[j, k] = integrate_along_ray(P, r)
     end
     return S
-    #return Sinogram(S, radii, angles, width)
 end
 
-function integrate_along_ray(I::Intensity, radius::Float64, angle::Float64, width::Float64)
-    if width > 0
-        integrate_along_area_ray(I::Intensity, radius::Float64, angle::Float64, width::Float64)
-    else 
-        integrate_along_line_ray(I::Intensity, radius::Float64, angle::Float64)
+function determine_corresponding_ray(j::Int64, k::Int64, R::RadonTransform)
+    t = (2 + R.width) * (j - 1) / (R.radii - 1) - 1 - R.width / 2
+    θ = π * (k - 1) / R.angles
+    return Ray(t, θ, R.width)
+end
+
+function integrate_along_ray(P::Phantom, r::Ray)
+    if π / 4 <= r.θ < 3 * π / 4
+        return integrate_horizontal_ray(P, r)
+    else
+        return integrate_vertical_ray(P, r)
     end
 end 
 
-function integrate_along_area_ray(I::Intensity, radius::Float64, angle::Float64, width::Float64)
-    if 0 <= angle < π / 4 || 3 * π / 4 <= angle < π
-        return integrate_horizontal_area_first(I, radius, angle, width)
-    elseif π / 4 <= angle < π / 2 || π / 2 <= angle < 3 * π / 4
-        return integrate_vertical_area_first(I, radius, angle, width)
-    end
-end
-
-function integrate_horizontal_area_first(I::Intensity, radius::Float64, angle::Float64, width::Float64)
-    wscale = (width/2) / cos(π - angle) / I.pixel_size
-    wscale = abs(wscale)
-    P = 0.0
-    (nax1, nax2) = size(I.data)
-    for j in axes(I.data, 2)
-        x = (j - nax2 / 2) * I.pixel_size
-        yₒ, yᵤ = intersection_y(x, angle, radius, I.pixel_size, wscale, nax1)
-        for i in range(max(yᵤ,1), min(yₒ,nax1))
-            y = (i - nax1 / 2) * I.pixel_size
-            xyᵤ, xyₒ = itegration_bound(x, y, angle, radius, I.pixel_size, width)
-            P += compute_partial_area(I.data[i, j], xyᵤ, xyₒ, angle, I.pixel_size)
+function integrate_vertical_ray(P::Phantom, r::Ray)
+    S = 0.0
+    for j in axes(P.data, 1)
+        for k in horizontal_pixels(j, P, r)
+            S += integrate_pixel_along_ray(j, k, P, r)
         end
     end
-    return P ./ width
+    return S
 end
 
+function horizontal_pixels(j::Int64, P::Phantom, r::Ray)
+    (cos_θ, sin_θ) = (cos(r.θ), sin(r.θ))
+    y = index_to_y_coordinate(j, P)
+    τ = (r.t * sin_θ - y) / cos_θ
+    x = r.t * cos_θ + τ * sin_θ
+    x_width = abs(r.w / cos_θ / 2)
+    first_index = Int64(floor(x_coordinate_to_index(x - x_width, P)))
+    last_index = Int64(ceil(x_coordinate_to_index(x + x_width, P)))
+    return max(first_index, 1):min(last_index, P.dim_x)
+end
 
-function integrate_vertical_area_first(I::Intensity, radius::Float64, angle::Float64, width::Float64)
-    wscale = (width/2) / sin(angle) / I.pixel_size
-    wscale = abs(wscale)
-    P = 0.0
-    (nax1, nax2) = size(I.data)
-    for i in axes(I.data, 1)
-        y = (i - nax1 / 2) * I.pixel_size
-        xₒ, xᵤ = intersection_x(y, angle, radius, I.pixel_size, wscale, nax1)
-        for j in range(max(xᵤ,1), min(xₒ,nax2))
-            x = (j - nax2 / 2) * I.pixel_size
-            xyᵤ, xyₒ = itegration_bound(x, y, angle, radius, I.pixel_size, width)
-            P += compute_partial_area(I.data[i, j], xyᵤ, xyₒ, angle, I.pixel_size)
+function integrate_horizontal_ray(P::Phantom, r::Ray)
+    S = 0.0
+    for k in axes(P.data, 2)
+        for j in vertical_pixels(k, P, r)
+            S += integrate_pixel_along_ray(j, k, P, r)
         end
     end
-    return P ./ width
+    return S
 end
 
-function intersection_y(x::Float64, ψ::Float64, l::Float64, scale::Float64, wscale::Float64, nax1::Int64)
-    η = (x + l * sin(ψ)) / cos(ψ)
-    y = (l * cos(ψ) + η * sin(ψ)) / scale + nax1 / 2
-    yₒ = Int(floor(y + wscale + 0.5))
-    yᵤ = Int(ceil(y - wscale - 0.5))
-    return yₒ, yᵤ
+function vertical_pixels(k::Int64, P::Phantom, r::Ray)
+    (cos_θ, sin_θ) = (cos(r.θ), sin(r.θ))
+    x = index_to_x_coordinate(k, P)
+    τ = (x - r.t * cos_θ) / sin_θ
+    y = r.t * sin_θ - τ * cos_θ
+    y_width = abs(r.w / sin_θ / 2)
+    first_index = Int64(floor(y_coordinate_to_index(y + y_width, P)))
+    last_index = Int64(ceil(y_coordinate_to_index(y - y_width, P)))
+    return max(first_index, 1):min(last_index, P.dim_y)
 end
 
-function intersection_x(y::Float64, ψ::Float64, l::Float64, scale::Float64, wscale::Float64, nax2::Int64)
-    η = (y - l * cos(ψ)) / sin(ψ)
-    x = (-l * sin(ψ) + η * cos(ψ)) / scale + nax2 / 2
-    xₒ = Int(floor(x + wscale + 0.5))
-    xᵤ = Int(ceil(x - wscale - 0.5))
-    return xₒ, xᵤ
+function index_to_x_coordinate(k::Int64, P::Phantom)
+    return (k - (P.dim_x + 1) / 2) * P.pixel_size
 end
 
-function itegration_bound(x::Float64, y::Float64, ψ::Float64, l::Float64, scale::Float64, width::Float64)
-    xyₜ = -x * sin(ψ) + y * cos(ψ)
-    xyᵤ, xyₒ = (l - xyₜ - width / 2) / scale, (l - xyₜ + width / 2) / scale
-    return xyᵤ, xyₒ
+function x_coordinate_to_index(x::Float64, P::Phantom)
+    return x / P.pixel_size + (P.dim_x + 1) / 2
 end
 
-function compute_partial_area(I::Float64, xyᵤ::Float64, xyₒ::Float64, ψ::Float64, scale::Float64)
-    area = (compute_unit_pixel_area(xyₒ, ψ) - compute_unit_pixel_area(xyᵤ, ψ)) * scale^2 * I
-    return area
+function index_to_y_coordinate(j::Int64, P::Phantom)
+    return ((P.dim_y + 1) / 2 - j) * P.pixel_size
 end
 
-function integrate_along_line_ray(I::Intensity, radius::Float64, angle::Float64)
-    if 0 <= angle < π / 4 || 3 * π / 4 <= angle < π
-        return integrate_horizontal_line_first(I, radius, angle)
-    elseif π / 4 <= angle < π / 2 || π / 2 <= angle < 3 * π / 4
-        return integrate_vertical_line_first(I, radius, angle)
-    end
+function y_coordinate_to_index(y::Float64, P::Phantom)
+    return (P.dim_y + 1) / 2 - y / P.pixel_size
 end
 
-function integrate_horizontal_line_first(I::Intensity, radius::Float64, angle::Float64)
-    P = 0.0
-    (nax1, nax2) = size(I.data)
-    for j in axes(I.data, 2)
-        x = (j - nax2 / 2) * I.pixel_size
-        yₒ, yᵤ = intersection_y(x, angle, radius, I.pixel_size, 1.0, nax1)
-        for i in range(max(yᵤ,1), min(yₒ,nax1))
-            y = (i - nax1 / 2) * I.pixel_size
-            xyₜ = intersection_t(x, y, angle)
-            P += compute_partial_line(I.data[i, j], radius, xyₜ, angle, I.pixel_size)
-        end
-    end
-    return P
+function integrate_pixel_along_ray(j::Int64, k::Int64, P::Phantom, r::Ray)
+    unit_r = select_unit_ray(j, k, P, r)
+    weight = integrate_unit_pixel_along_ray(unit_r)
+    scale = (r.w == 0.0) ? P.pixel_size : P.pixel_size^2 / r.w
+    return weight * scale * P.data[j, k]
 end
 
-function integrate_vertical_line_first(I::Intensity, radius::Float64, angle::Float64)
-    P = 0.0
-    (nax1, nax2) = size(I.data)
-    for i in axes(I.data, 1)
-        y = (i - nax1 / 2) * I.pixel_size
-        xₒ, xᵤ = intersection_x(y, angle, radius, I.pixel_size, 1.0, nax1)
-        for j in range(max(xᵤ,1), min(xₒ,nax2))
-            x = (j - nax2 / 2) * I.pixel_size
-            xyₜ = intersection_t(x, y, angle)
-            P += compute_partial_line(I.data[i, j], radius, xyₜ, angle, I.pixel_size)
-        end
-    end
-    return P
+function select_unit_ray(j::Int64, k::Int64, P::Phantom, r::Ray)
+    t_pixel = index_to_t_coordinate(j, k, P, r)
+    unit_t = (r.t - t_pixel) / P.pixel_size
+    unit_θ = mod(r.θ, π / 2)
+    unit_θ = (0 <= unit_θ < π/4) ? unit_θ : π / 2 - unit_θ
+    unit_w = r.w / P.pixel_size
+    return Ray(unit_t, unit_θ, unit_w)
 end
 
-function intersection_t(x::Float64, y::Float64, ψ::Float64)
-    xyₜ = -x * sin(ψ) + y * cos(ψ)
-    return xyₜ
+function index_to_t_coordinate(j::Int64, k::Int64, P::Phantom, r::Ray)
+    x = index_to_x_coordinate(k, P)
+    y = index_to_y_coordinate(j, P)
+    return x * cos(r.θ) + y * sin(r.θ)
 end
 
-function compute_partial_line(I::Float64, l::Float64, xyₜ::Float64, ψ::Float64, scale::Float64)
-    line = compute_unit_pixel_line((l - xyₜ) / scale, ψ) * scale * I
-    return line
-end
-
-function compute_unit_pixel_area(t::Float64, ψ::Float64)
-    ψ = mod(ψ, π / 2)
-    if 0 <= ψ < π/4
-        return compute_unit_pixel_area_octant(t, ψ)
-    elseif π / 4 <= ψ < π / 2
-        return compute_unit_pixel_area_octant(t, π / 2 - ψ)
-    end    
-end
-
-function compute_unit_pixel_area_octant(t::Float64, ψ::Float64)
-    area_triangle = tan(ψ) / 2
-    area_parallogram = 1 - tan(ψ)
-    t1 = -(cos(ψ) + sin(ψ)) / 2
-    t2 = (sin(ψ) - cos(ψ)) / 2
-    t3 = -t2
-    t4 = -t1
-    if t <= t1
-        return 0.0
-    elseif t <= t2
-        return area_triangle * ((t - t1) / (t2 - t1))^2
-    elseif t <= t3
-        return area_triangle + area_parallogram * (t - t2) / (t3 - t2)
-    elseif t <= t4
-        return 1 - area_triangle * ((t - t4) / (t4 - t3))^2
+function integrate_unit_pixel_along_ray(r::Ray)
+    if r.w == 0.0
+        return line_integral_unit_pixel(r.t, r.θ)
     else
-        return 1.0
+        return area_integral_unit_pixel(r.t, r.θ, r.w)
     end
 end
 
-function compute_unit_pixel_line(t::Float64, ψ::Float64)
-    ψ = mod(ψ, π / 2)
-    if 0 <= ψ < π/4
-        return compute_unit_pixel_line_octant(t, ψ)
-    elseif π / 4 <= ψ < π / 2
-        return compute_unit_pixel_line_octant(t, π / 2 - ψ)
-    end    
-end
-
-function compute_unit_pixel_line_octant(t::Float64, ψ::Float64)
-    line = 1 / cos(ψ)
-    t1 = -(cos(ψ) + sin(ψ)) / 2
-    t2 = (sin(ψ) - cos(ψ)) / 2
+function line_integral_unit_pixel(t::Float64, θ::Float64)
+    line = 1 / cos(θ)
+    t1 = -(cos(θ) + sin(θ)) / 2
+    t2 = (sin(θ) - cos(θ)) / 2
     t3 = -t2
     t4 = -t1
     if t <= t1
@@ -460,96 +163,26 @@ function compute_unit_pixel_line_octant(t::Float64, ψ::Float64)
     end
 end
 
-#=
+function area_integral_unit_pixel(t::Float64, θ::Float64, w::Float64)
+    return (anti_derivative_area_integral(t + w / 2, θ) - anti_derivative_area_integral(t - w / 2, θ))
+end
 
-function adj_radon(I::AbstractMatrix, n::Int, m::Int)
-
-    P = zeros(eltype(I), 2*n, 2*m)
-
-    t, d = size(I)
-    axangle = LinRange(0, π, d)
-    axt = LinRange(-1, 1, t)
-    dis = axt[2] - axt[1]
-    
-    for i in range(-n+1, n-1), j in range(-m+1, m-1)
-        for (k, θₖ) in enumerate(axangle)
-            x₁ᵢ, x₂ⱼ = i/(n - 1), j/(m - 1)
-            if x₁ᵢ^2 + x₂ⱼ^2 <=1
-                sᵢⱼ = -x₁ᵢ * cos(θₖ) + x₂ⱼ * sin(θₖ)
-                tᵢⱼ = sᵢⱼ / dis
-                αᵢⱼ = tᵢⱼ - floor(tᵢⱼ)
-                if -t/2 < Int(floor(tᵢⱼ)) < t/2 && -t/2 < Int(ceil(tᵢⱼ)) < t/2 
-                    P[i+n+1, j+m+1] += (1 - αᵢⱼ) * I[Int(floor(tᵢⱼ)) + Int(ceil(t/2)), k] + αᵢⱼ * I[Int(ceil(tᵢⱼ)) + Int(ceil(t/2)), k]
-                end
-            end
-        end
+function anti_derivative_area_integral(t::Float64, θ::Float64)
+    area_triangle = tan(θ) / 2
+    area_parallelogram = 1 - tan(θ)
+    t1 = -(cos(θ) + sin(θ)) / 2
+    t2 = (sin(θ) - cos(θ)) / 2
+    t3 = -t2
+    t4 = -t1
+    if t <= t1
+        return 0.0
+    elseif t <= t2
+        return area_triangle * ((t - t1) / (t2 - t1))^2
+    elseif t <= t3
+        return area_triangle + area_parallelogram * (t - t2) / (t3 - t2)
+    elseif t <= t4
+        return 1 - area_triangle * ((t - t4) / (t4 - t3))^2
+    else
+        return 1.0
     end
-
-    return P .*dis ./ π
-end
-
-function _ramp_spatial(N::Int, τ, Npad::Int = N)
-    @assert Npad ≥ N
-    N2 = N ÷ 2
-    hval(n) = n == 0 ? 1 / (4*τ^2) : - mod(n, 2)/(π * n * τ)^2
-    [i ≤ N ? hval(i - N2 - 1) : 0. for i = 1:Npad]
-end
-
-function iradon(I::AbstractMatrix, n::Int, m::Int)
-
-    t, d = size(I)
-    axangle = LinRange(0, π, d)
-    axt = LinRange(-1, 1, t)
-    disₜ = axt[2] - axt[1]
-
-    tₚ = nextpow(2, 2 * t - 1)
-
-    tᵢ = t ÷ 2 + 1
-    tⱼ = tᵢ + t - 1
-
-    ramp = fft(_ramp_spatial(t, disₜ, tₚ))
-
-    T = eltype(I)
-    P = [zeros(T, 2*n, 2*m) for _ = 1:nthreads()]
-    I′ = [Vector{Complex{T}}(undef, tₚ) for _ = 1:nthreads()] # or power instead of t
-    Q = [Vector{T}(undef, t) for _ = 1:nthreads()]
-    
-    for i in range(-n+1, n-1), j in range(-m+1, m-1)
-        l = SpinLock()
-        for (k, θₖ) in collect(enumerate(axangle))
-            id = threadid()
-            Pid = P[id]
-            Qid = Q[id]
-            Iid = I′[id]
-
-            x₁ᵢ, x₂ⱼ = i/(n - 1), j/(m - 1)
-
-            Iid[1:t] .= I[:,k]
-            Iid[t+1:end] .= 0
-
-            lock(l)
-            fft!(Iid)
-            Iid .*= ramp # abs.(LinRange(-t,t,size(Iid)[1]))
-            ifft!(Iid)
-            unlock(l)
-
-            # Qid .= dis .* real.(Iid[Int(floor(t/2))+1:Int(floor(3*t/2))])
-            Qid .= disₜ .* real.(Iid[tᵢ:tⱼ])
-            
-            if x₁ᵢ^2 + x₂ⱼ^2 <=1
-                sᵢⱼ = - x₁ᵢ * cos(θₖ) + x₂ⱼ * sin(θₖ)
-                tᵢⱼ = sᵢⱼ / disₜ
-                αᵢⱼ = tᵢⱼ - floor(tᵢⱼ)
-                if -t/2 < Int(floor(tᵢⱼ)) < t/2 && -t/2 < Int(ceil(tᵢⱼ)) < t/2
-                    Pid[i+n+1, j+m+1] += (1 - αᵢⱼ) * Qid[Int(floor(tᵢⱼ)) + Int(ceil(t/2))] + αᵢⱼ * Qid[Int(ceil(tᵢⱼ)) + Int(ceil(t/2))]
-                end
-            end
-        end
-    end
-
-    return sum(P) .* π ./ d
-end
-
-=#
-
 end
