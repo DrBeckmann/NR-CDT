@@ -87,6 +87,24 @@ struct MikadoNoise <: AbstractNoise
     sticks::Tuple{Int64, Int64}
     length::Tuple{Float64, Float64}
     width::Tuple{Float64, Float64}
+    function MikadoNoise(s, l, w)
+        if !(0 <= s[1] <= s[2]) 
+            error("inconsistent stick number")
+        elseif !(0 <= l[1] <= l[2]) 
+            error("inconsistent length")
+        elseif !(0 <= w[1] <= w[2]) 
+            error("inconsistent width")
+        end
+        return new(s, l, w)
+    end
+end
+
+function MikadoNoise(;
+    sticks::Tuple{Int64, Int64}=(10, 15),
+    length::Tuple{Float64, Float64}=(0.125, 0.25),
+    width::Tuple{Float64, Float64}=(2.0, 2.0)
+)
+    return MikadoNoise(sticks, length, width)
 end
 
 function (N::MikadoNoise)(image::AbstractMatrix)
