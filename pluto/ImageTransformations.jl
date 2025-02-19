@@ -74,6 +74,12 @@ E(I)
 # ╔═╡ 9b1fe40b-f34c-4cc3-99fa-29b2b72b1df2
 N(S(B(A(E(I)))))
 
+# ╔═╡ dbff450c-5836-462a-97ab-13a7137677db
+J = DataTransformations.extend_image(I, (256, 128))
+
+# ╔═╡ 7c59be83-d395-4283-a541-07fd5381ff49
+N(S(B(A(E(J)))))
+
 # ╔═╡ Cell order:
 # ╠═8cbe0300-edff-11ef-2fad-d3b8cca171a9
 # ╠═8ab0ffae-2f4c-4b8b-b201-7f86d9ef25ac
@@ -96,3 +102,5 @@ N(S(B(A(E(I)))))
 # ╠═2349961b-3a2d-46a3-9225-84786050cbef
 # ╠═b9d24f03-fe34-4b62-8709-b84b0b01c3c4
 # ╠═9b1fe40b-f34c-4cc3-99fa-29b2b72b1df2
+# ╠═dbff450c-5836-462a-97ab-13a7137677db
+# ╠═7c59be83-d395-4283-a541-07fd5381ff49

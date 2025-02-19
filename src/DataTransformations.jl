@@ -172,7 +172,7 @@ function render_noise(noise::AbstractNoise, size::Tuple{Integer,Integer})
 end
 
 function initiate_luxor_drawing(size::Tuple{Integer,Integer})
-    (x, y) = size
+    (y, x) = size
     Drawing(x, y, :png)
     origin()
     background("black")
@@ -317,6 +317,22 @@ end
 
 function periodic_index(j::Int64, dim::Int64)
     return mod(j - 1, dim) + 1
+end
+
+function extend_image(image::AbstractMatrix, shape::Tuple{Int64, Int64})
+    (dim_y, dim_x) = size(image)
+    if dim_y > shape[1] || dim_x > shape[2]
+        error("dimension mismatch")
+    end
+    I = zeros(Gray{Float64}, shape)
+    id_x = max((shape[2] - dim_x) ÷ 2, 1)
+    id_y = max((shape[1] - dim_y) ÷ 2, 1)
+    I[id_y:(id_y + dim_y - 1), id_x:(id_x + dim_x - 1)] .= Gray{Float64}.(image)
+    return I
+end
+
+function extend_image(image::AbstractMatrix, shape::Int64)
+    return extend_image(image, (shape, shape))
 end
 
 
