@@ -335,6 +335,25 @@ function extend_image(image::AbstractMatrix, shape::Int64)
     return extend_image(image, (shape, shape))
 end
 
+function generate_academic_classes(images::AbstractArray, class_size::Int64)
+    num = length(images)
+    classes = []
+    labels = []
+    for k in 1:num, _ in 1:class_size
+        append!(classes, images[k])
+        append!(labels, k)
+    end
+    return shuffle_data(classes, labels)
+end
+
+function shuffle_data(classes::AbstractArray, classes::AbstractArray)
+    dim = length(classes)
+    p = shuffle(1:dim)
+    classes = classes[p]
+    labels = labels[p]
+    return classes, labels
+end
+
 
 ###### -> move to pluto
 function gen_dataset(template, label, image_size, size_data, parameters, parameters_non_aff, seed)
