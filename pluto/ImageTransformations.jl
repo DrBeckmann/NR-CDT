@@ -80,6 +80,27 @@ J = DataTransformations.extend_image(I, (256, 128))
 # ╔═╡ 7c59be83-d395-4283-a541-07fd5381ff49
 N(S(B(A(E(J)))))
 
+# ╔═╡ 62d921a9-ebdd-4d38-b8c0-df2be57134a6
+I₁ = Gray{Float64}.(render(OrbAndCross(Circle(),Star(4)), width=4.0))
+
+# ╔═╡ 649d8324-d91b-4295-8198-1f425f4e6acf
+I₂ = Gray{Float64}.(render(Shield(Circle()), width=4.0))
+
+# ╔═╡ 7f4a48e3-be97-450b-abe2-dabc62401ed7
+J₁ = DataTransformations.extend_image(I₁, (256, 256))
+
+# ╔═╡ c171a7a4-0815-4a2a-ac10-b8b799e2fc0f
+J₂ = DataTransformations.extend_image(I₂, (256, 256))
+
+# ╔═╡ e31b9e0b-ad11-431d-ae7d-1dd4b12a5b6a
+JA = [J₁, J₂];
+
+# ╔═╡ 24b8d1a6-216c-4614-b742-3e795ec747b9
+JClass, JLabel = DataTransformations.generate_academic_classes(JA, 10);
+
+# ╔═╡ 0593b84b-35fa-4ce3-9277-df1ba94a87de
+A.(JClass)
+
 # ╔═╡ Cell order:
 # ╠═8cbe0300-edff-11ef-2fad-d3b8cca171a9
 # ╠═8ab0ffae-2f4c-4b8b-b201-7f86d9ef25ac
@@ -104,3 +125,10 @@ N(S(B(A(E(J)))))
 # ╠═9b1fe40b-f34c-4cc3-99fa-29b2b72b1df2
 # ╠═dbff450c-5836-462a-97ab-13a7137677db
 # ╠═7c59be83-d395-4283-a541-07fd5381ff49
+# ╠═62d921a9-ebdd-4d38-b8c0-df2be57134a6
+# ╠═649d8324-d91b-4295-8198-1f425f4e6acf
+# ╠═7f4a48e3-be97-450b-abe2-dabc62401ed7
+# ╠═c171a7a4-0815-4a2a-ac10-b8b799e2fc0f
+# ╠═e31b9e0b-ad11-431d-ae7d-1dd4b12a5b6a
+# ╠═24b8d1a6-216c-4614-b742-3e795ec747b9
+# ╠═0593b84b-35fa-4ce3-9277-df1ba94a87de
