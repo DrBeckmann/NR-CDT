@@ -346,7 +346,7 @@ function generate_academic_classes(images::AbstractArray, class_size::Int64)
             append!(labels, k)
         end
     end
-    return classes, labels # shuffle_data(classes, labels)
+    return classes, labels 
 end
 
 function shuffle_data(classes::AbstractArray, labels::AbstractArray)
