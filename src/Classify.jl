@@ -1,7 +1,70 @@
-using NormalizedRadonCDT.radon_cdt
-using MLDatasets, Random, Statistics
-using Interpolations: LinearInterpolation as LinInter
-using LIBSVM, LIBLINEAR
+using Plots
+# using MLDatasets, Random, Statistics
+# using Interpolations: LinearInterpolation as LinInter
+# using LIBSVM, LIBLINEAR
+
+function mNRCDT_quantiles(temp_q::AbstractArray, temp_lab::AbstractArray, data_q::AbstractArray, data_lab::AbstractArray)
+    # plot of all of the projections (Theorem 1)
+    dd = length(data_q[1])
+    plt = plot(plot_title="Quantiles of mNR-CDT", size = (400,400))
+    for i in 1:length(temp_lab), j in 1:length(data_lab)
+        if data_lab[j] == temp_lab[i]
+            plot!(plt, data_q[j], label=false, linecolor = RGBA(1-i/length(temp_lab)*0.85, 0, i/length(temp_lab)*0.85, 0.5), yticks=true, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));
+        end
+    end
+    for i in 1:length(temp_lab)
+        plot!(plt, temp_q[i], fontfamily="Computer Modern", label=["class $i" "i"], linewidth=2 , linecolor = RGBA(1-i/length(temp_lab)*0.85, 0, i/length(temp_lab)*0.85, 1), yticks=true, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));    
+    end
+    savefig(plt, "nearest_m_rc-det.pdf")
+    return plt
+end
+
+function mNRCDT_nearest_neighbour(temp_q::AbstractArray, temp_lab::AbstractArray, data_q::AbstractArray, data_lab::AbstractArray)
+    pred_rcdt_max_inf_normalized = zeros(length(temp_q),length(data_q))
+    pred_rcdt_max_2_normalized = zeros(length(temp_q),length(data_q))
+
+    pred_rcdt_mean_inf_normalized = zeros(length(temp_q),length(data_q))
+    pred_rcdt_mean_2_normalized = zeros(length(temp_q),length(data_q))
+
+    for k in 1:length(data_q)
+        for kk in 1:length(temp_q)
+            pred_rcdt_max_inf_normalized[kk,k] = maximum(abs.(temp_q[kk] .- data_q[k]))
+            pred_rcdt_max_2_normalized[kk,k] = sqrt(sum((temp_q[kk] .- data_q[k]).*(temp_q[kk] .- data_q[k])))
+        
+            pred_rcdt_mean_inf_normalized[kk,k] = maximum(abs.(temp_q[kk] .- data_q[k]))
+            pred_rcdt_mean_2_normalized[kk,k] = sqrt(sum((temp_q[kk] .- data_q[k]).*(temp_q[kk] .- data_q[k])))
+        end
+    end
+    
+    pred_label_rcdt_max_inf_normalized = argmin(pred_rcdt_max_inf_normalized, dims=1)
+    pred_label_rcdt_max_2_normalized = argmin(pred_rcdt_max_2_normalized, dims=1)
+
+    pred_label_rcdt_mean_inf_normalized = argmin(pred_rcdt_mean_inf_normalized, dims=1)
+    pred_label_rcdt_mean_2_normalized = argmin(pred_rcdt_mean_2_normalized, dims=1)
+
+    label_rcdt_max_inf_normalized = zeros(length(data_q))
+    label_rcdt_max_2_normalized = zeros(length(data_q))
+
+    label_rcdt_mean_inf_normalized = zeros(length(data_q))
+    label_rcdt_mean_2_normalized = zeros(length(data_q))
+
+    for k in 1:length(data_q)
+        label_rcdt_max_inf_normalized[k] = temp_lab[pred_label_rcdt_max_inf_normalized[k][1]]
+        label_rcdt_max_2_normalized[k] = temp_lab[pred_label_rcdt_max_2_normalized[k][1]]
+
+        label_rcdt_mean_inf_normalized[k] = temp_lab[pred_label_rcdt_mean_inf_normalized[k][1]]
+        label_rcdt_mean_2_normalized[k] = temp_lab[pred_label_rcdt_mean_2_normalized[k][1]]
+    end 
+
+    @info "Acc. of max-NRCDT (||.||_inf) : \t $(mean(data_lab .== label_rcdt_max_inf_normalized))"
+    @info "Acc. of max-NRCDT (||.||_2) : \t $(mean(data_lab .== label_rcdt_max_2_normalized))"
+    @info "-----------------------------------------------------------------------------"
+    @info "Acc. of mean-NRCDT (||.||_inf) : \t $(mean(data_lab .== label_rcdt_mean_inf_normalized))"
+    @info "Acc. of mean-NRCDT (||.||_2) : \t $(mean(data_lab .== label_rcdt_mean_2_normalized))"
+    @info "-----------------------------------------------------------------------------"
+end
+
+#=
 
 function prepare_data(data, num_angles, scale_radii, width)
     ref = ones(size(data[1,:,:]));
@@ -1237,3 +1300,5 @@ function nearest_cross_mnist_NRCDT(samp, size_data, random_seed, num_angles_rcdt
     @info "Acc. of max-NRCDT (||.||_2): \t $(mean(acc_rcdt_max_2_normalized)) +/- $(std(acc_rcdt_max_2_normalized))"
     @info "-----------------------------------------------------------------------------"
 end
+
+=#

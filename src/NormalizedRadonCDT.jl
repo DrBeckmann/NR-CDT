@@ -4,8 +4,8 @@ using Interpolations: LinearInterpolation
 using Statistics
 
 export TestImages
-export NormRadonCDT, MaxNormRadonCDT, MeanNormRadonCDT
 export RadonCDT, RadonTransform
+export NormRadonCDT, MaxNormRadonCDT, MeanNormRadonCDT
 export RandomAffineTransformation
 #export radon_cdt
 
@@ -17,6 +17,6 @@ include("RadonCDT.jl")
 include("DataTransformations.jl")
 #include("Temp.jl")
 #include("Data.jl")
-#include("Classify.jl")
+include("Classify.jl")
 
 end

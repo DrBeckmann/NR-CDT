@@ -336,7 +336,7 @@ function extend_image(image::AbstractMatrix, shape::Int64)
 end
 
 
-function generate_academic_classes(images::AbstractArray, class_size::Int64)
+function generate_academic_classes(images::AbstractArray; class_size::Int64=10)
     num = length(images)
     classes = []
     labels = []
@@ -346,7 +346,7 @@ function generate_academic_classes(images::AbstractArray, class_size::Int64)
             append!(labels, k)
         end
     end
-    return classes, labels 
+    return shuffle_data(classes::AbstractArray, labels::AbstractArray)
 end
 
 function shuffle_data(classes::AbstractArray, labels::AbstractArray)
