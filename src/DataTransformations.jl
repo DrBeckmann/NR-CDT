@@ -2,6 +2,7 @@ module DataTransformations
 
 using Random, Images, Luxor
 using Augmentor
+# using MLDatasets
 # using Statistics, ImageTransformations, Distributions, Rotations, CoordinateTransformations
 
 struct RandomAffineTransformation
@@ -346,7 +347,7 @@ function generate_academic_classes(images::AbstractArray; class_size::Int64=10)
             append!(labels, k)
         end
     end
-    return shuffle_data(classes::AbstractArray, labels::AbstractArray)
+    return shuffle_data(classes, labels)
 end
 
 function shuffle_data(classes::AbstractArray, labels::AbstractArray)
@@ -355,6 +356,21 @@ function shuffle_data(classes::AbstractArray, labels::AbstractArray)
     classes = classes[p]
     labels = labels[p]
     return classes, labels
+end
+
+function samp_mnist(trainset, labels::AbstractArray, size_classes::Int64)
+    target = trainset.targets;
+    pos = findall(x->x==labels[1], target)
+    pos = pos[1:size_classes]
+    for k in 2:size(labels)[1]
+        pos1 = findall(x->x==labels[k], target)
+        append!(pos, pos1[1:size_classes])
+    end
+    data_mnist_tens = Gray{Float64}.(permutedims(trainset[pos].features, [3,2,1]))
+    dim = length(labels)*size_classes
+    data_mnist = [extend_image(imresize(data_mnist_tens[i,:,:], ratio=2),128) for i in 1:dim]
+    label_mnist = trainset[pos].targets
+    return data_mnist, label_mnist #shuffle_data(data_mnist, label_mnist)
 end
 
 
