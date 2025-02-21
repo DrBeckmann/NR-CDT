@@ -85,7 +85,6 @@ function classify_flatten_svm(data::AbstractArray, data_lab::AbstractArray)
         for k in 2:samp
             append!(split_range,  Array([i+(k-1)*10]))
         end
-        print(split_range)
         train_data = data[split_range]
         train_labels = data_lab[split_range]
 
