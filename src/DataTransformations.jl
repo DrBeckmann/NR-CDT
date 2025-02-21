@@ -347,7 +347,7 @@ function generate_academic_classes(images::AbstractArray; class_size::Int64=10, 
             append!(labels, k)
         end
     end
-    if shuf == 1
+    if shuf==1
         return shuffle_data(classes, labels)
     else
         return classes, labels
