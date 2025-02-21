@@ -19,50 +19,69 @@ function mNRCDT_quantiles(temp_q::AbstractArray, temp_lab::AbstractArray, data_q
     return plt
 end
 
-function mNRCDT_nearest_neighbour(temp_q::AbstractArray, temp_lab::AbstractArray, data_q::AbstractArray, data_lab::AbstractArray)
+function mNRCDT_nearest_neighbour(temp_q::AbstractArray, temp_lab::AbstractArray, data_q::AbstractArray, data_lab::AbstractArray; ret::Int64=0)
     pred_rcdt_max_inf_normalized = zeros(length(temp_q),length(data_q))
     pred_rcdt_max_2_normalized = zeros(length(temp_q),length(data_q))
 
-    pred_rcdt_mean_inf_normalized = zeros(length(temp_q),length(data_q))
-    pred_rcdt_mean_2_normalized = zeros(length(temp_q),length(data_q))
-
-    for k in 1:length(data_q)
-        for kk in 1:length(temp_q)
-            pred_rcdt_max_inf_normalized[kk,k] = maximum(abs.(temp_q[kk] .- data_q[k]))
-            pred_rcdt_max_2_normalized[kk,k] = sqrt(sum((temp_q[kk] .- data_q[k]).*(temp_q[kk] .- data_q[k])))
-        
-            pred_rcdt_mean_inf_normalized[kk,k] = maximum(abs.(temp_q[kk] .- data_q[k]))
-            pred_rcdt_mean_2_normalized[kk,k] = sqrt(sum((temp_q[kk] .- data_q[k]).*(temp_q[kk] .- data_q[k])))
-        end
+    for k in 1:length(data_q), kk in 1:length(temp_q)
+        pred_rcdt_max_inf_normalized[kk,k] = maximum(abs.(temp_q[kk] .- data_q[k]))
+        pred_rcdt_max_2_normalized[kk,k] = sqrt(sum((temp_q[kk] .- data_q[k]).*(temp_q[kk] .- data_q[k])))
     end
     
     pred_label_rcdt_max_inf_normalized = argmin(pred_rcdt_max_inf_normalized, dims=1)
     pred_label_rcdt_max_2_normalized = argmin(pred_rcdt_max_2_normalized, dims=1)
 
-    pred_label_rcdt_mean_inf_normalized = argmin(pred_rcdt_mean_inf_normalized, dims=1)
-    pred_label_rcdt_mean_2_normalized = argmin(pred_rcdt_mean_2_normalized, dims=1)
-
     label_rcdt_max_inf_normalized = zeros(length(data_q))
     label_rcdt_max_2_normalized = zeros(length(data_q))
-
-    label_rcdt_mean_inf_normalized = zeros(length(data_q))
-    label_rcdt_mean_2_normalized = zeros(length(data_q))
 
     for k in 1:length(data_q)
         label_rcdt_max_inf_normalized[k] = temp_lab[pred_label_rcdt_max_inf_normalized[k][1]]
         label_rcdt_max_2_normalized[k] = temp_lab[pred_label_rcdt_max_2_normalized[k][1]]
-
-        label_rcdt_mean_inf_normalized[k] = temp_lab[pred_label_rcdt_mean_inf_normalized[k][1]]
-        label_rcdt_mean_2_normalized[k] = temp_lab[pred_label_rcdt_mean_2_normalized[k][1]]
     end 
 
-    @info "Acc. of max-NRCDT (||.||_inf) : \t $(mean(data_lab .== label_rcdt_max_inf_normalized))"
-    @info "Acc. of max-NRCDT (||.||_2) : \t $(mean(data_lab .== label_rcdt_max_2_normalized))"
-    @info "-----------------------------------------------------------------------------"
-    @info "Acc. of mean-NRCDT (||.||_inf) : \t $(mean(data_lab .== label_rcdt_mean_inf_normalized))"
-    @info "Acc. of mean-NRCDT (||.||_2) : \t $(mean(data_lab .== label_rcdt_mean_2_normalized))"
-    @info "-----------------------------------------------------------------------------"
+    acc_rcdt_max_inf_normalized = mean(data_lab .== label_rcdt_max_inf_normalized)
+    acc_rcdt_max_2_normalized = mean(data_lab .== label_rcdt_max_2_normalized)
+    if ret==1
+        @info "--------------------------------------------------------------------------------"
+        @info "Acc. of max-NRCDT (||.||_inf): \t $(acc_rcdt_max_inf_normalized)"
+        @info "Acc. of max-NRCDT (||.||_2): \t $(acc_rcdt_max_2_normalized)"
+        @info "--------------------------------------------------------------------------------"
+    end
+    return acc_rcdt_max_inf_normalized, acc_rcdt_max_2_normalized
 end
+
+function mnist_mNRCDT_nearest_cross_neighbour(data_q::AbstractArray, data_lab::AbstractArray)
+
+    acc_rcdt_max_inf_normalized = zeros(10)
+    acc_rcdt_max_2_normalized = zeros(10)
+    size_data = length(data_lab)
+    samp = div(size_data,10)
+    
+    for l in 1:10
+        split_range = Array([l])
+        for k in 2:samp
+            append!(split_range,  Array([l+(k-1)*10]))
+        end
+        train_data_q = data_q[split_range]
+        train_labels = data_lab[split_range]
+
+        test_range = Array(1:size_data)
+        test_range = filter(e->!(e in split_range),test_range)
+
+        test_data_q = data_q[test_range]
+        test_labels = data_lab[test_range]
+
+        acc_rcdt_max_inf_normalized[l], acc_rcdt_max_2_normalized[l] = mNRCDT_nearest_neighbour(train_data_q, train_labels, test_data_q, test_labels)
+    end
+
+    @info "--------------------------------------------------------------------------------"
+    @info "Acc. of max-NRCDT (||.||_inf): \t $(mean(acc_rcdt_max_inf_normalized)) +/- $(std(acc_rcdt_max_inf_normalized))"
+    @info "Acc. of max-NRCDT (||.||_2): \t $(mean(acc_rcdt_max_2_normalized)) +/- $(std(acc_rcdt_max_2_normalized))"
+    @info "--------------------------------------------------------------------------------"
+    
+end
+
+
 
 #=
 
