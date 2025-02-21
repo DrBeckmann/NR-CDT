@@ -35,11 +35,14 @@ I₃ = Gray{Float64}.(render(Shield(Triangle())));
 J₃ = DataTransformations.extend_image(I₃, (256, 256))
 
 # ╔═╡ c1959bcd-b5ce-40ae-9c41-142fca3027b6
-# J = [J₁, J₂, J₃];
-J = [J₂, J₃]; Label = [1,2];
+J = [J₁, J₂, J₃]; Label = [1, 2, 3];
+# J = [J₂, J₃]; Label = [1, 2];
 
 # ╔═╡ 14864b75-d2e6-476a-bf63-5ffffa95a61d
 Class, Labels = DataTransformations.generate_academic_classes(J, class_size=10);
+
+# ╔═╡ 817efc57-0b05-4164-a4ec-c38a47b54de5
+Class[1]
 
 # ╔═╡ 773832af-9099-4dcf-bd1b-c82baaa83424
 A = DataTransformations.RandomAffineTransformation(
@@ -55,10 +58,10 @@ A = DataTransformations.RandomAffineTransformation(
 TClass = A.(Class)
 
 # ╔═╡ 8fb1f5c3-386e-4117-9b87-dedb75c1ae1d
-R = RadonTransform(256,32,0.0)
+R = RadonTransform(256,128,0.0)
 
 # ╔═╡ bbbcd04c-8b4f-4c44-958d-9e4089ada051
-RCDT = RadonCDT(5*256, R)
+RCDT = RadonCDT(256, R)
 
 # ╔═╡ 81fd55d8-24df-4047-b235-20468b2c111c
 NRCDT = NormRadonCDT(RCDT)
@@ -88,6 +91,7 @@ NormalizedRadonCDT.mNRCDT_nearest_neighbour(qTemp, Label, qClass, Labels)
 # ╠═25220f99-8cbd-4387-b4fd-bb4a0e6fad96
 # ╠═c1959bcd-b5ce-40ae-9c41-142fca3027b6
 # ╠═14864b75-d2e6-476a-bf63-5ffffa95a61d
+# ╠═817efc57-0b05-4164-a4ec-c38a47b54de5
 # ╠═773832af-9099-4dcf-bd1b-c82baaa83424
 # ╠═fb3629dc-1860-4a96-a75e-2b4402f847fe
 # ╠═8fb1f5c3-386e-4117-9b87-dedb75c1ae1d
