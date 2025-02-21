@@ -2,8 +2,6 @@ module DataTransformations
 
 using Random, Images, Luxor
 using Augmentor
-# using MLDatasets
-# using Statistics, ImageTransformations, Distributions, Rotations, CoordinateTransformations
 
 struct RandomAffineTransformation
     scaling_x::Tuple{Float64, Float64}
