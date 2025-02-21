@@ -1,7 +1,7 @@
 using Plots
 # using MLDatasets, Random, Statistics
 # using Interpolations: LinearInterpolation as LinInter
-# using LIBSVM, LIBLINEAR
+using LIBSVM, LIBLINEAR
 
 function mNRCDT_quantiles(temp_q::AbstractArray, temp_lab::AbstractArray, data_q::AbstractArray, data_lab::AbstractArray)
     # plot of all of the projections (Theorem 1)
@@ -42,10 +42,8 @@ function mNRCDT_nearest_neighbour(temp_q::AbstractArray, temp_lab::AbstractArray
     acc_rcdt_max_inf_normalized = mean(data_lab .== label_rcdt_max_inf_normalized)
     acc_rcdt_max_2_normalized = mean(data_lab .== label_rcdt_max_2_normalized)
     if ret==1
-        @info "--------------------------------------------------------------------------------"
         @info "Acc. of max-NRCDT (||.||_inf): \t $(acc_rcdt_max_inf_normalized)"
         @info "Acc. of max-NRCDT (||.||_2): \t $(acc_rcdt_max_2_normalized)"
-        @info "--------------------------------------------------------------------------------"
     end
     return acc_rcdt_max_inf_normalized, acc_rcdt_max_2_normalized
 end
@@ -73,12 +71,36 @@ function mnist_mNRCDT_nearest_cross_neighbour(data_q::AbstractArray, data_lab::A
 
         acc_rcdt_max_inf_normalized[l], acc_rcdt_max_2_normalized[l] = mNRCDT_nearest_neighbour(train_data_q, train_labels, test_data_q, test_labels)
     end
-
-    @info "--------------------------------------------------------------------------------"
     @info "Acc. of max-NRCDT (||.||_inf): \t $(mean(acc_rcdt_max_inf_normalized)) +/- $(std(acc_rcdt_max_inf_normalized))"
     @info "Acc. of max-NRCDT (||.||_2): \t $(mean(acc_rcdt_max_2_normalized)) +/- $(std(acc_rcdt_max_2_normalized))"
-    @info "--------------------------------------------------------------------------------"
-    
+end
+
+function euclidean_svm(data_q::AbstractArray, data_lab::AbstractArray)
+    acc_euclid = zeros(10)
+    size_data = length(data_lab)
+    samp = div(size_data,10)
+    for i in 1:10
+        split_range = Array([i])
+        for k in 2:samp
+            append!(split_range,  Array([i+(k-1)*10]))
+        end
+        train_data = data_q[split_range]
+        train_labels = data_lab[split_range]
+
+        test_range = Array(1:size_data)
+        test_range = filter(e->!(e in split_range),test_range)
+
+        test_data = data_q[test_range]
+        test_labels = data_lab[test_range]
+
+        train_data_reshaped = reshape(collect(Iterators.flatten(train_data)), (length(train_data), length(train_data[1])))
+        clf_euclid_model = linear_train(train_labels, transpose(train_data_reshaped), solver_type=LIBLINEAR.L2R_L2LOSS_SVC)
+        test_data_reshaped = reshape(collect(Iterators.flatten(test_data)), (length(test_data), length(test_data[1])))
+        pred_euclid = linear_predict(clf_euclid_model, transpose(test_data_reshaped))[1]
+
+        acc_euclid[i] = mean(test_labels .== pred_euclid)
+    end     
+    @info "Acc. of Euclidean : \t $(mean(acc_euclid)) +/- $(std(acc_euclid))"
 end
 
 
@@ -506,370 +528,6 @@ function classify_data_NRCDT(samp, image_size, size_data, random_seed, num_angle
     @info "-----------------------------------------------------------------------------"
 end
 
-function nearest_data_NRCDT(samp, image_size, size_data, random_seed, num_angles_rcdt_norm, scale_radii, noise, width)
-
-    templates = load("temp.jld")["temp"]
-    label = range(1, size(templates)[1])
-    size_data_small = size_data
-
-    #####
-    #####
-    # 
-    # Generating the chosen tamps form "samp"-image tamps
-    #         - with extension of the size (by two), due to the random affine transformation
-    #
-    #####
-    #####
-
-    temp, lab = gen_temp_ext(samp, templates, label, image_size)
-
-    # Plot of temp_ext
-    plt1 = plot(layout=(1,size(samp)[1]), plot_title="choice of the synthetic template")
-    # plt1 = []
-    for i in 1:size(samp)[1]
-        plot!(plt1, Gray.(temp[i,:,:]), subplot=i, xaxis=false, yaxis=false, grid=false); # plot each set in a different subplot
-        # push!(plt1, heatmap(temp[i,:,:], aspect_ratio=:equal, axis=([], false), cbar=false))
-    end
-    display(plt1)
-    savefig(plt1, "nearest_temp.pdf")
-
-    #####
-    #####
-    #
-    # Generating the dataset from the chosen tamps
-    #
-    #
-    #####
-    #####
-
-    if noise == 0
-        parameters = [(0.75,1.0),(-0.5,0.5),(-5,5),(-5,5),(-5,5)] #noise: (4,20,2,5), (10,40,2,5)
-    elseif noise == 0.5
-        parameters = [(0.75,1.0),(0.,0.),(0.,0.),(-5,5),(-5,5)] #noise: (4,20,2,5), (10,40,2,5)
-    elseif noise == 1
-        parameters = [(0.75,1.0),(-0.5,0.5),(-5,5),(-5,5),(-5,5),(4,20,2,5)] #noise: (4,20,2,5), (10,40,2,5)
-    elseif noise == 1.5
-        parameters = [(0.75,1.0),(-0.5,0.5),(0.,0.),(-5,5),(-5,5),(4,20,2,10)] #noise: (4,20,2,5), (10,40,2,5)
-        parameters = [(0,0),(0,0),(0,0),(0,0),(0,0),(4,20,2,10)] #noise: (4,20,2,5), (10,40,2,5)
-    elseif noise == 2
-        parameters = [[10.0, 3.0], [1.0, 10, 10], [0]] 
-    elseif noise == 2.3
-        parameters = [[10.0, 3.0], [0], [0]] 
-        parameters = [[10.0, 3.0], [0], [1]] 
-        noise = 2
-    elseif noise == 2.6
-        parameters = [[0], [0.25, 10, 50], [0]]
-        noise = 2
-    elseif noise == 2.8
-        parameters = [[0], [0], [1]]
-        noise = 2
-    elseif noise == 3
-        parameters_aff = [(0.75,1.0),(-0.5,0.5),(-5,5),(-5,5),(-5,5)]
-        parameters_non_aff = [[10.0, 3.0], [1.0, 10, 10], [0]]
-    elseif noise == 3.3
-        parameters_aff = [(0.75,1.0),(-0.5,0.5),(-5,5),(-5,5),(-5,5)]
-        parameters_aff = [(0,0),(0,0),(0,0),(0,0),(0,0),(4,20,2,10)] #noise: (4,20,2,5), (10,40,2,5)
-        parameters_non_aff = [[10.0, 3.0], [0], [0]]
-        parameters_non_aff = [[10.0, 3.0], [0], [1]] 
-        noise = 3
-    elseif noise == 3.6
-        parameters_aff = [(0.75,1.0),(-0.5,0.5),(-5,5),(-5,5),(-5,5)]
-        parameters_non_aff = [[0], [1.0, 10, 10], [0]] 
-        noise = 3
-    end
-
-
-    if noise < 2
-        dataset, labels = gen_dataset(temp, lab, 2*image_size, size_data_small, parameters, [[0], [0], [0]], random_seed)
-    elseif noise == 2
-        dataset, labels = gen_dataset_nonaffine(temp, lab, 2*image_size, size_data_small, parameters)
-    elseif noise == 3
-        dataset, labels = gen_dataset(temp, lab, 2*image_size, size_data_small, parameters_aff, [parameters_non_aff[1], [0], [0]], random_seed)
-        if parameters_non_aff[2][1] != 0
-            for k in 1:size_data*size(samp)[1]
-                dataset[k,:,:] = temp_distortion(dataset[k,:,:], [[0], parameters_non_aff[2], parameters_non_aff[3]])
-            end
-        end
-    end
-
-    for i in 1:size_data*size(samp)[1]
-        dataset[i,:,:] = min.(dataset[i,:,:],1)
-        dataset[i,:,:] = dataset[i,:,:]/sum(dataset[i,:,:])
-        # dataset[i,:,:] = dataset[i,:,:]/maximum(dataset[i,:,:])
-    end
-
-
-    size_data = size(dataset)[1]
-    @info "Size of data: \t  $size_data"
-    sel = rand(1:size_data, 9)
-
-    # Plot random choice of dataimages
-    plt2 = plot(layout=(3,3), plot_title="random choice of dataset")
-    # plt2 = []
-    for i in 1:9
-        plot!(plt2, Gray.(dataset[sel[i],:,:]/maximum(dataset[sel[i],:,:])), subplot=i, xaxis=false, yaxis=false, grid=false); # plot each set in a different subplot
-        # push!(plt2, heatmap(dataset[sel[i],:,:], aspect_ratio=:equal, axis=([], false), cbar=false))
-    end
-    display(plt2)
-    plot(plt2)
-    savefig(plt2, "nearest_data.pdf")
-
-    # plt3 = plot(layout=(4,5), plot_title="random choice of dataset")
-    # for i in 1:20
-    #     plot!(plt3, Gray.(dataset[i,:,:]), subplot=i, xaxis=false, yaxis=false, grid=false); # plot each set in a different subplot
-    # end
-    # display(plt3)
-    # plot(plt3)
-    # savefig(plt3, "nearest_data_all.pdf")
-    
-    #####
-    #####
-    #
-    # Generating training data
-    #
-    #
-    #####
-    #####   
-
-    @info "============================================================================="
-
-    #####
-    #####
-    #
-    # NRCDT --- Computation --- with normalization
-    #
-    #
-    #####
-    #####
-    
-    train_data = temp
-    train_labels = lab
-
-    test_data = dataset
-    test_labels = labels
-
-    ref = ones(size(train_data)[2], size(train_data)[3])
-
-    train_rcdt = gen_rcdt_temp(ref, train_data, num_angles_rcdt_norm, scale_radii, width)
-    
-    train_rcdt_max_normalized = mNR_CDT(train_rcdt)
-    train_rcdt_mean_normalized = aNR_CDT(train_rcdt)
-
-    test_rcdt = gen_rcdt_temp(ref, test_data, num_angles_rcdt_norm, scale_radii, width)
-
-    test_rcdt_max_normalized = mNR_CDT(test_rcdt)
-    test_rcdt_mean_normalized = aNR_CDT(test_rcdt)
-
-    # plot of all of the projections (Theorem 1)
-    dd = size(train_rcdt_max_normalized)[2]
-    plt3 = plot(layout=(size(samp)[1]+1, 2), plot_title="transform of max./mean. NR-CDT", size = (1000,1400))
-    for i in 1:size(samp)[1]
-        for j in 1:size(test_data)[1]
-            if test_labels[j] == train_labels[i]
-                # plot each set in a different subplot
-                plot!(plt3, test_rcdt_max_normalized[j,:], subplot=2*(i-1)+1, label=false, linecolor = RGBA(1-i/size(samp)[1]*0.85, 0, i/size(samp)[1]*0.85, 0.5), yticks = false, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));
-                plot!(plt3, test_rcdt_max_normalized[j,:], subplot=2*size(samp)[1]+1, label=false, linecolor = RGBA(1-i/size(samp)[1]*0.85, 0, i/size(samp)[1]*0.85, 0.5), yticks = false, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));
-
-                plot!(plt3, test_rcdt_mean_normalized[j,:], subplot=2*((i-1)+1), label=false, linecolor = RGBA(1-i/size(samp)[1]*0.85, 0, i/size(samp)[1]*0.85, 0.5), yticks = false, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));
-                plot!(plt3, test_rcdt_mean_normalized[j,:], subplot=2*(size(samp)[1]+1), label=false, linecolor = RGBA(1-i/size(samp)[1]*0.85, 0, i/size(samp)[1]*0.85, 0.5), yticks = false, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));
-            end
-        end
-    end
-    for i in 1:size(samp)[1]
-        plot!(plt3, train_rcdt_max_normalized[i,:], subplot=2*(i-1)+1, label=false, color=:black, yticks = false, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));
-        plot!(plt3, train_rcdt_max_normalized[i,:], subplot=2*size(samp)[1]+1, fontfamily="Computer Modern", label=["class $i" "i"], linewidth=2 , linecolor = RGBA(1-i/size(samp)[1]*0.85, 0, i/size(samp)[1]*0.85, 1), yticks = false, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));    
-    
-        plot!(plt3, train_rcdt_mean_normalized[i,:], subplot=2*((i-1)+1), label=false, color=:black, yticks = false, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));
-        plot!(plt3, train_rcdt_mean_normalized[i,:], subplot=2*(size(samp)[1]+1), fontfamily="Computer Modern", label=["class $i" "i"], linewidth=2 , linecolor = RGBA(1-i/size(samp)[1]*0.85, 0, i/size(samp)[1]*0.85, 1), yticks = false, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));    
-    end
-    display(plt3);
-    savefig(plt3, "nearest_m_rc-det.pdf")
-
-
-    pred_rcdt_max_inf_normalized = zeros(size(train_data)[1],size(test_data)[1])
-    pred_rcdt_max_2_normalized = zeros(size(train_data)[1],size(test_data)[1])
-
-    pred_rcdt_mean_inf_normalized = zeros(size(train_data)[1],size(test_data)[1])
-    pred_rcdt_mean_2_normalized = zeros(size(train_data)[1],size(test_data)[1])
-
-    for k in 1:size(test_data)[1]
-        for kk in 1:size(train_data)[1]
-            pred_rcdt_max_inf_normalized[kk,k] = maximum(abs.(train_rcdt_max_normalized[kk,:] .- test_rcdt_max_normalized[k,:]))
-            pred_rcdt_max_2_normalized[kk,k] = sqrt(sum((train_rcdt_max_normalized[kk,:] .- test_rcdt_max_normalized[k,:]).*(train_rcdt_max_normalized[kk,:] .- test_rcdt_max_normalized[k,:])))
-        
-            pred_rcdt_mean_inf_normalized[kk,k] = maximum(abs.(train_rcdt_mean_normalized[kk,:] .- test_rcdt_mean_normalized[k,:]))
-            pred_rcdt_mean_2_normalized[kk,k] = sqrt(sum((train_rcdt_mean_normalized[kk,:] .- test_rcdt_mean_normalized[k,:]).*(train_rcdt_mean_normalized[kk,:] .- test_rcdt_mean_normalized[k,:])))
-        end
-    end
-    
-    pred_label_rcdt_max_inf_normalized = argmin(pred_rcdt_max_inf_normalized, dims=1)
-    pred_label_rcdt_max_2_normalized = argmin(pred_rcdt_max_2_normalized, dims=1)
-
-    pred_label_rcdt_mean_inf_normalized = argmin(pred_rcdt_mean_inf_normalized, dims=1)
-    pred_label_rcdt_mean_2_normalized = argmin(pred_rcdt_mean_2_normalized, dims=1)
-
-    label_rcdt_max_inf_normalized = zeros(size(test_data)[1])
-    label_rcdt_max_2_normalized = zeros(size(test_data)[1])
-
-    label_rcdt_mean_inf_normalized = zeros(size(test_data)[1])
-    label_rcdt_mean_2_normalized = zeros(size(test_data)[1])
-
-    for k in 1:size(test_data)[1]
-        label_rcdt_max_inf_normalized[k] = train_labels[pred_label_rcdt_max_inf_normalized[k][1]]
-        label_rcdt_max_2_normalized[k] = train_labels[pred_label_rcdt_max_2_normalized[k][1]]
-
-        label_rcdt_mean_inf_normalized[k] = train_labels[pred_label_rcdt_mean_inf_normalized[k][1]]
-        label_rcdt_mean_2_normalized[k] = train_labels[pred_label_rcdt_mean_2_normalized[k][1]]
-    end 
-
-    @info "Acc. of max-NRCDT (||.||_inf) : \t $(mean(test_labels .== label_rcdt_max_inf_normalized))"
-    @info "Acc. of max-NRCDT (||.||_2) : \t $(mean(test_labels .== label_rcdt_max_2_normalized))"
-    @info "-----------------------------------------------------------------------------"
-    @info "Acc. of mean-NRCDT (||.||_inf) : \t $(mean(test_labels .== label_rcdt_mean_inf_normalized))"
-    @info "Acc. of mean-NRCDT (||.||_2) : \t $(mean(test_labels .== label_rcdt_mean_2_normalized))"
-    @info "-----------------------------------------------------------------------------"
-end
-
-function nearest_cross_data_NRCDT(samp, image_size, size_data, random_seed, num_angles_rcdt_norm, scale_radii, noise, width)
-
-    templates = load("pluto/temp.jld")["temp"]
-    label = range(1, size(templates)[1])
-    size_data_small = size_data
-
-    #####
-    #####
-    # 
-    # Generating the chosen tamps form "samp"-image tamps
-    #         - with extension of the size (by two), due to the random affine transformation
-    #
-    #####
-    #####
-
-    temp, lab = gen_temp_ext(samp, templates, label, image_size)
-
-    
-    # Plot of temp_ext
-    plt1 = plot(layout=(1,size(samp)[1]), plot_title="choice of the synthetic template")
-    # plt1 = []
-    for i in 1:size(samp)[1]
-        plot!(plt1, Gray.(temp[i,:,:]), subplot=i, xaxis=false, yaxis=false, grid=false); # plot each set in a different subplot
-        # push!(plt1, heatmap(temp[i,:,:], aspect_ratio=:equal, axis=([], false), cbar=false))
-    end
-    display(plt1)
-
-    savefig(plt1, "plt1.pdf")
-
-    
-    #####
-    #####
-    #
-    # Generating the dataset from the chosen tamps
-    #
-    #
-    #####
-    #####
-
-    if noise == 0
-        parameters = [(0.75,1.0),(-0.5,0.5),(-5,5),(-5,5),(-5,5)] #noise: (4,20,2,5), (10,40,2,5)
-    elseif noise == 0.5
-        parameters = [(0.75,1.0),(0.,0.),(0.,0.),(-5,5),(-5,5)] #noise: (4,20,2,5), (10,40,2,5)
-    elseif noise == 1
-        parameters = [(0.75,1.0),(-0.5,0.5),(-5,5),(-5,5),(-5,5),(4,20,2,5)] #noise: (4,20,2,5), (10,40,2,5)
-    elseif noise == 1.5
-        parameters = [(0.75,1.0),(-0.5,0.5),(0.,0.),(-5,5),(-5,5)] #noise: (4,20,2,5), (10,40,2,5)
-    end
-
-    dataset, labels =  gen_dataset(temp, lab, 2*image_size, size_data_small, parameters, random_seed)
-
-    size_data = size(dataset)[1]
-    @info "Size of data: \t $size_data"
-    sel = rand(1:size_data, 9)
-
-    # Plot random choice of dataimages
-    plt2 = plot(layout=(3,3), plot_title="random choice of dataset")
-    # plt2 = []
-    for i in 1:9
-        plot!(plt2, Gray.(dataset[sel[i],:,:]), subplot=i, xaxis=false, yaxis=false, grid=false); # plot each set in a different subplot
-        # push!(plt2, heatmap(dataset[sel[i],:,:], aspect_ratio=:equal, axis=([], false), cbar=false))
-    end
-    display(plt2)
-    plot(plt2)
-
-    savefig(plt2, "plt2.pdf")
-    
-    #####
-    #####
-    #
-    # Generating training data
-    #
-    #
-    #####
-    #####   
-
-    @info "============================================================================="
-
-    #####
-    #####
-    #
-    # NRCDT --- Computation --- with normalization
-    #
-    #
-    #####
-    #####
-
-    acc_rcdt_normalized_max = zeros(size_data_small)    
-    for l in 1:size_data_small
-        split_range = Array([l])
-        for k in 2:size(samp)[1]
-            append!(split_range,  Array([l+(k-1)*size_data_small]))
-        end
-        train_data = dataset[split_range,:,:]
-        train_labels = labels[split_range]
-
-        test_range = Array(1:size_data)
-        test_range = filter(e->!(e in split_range),test_range)
-
-        test_data = dataset[test_range,:,:]
-        test_labels = labels[test_range]
-
-        ref = ones(size(train_data)[2], size(train_data)[3])
-
-        train_rcdt = gen_rcdt_temp(ref, train_data, num_angles_rcdt_norm, scale_radii, width)
-
-        train_rcdt_max_normalized = mNR_CDT(train_rcdt)
-        
-        test_rcdt = gen_rcdt_temp(ref, test_data, num_angles_rcdt_norm, scale_radii, width)
-
-        test_rcdt_max_normalized = mNR_CDT(test_rcdt)
-
-        pred_rcdt_max_inf_normalized = zeros(size(train_data)[1],size(test_data)[1])
-        pred_rcdt_max_2_normalized = zeros(size(train_data)[1],size(test_data)[1])
-        for k in 1:size(test_data)[1]
-            for kk in 1:size(train_data)[1]
-                pred_rcdt_max_inf_normalized[kk,k] = maximum(abs.(train_rcdt_max_normalized[kk,:] .- test_rcdt_max_normalized[k,:]))
-                pred_rcdt_max_2_normalized[kk,k] = sqrt(sum((abs.(train_rcdt_max_normalized[kk,:] .- test_rcdt_max_normalized[k,:])).*(abs.(train_rcdt_max_normalized[kk,:] .- test_rcdt_max_normalized[k,:]))))
-            end
-        end
-        
-        pred_label_rcdt_max_inf_normalized = argmin(pred_rcdt_max_inf_normalized, dims=1)
-        pred_label_rcdt_max_2_normalized = argmin(pred_rcdt_max_2_normalized, dims=1)
-
-        label_rcdt_max_inf_normalized = zeros(size(test_data)[1])
-        label_rcdt_max_2_normalized = zeros(size(test_data)[1])
-        for k in 1:size(test_data)[1]
-            label_rcdt_max_inf_normalized[k] = train_labels[pred_label_rcdt_max_inf_normalized[k][1]]
-            label_rcdt_max_2_normalized[k] = train_labels[pred_label_rcdt_max_2_normalized[k][1]]
-        end 
-
-        acc_rcdt_max_inf_normalized[l] = mean(test_labels .== label_rcdt_max_inf_normalized)
-        acc_rcdt_max_2_normalized[l] = mean(test_labels .== label_rcdt_max_2_normalized)
-    end
-
-    @info "Acc. of max-NRCDT : \t $(mean(acc_rcdt_max_inf_normalized)) +/- $(std(acc_rcdt_max_inf_normalized))"
-    @info "-----------------------------------------------------------------------------"
-    @info "Acc. of mean-NRCDT : \t $(mean(acc_rcdt_max_2_normalized)) +/- $(std(acc_rcdt_max_2_normalized))"
-    @info "-----------------------------------------------------------------------------"
-end
 
 function classify_mnist_NRCDT(samp, size_data, random_seed, num_angles_rcdt, num_angles_rcdt_norm, scale_radii, noise, width)
 
@@ -1148,175 +806,6 @@ function classify_mnist_NRCDT(samp, size_data, random_seed, num_angles_rcdt, num
 
     @info "Acc. of max-NRCDT : \t $(mean(acc_rcdt_max_normalized)) +/- $(std(acc_rcdt_max_normalized))"
     @info "Acc. of mean-NRCDT : \t $(mean(acc_rcdt_mean_normalized)) +/- $(std(acc_rcdt_mean_normalized))"
-    @info "-----------------------------------------------------------------------------"
-end
-
-function nearest_cross_mnist_NRCDT(samp, size_data, random_seed, num_angles_rcdt_norm, scale_radii, noise, width)
-
-    datas, labels = NormalizedRadonCDT.samp_mnist(samp, size_data);
-    size_data_small = size_data
-
-    dataset = permutedims(datas, (3, 2, 1))
-
-    @info "Choise of labels: \t $(unique(labels))"
-    @info "Size of data: \t $(size(labels)[1])"
-
-    size_data = size(labels)[1]
-    image_size = size(dataset)[2]
-
-    dataset = gen_ext(dataset, size_data, image_size)
-
-    # Plot random choice of dataimages
-    sel = rand(1:size_data, 9)
-    plt1 = plot(layout=(3,3), plot_title="random choice of dataset")
-    for i in 1:9
-        # plot each set in a different subplot
-        plot!(plt1, Gray.(dataset[sel[i],:,:]), subplot=i, xaxis=false, yaxis=false, grid=false)
-    end
-    display(plt1)
-    plot(plt1)
-
-    savefig(plt1, "plt_mnist_rand_data.pdf")
-
-    #####
-    #####
-    #
-    # noisy - MNIST data
-    #
-    #
-    #####
-    #####
-
-    if noise == 0
-        parameters = [(0.75,1.0),(-0.5,0.5),(-5,5),(-5,5),(-5,5)] #noise: (4,20,2,5), (10,40,2,5)
-    elseif noise == 0.5
-        parameters = [(0.75,1.0),(0.,0.),(0.,0.),(-5,5),(-5,5)] #noise: (4,20,2,5), (10,40,2,5)
-    elseif noise == 1
-        parameters = [(0.75,1.0),(-0.5,0.5),(-5,5),(-5,5),(-5,5),(4,20,2,5)] #noise: (4,20,2,5), (10,40,2,5)
-    elseif noise == 1.5
-        parameters = [(0.75,1.0),(-0.5,0.5),(0.,0.),(-5,5),(-5,5)] #noise: (4,20,2,5), (10,40,2,5)
-    end
-
-    datas_noise = zeros(size_data,2*image_size,2*image_size)
-
-    for i in 1:size_data
-        datas_noise[i,:,:] = gen_dataset_mnist(dataset[i,:,:], 2*image_size, parameters, mod(i,10))
-    end
-    dataset = datas_noise
-
-
-    for i in 1:size_data
-        # dataset[i,:,:] = dataset[i,:,:]/sum(dataset[i,:,:])
-        dataset[i,:,:] = dataset[i,:,:]/maximum(dataset[i,:,:])
-    end
-
-    # Plot random choice of dataimages
-    sel = rand(1:size_data, 9)
-    plt11 = plot(layout=(3,3), plot_title="random choice of noisy dataset")
-    for i in 1:9
-        # plot each set in a different subplot
-        plot!(plt11, Gray.(dataset[sel[i],:,:]), subplot=i, xaxis=false, yaxis=false, grid=false)
-    end
-    display(plt11)
-    plot(plt11)
-
-    savefig(plt11, "plt_mnist_rand_data_noise.pdf")
-    
-    #####
-    #####
-    #
-    # Generating training data
-    #
-    #
-    #####
-    #####   
-
-    @info "============================================================================="
-
-    #####
-    #####
-    #
-    # NRCDT --- Computation --- with normalization
-    #
-    #
-    #####
-    #####
-
-    acc_rcdt_max_inf_normalized = zeros(size_data_small)
-    acc_rcdt_max_2_normalized = zeros(size_data_small)
-    
-    for l in 1:size_data_small
-        split_range = Array([l])
-        for k in 2:size(samp)[1]
-            append!(split_range,  Array([l+(k-1)*size_data_small]))
-        end
-        train_data = dataset[split_range,:,:]
-        train_labels = labels[split_range]
-
-        test_range = Array(1:size_data)
-        test_range = filter(e->!(e in split_range),test_range)
-
-        test_data = dataset[test_range,:,:]
-        test_labels = labels[test_range]
-
-        ref = ones(size(train_data)[2], size(train_data)[3])
-
-        train_rcdt = gen_rcdt_temp(ref, train_data, num_angles_rcdt_norm, scale_radii, width)
-
-        train_rcdt_max_normalized = mNR_CDT(train_rcdt)
-
-        test_rcdt = gen_rcdt_temp(ref, test_data, num_angles_rcdt_norm, scale_radii, width)
-
-        test_rcdt_max_normalized = mNR_CDT(test_rcdt)
-
-        # plot of the projection (Theorem 1), notice that the assumption on the perfect (affine transfomed) template measure does not hold anymore!
-        dd = size(train_rcdt_max_normalized)[2]
-        plt3 = plot(layout=(size(samp)[1]+1, 1), plot_title="transform of max. NR-CDT")
-        for i in 1:size(samp)[1]
-            for j in 1:size(test_data)[1]
-                if test_labels[j] == train_labels[i]
-                    # plot each set in a different subplot
-                    plot!(plt3, test_rcdt_max_normalized[j,:], subplot=(i-1)+1, legend=false, linecolor = RGBA(1-i/size(samp)[1]*0.5, i/size(samp)[1]*0.5, 1, 0.5), yticks = false, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));
-
-                    plot!(plt3, test_rcdt_max_normalized[j,:], subplot=size(samp)[1]+1, legend=false, linecolor = RGBA(1-i/size(samp)[1]*0.5, i/size(samp)[1]*0.5, 1, 0.5), yticks = false, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));
-                end
-            end
-        end
-        for i in 1:size(samp)[1]
-            plot!(plt3, train_rcdt_max_normalized[i,:], subplot=(i-1)+1, legend=false, color=:black, yticks = false, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));
-
-            plot!(plt3, train_rcdt_max_normalized[i,:], subplot=size(samp)[1]+1, legend=false, color=:black, yticks = false, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));
-        end
-        display(plt3);
-        savefig(plt3, "nearest_mnist_m_rc-det.pdf")
-
-        pred_rcdt_max_inf_normalized = zeros(size(train_data)[1],size(test_data)[1])
-        pred_rcdt_max_2_normalized = zeros(size(train_data)[1],size(test_data)[1])
-
-        for k in 1:size(test_data)[1]
-            for kk in 1:size(train_data)[1]
-                pred_rcdt_max_inf_normalized[kk,k] = maximum(abs.(train_rcdt_max_normalized[kk,:] .- test_rcdt_max_normalized[k,:]))
-                pred_rcdt_max_2_normalized[kk,k] = sqrt(sum((train_rcdt_max_normalized[kk,:] .- test_rcdt_max_normalized[k,:]).*(train_rcdt_max_normalized[kk,:] .- test_rcdt_max_normalized[k,:])))
-            end
-        end
-        
-        pred_label_rcdt_max_inf_normalized = argmin(pred_rcdt_max_inf_normalized, dims=1)
-        pred_label_rcdt_max_2_normalized = argmin(pred_rcdt_max_2_normalized, dims=1)
-
-        label_rcdt_max_inf_normalized = zeros(size(test_data)[1])
-        label_rcdt_max_2_normalized = zeros(size(test_data)[1])
-
-        for k in 1:size(test_data)[1]
-            label_rcdt_max_inf_normalized[k] = train_labels[pred_label_rcdt_max_inf_normalized[k][1]]
-            label_rcdt_max_2_normalized[k] = train_labels[pred_label_rcdt_max_2_normalized[k][1]]
-        end 
-
-        acc_rcdt_max_inf_normalized[l] = mean(test_labels .== label_rcdt_max_inf_normalized)
-        acc_rcdt_max_2_normalized[l] = mean(test_labels .== label_rcdt_max_2_normalized)
-    end
-
-    @info "Acc. of max-NRCDT (||.||_inf): \t $(mean(acc_rcdt_max_inf_normalized)) +/- $(std(acc_rcdt_max_inf_normalized))"
-    @info "Acc. of max-NRCDT (||.||_2): \t $(mean(acc_rcdt_max_2_normalized)) +/- $(std(acc_rcdt_max_2_normalized))"
     @info "-----------------------------------------------------------------------------"
 end
 
