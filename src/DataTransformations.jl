@@ -337,7 +337,7 @@ function extend_image(image::AbstractMatrix, shape::Int64)
 end
 
 
-function generate_academic_classes(images::AbstractArray; class_size::Int64=10)
+function generate_academic_classes(images::AbstractArray; class_size::Int64=10, shuf::Int64=0)
     num = length(images)
     classes = []
     labels = []
@@ -347,7 +347,11 @@ function generate_academic_classes(images::AbstractArray; class_size::Int64=10)
             append!(labels, k)
         end
     end
-    return shuffle_data(classes, labels)
+    if shuf == 1
+        return shuffle_data(classes, labels)
+    else
+        return classes, labels
+    end
 end
 
 function shuffle_data(classes::AbstractArray, labels::AbstractArray)
