@@ -57,7 +57,7 @@ A = DataTransformations.RandomAffineTransformation(
 TClass = A.(Class)
 
 # ╔═╡ 8fb1f5c3-386e-4117-9b87-dedb75c1ae1d
-R = RadonTransform(floor(Int,sqrt(2)*256),16,0.0)
+R = RadonTransform(floor(Int,sqrt(2)*256),2,0.0)
 
 # ╔═╡ bbbcd04c-8b4f-4c44-958d-9e4089ada051
 RCDT = RadonCDT(floor(Int,sqrt(2)*256), R)
