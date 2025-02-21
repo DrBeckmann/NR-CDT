@@ -75,32 +75,34 @@ function mnist_mNRCDT_nearest_cross_neighbour(data_q::AbstractArray, data_lab::A
     @info "Acc. of max-NRCDT (||.||_2): \t $(mean(acc_rcdt_max_2_normalized)) +/- $(std(acc_rcdt_max_2_normalized))"
 end
 
-function euclidean_svm(data_q::AbstractArray, data_lab::AbstractArray)
+function classify_flatten_svm(data::AbstractArray, data_lab::AbstractArray)
     acc_euclid = zeros(10)
     size_data = length(data_lab)
     samp = div(size_data,10)
+    data = Array{Float64}.(data)
     for i in 1:10
         split_range = Array([i])
         for k in 2:samp
             append!(split_range,  Array([i+(k-1)*10]))
         end
-        train_data = data_q[split_range]
+        print(split_range)
+        train_data = data[split_range]
         train_labels = data_lab[split_range]
 
         test_range = Array(1:size_data)
         test_range = filter(e->!(e in split_range),test_range)
 
-        test_data = data_q[test_range]
+        test_data = data[test_range]
         test_labels = data_lab[test_range]
 
-        train_data_reshaped = reshape(collect(Iterators.flatten(train_data)), (length(train_data), length(train_data[1])))
-        clf_euclid_model = linear_train(train_labels, transpose(train_data_reshaped), solver_type=LIBLINEAR.L2R_L2LOSS_SVC)
-        test_data_reshaped = reshape(collect(Iterators.flatten(test_data)), (length(test_data), length(test_data[1])))
-        pred_euclid = linear_predict(clf_euclid_model, transpose(test_data_reshaped))[1]
+        train_data_reshaped = reshape(collect(Iterators.flatten(train_data)), (length(train_data[1]), length(train_data)))
+        clf_euclid_model = linear_train(train_labels, train_data_reshaped, solver_type=LIBLINEAR.L2R_L2LOSS_SVC)
+        test_data_reshaped = reshape(collect(Iterators.flatten(test_data)), (length(test_data[1]), length(test_data)))
+        pred_euclid = linear_predict(clf_euclid_model, test_data_reshaped)[1]
 
         acc_euclid[i] = mean(test_labels .== pred_euclid)
     end     
-    @info "Acc. of Euclidean : \t $(mean(acc_euclid)) +/- $(std(acc_euclid))"
+    @info "Acc. : \t $(mean(acc_euclid)) +/- $(std(acc_euclid))"
 end
 
 
