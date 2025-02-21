@@ -2,7 +2,6 @@ using Plots
 using LIBSVM, LIBLINEAR
 
 function mNRCDT_quantiles(temp_q::AbstractArray, temp_lab::AbstractArray, data_q::AbstractArray, data_lab::AbstractArray)
-    # plot of all of the projections (Theorem 1)
     dd = length(data_q[1])
     plt = plot(plot_title="Quantiles of mNR-CDT", size = (400,400))
     for i in 1:length(temp_lab), j in 1:length(data_lab)
@@ -13,7 +12,7 @@ function mNRCDT_quantiles(temp_q::AbstractArray, temp_lab::AbstractArray, data_q
     for i in 1:length(temp_lab)
         plot!(plt, temp_q[i], fontfamily="Computer Modern", label=["class $i" "i"], linewidth=2 , linecolor = RGBA(1-i/length(temp_lab)*0.85, 0, i/length(temp_lab)*0.85, 1), yticks=true, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));    
     end
-    savefig(plt, "nearest_m_rc-det.pdf")
+    # savefig(plt, "nearest_m_rc-det.pdf")
     return plt
 end
 
