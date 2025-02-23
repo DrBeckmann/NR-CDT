@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.4
+# v0.19.47
 
 using Markdown
 using InteractiveUtils
@@ -58,7 +58,7 @@ A = DataTransformations.RandomAffineTransformation(
 TClass = A.(Class)
 
 # ╔═╡ 8fb1f5c3-386e-4117-9b87-dedb75c1ae1d
-R = RadonTransform(256,128,0.0)
+R = RadonTransform(floor(Int,sqrt(2)*256),120,0.0)
 
 # ╔═╡ bbbcd04c-8b4f-4c44-958d-9e4089ada051
 RCDT = RadonCDT(256, R)
@@ -70,16 +70,31 @@ NRCDT = NormRadonCDT(RCDT)
 mNRCDT = MaxNormRadonCDT(RCDT)
 
 # ╔═╡ 553a0f34-84b4-4997-b00d-c90fdb1ae833
-qClass = mNRCDT.(TClass);
+mqClass = mNRCDT.(TClass);
 
 # ╔═╡ 6f89e4df-7af6-4fdd-bf50-029b07ca82c2
-qTemp = mNRCDT.(J);
+mqTemp = mNRCDT.(J);
 
 # ╔═╡ e1d7ede5-1b44-4186-9b9e-21e6ddd29dda
-NormalizedRadonCDT.mNRCDT_quantiles(qTemp, Label, qClass, Labels)
+NormalizedRadonCDT.mNRCDT_quantiles(mqTemp, Label, mqClass, Labels)
 
 # ╔═╡ d3839077-85e3-42b7-ba3b-8b97c720ee9f
-NormalizedRadonCDT.mNRCDT_nearest_neighbour(qTemp, Label, qClass, Labels)
+NormalizedRadonCDT.mNRCDT_nearest_neighbour(mqTemp, Label, mqClass, Labels, ret=1)
+
+# ╔═╡ b0a056d3-d727-4a5d-bcae-264d58f6cae2
+# ╠═╡ disabled = true
+#=╠═╡
+for angle in [2,4,8,16,32,64,128]
+	R = RadonTransform(floor(Int,sqrt(2)*256),angle,0.0);
+	RCDT = RadonCDT(floor(Int,sqrt(2)*256), R);
+	NRCDT = NormRadonCDT(RCDT);
+	mNRCDT = MaxNormRadonCDT(RCDT);
+	mqClass = mNRCDT.(TClass);
+	mqTemp = mNRCDT.(J);
+	@info "number of equispaced angles:" angle
+	NormalizedRadonCDT.mNRCDT_nearest_neighbour(mqTemp, Label, mqClass, Labels, ret=1)
+end
+  ╠═╡ =#
 
 # ╔═╡ Cell order:
 # ╠═8cbe0300-edff-11ef-2fad-d3b8cca171a9
@@ -102,3 +117,4 @@ NormalizedRadonCDT.mNRCDT_nearest_neighbour(qTemp, Label, qClass, Labels)
 # ╠═6f89e4df-7af6-4fdd-bf50-029b07ca82c2
 # ╠═e1d7ede5-1b44-4186-9b9e-21e6ddd29dda
 # ╠═d3839077-85e3-42b7-ba3b-8b97c720ee9f
+# ╠═b0a056d3-d727-4a5d-bcae-264d58f6cae2
