@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.4
+# v0.19.47
 
 using Markdown
 using InteractiveUtils
@@ -24,7 +24,7 @@ trainset = MNIST(:train)
 typeof(trainset)
 
 # ╔═╡ 81170d86-6140-41ce-a1e4-24e70c0530ff
-MLClass, MLLabel = DataTransformations.samp_mnist(trainset, [1, 5, 7], 20);
+MLClass, MLLabel = DataTransformations.samp_mnist(trainset, [1, 5, 7], 50);
 
 # ╔═╡ bf8448db-7cb1-42ba-9f1e-03b775b31cb8
 MLClass
@@ -63,6 +63,20 @@ NormalizedRadonCDT.mNRCDT_quantiles([qClass[1], qClass[11], qClass[21]], [1, 5, 
 # ╔═╡ e2dd2d01-a701-4939-86ab-256c6254942f
 NormalizedRadonCDT.mnist_mNRCDT_nearest_cross_neighbour(qClass, MLLabel)
 
+# ╔═╡ 348b704c-c1b5-456b-ad6b-d19a5057e84b
+# ╠═╡ disabled = true
+#=╠═╡
+for angle in [2,4,8,16,32,64,128]
+	R = RadonTransform(floor(Int,sqrt(2)*256),angle,0.0);
+	RCDT = RadonCDT(floor(Int,sqrt(2)*256), R);
+	NRCDT = NormRadonCDT(RCDT);
+	mNRCDT = MaxNormRadonCDT(RCDT);
+	qClass = mNRCDT.(TMLClass);
+	@info "number of equispaced angles:" angle
+	NormalizedRadonCDT.mnist_mNRCDT_nearest_cross_neighbour(qClass, MLLabel)
+end
+  ╠═╡ =#
+
 # ╔═╡ Cell order:
 # ╠═8cbe0300-edff-11ef-2fad-d3b8cca171a9
 # ╠═81783bfb-d7a2-4c18-a4f8-b634f3bbc59b
@@ -78,3 +92,4 @@ NormalizedRadonCDT.mnist_mNRCDT_nearest_cross_neighbour(qClass, MLLabel)
 # ╠═553a0f34-84b4-4997-b00d-c90fdb1ae833
 # ╠═e1d7ede5-1b44-4186-9b9e-21e6ddd29dda
 # ╠═e2dd2d01-a701-4939-86ab-256c6254942f
+# ╠═348b704c-c1b5-456b-ad6b-d19a5057e84b
