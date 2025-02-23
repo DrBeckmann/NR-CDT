@@ -3,16 +3,16 @@ using LIBSVM, LIBLINEAR
 
 function mNRCDT_quantiles(temp_q::AbstractArray, temp_lab::AbstractArray, data_q::AbstractArray, data_lab::AbstractArray)
     dd = length(data_q[1])
-    plt = plot(plot_title="Quantiles of mNR-CDT", size = (400,400))
+    plt = plot(plot_title="Quantiles of mNR-CDT", size = (500,350))
     for i in 1:length(temp_lab), j in 1:length(data_lab)
         if data_lab[j] == temp_lab[i]
-            plot!(plt, data_q[j], label=false, linecolor = RGBA(1-i/length(temp_lab)*0.85, 0, i/length(temp_lab)*0.85, 0.5), yticks=true, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));
+            plot!(plt, data_q[j], label=false, linecolor = RGBA((abs(0.5-(i-1)/(length(temp_lab)-1)))*(1-(i-1)/(length(temp_lab)-1))*0.99, ((i-1)/(length(temp_lab)-1))*(1-(i-1)/(length(temp_lab)-1))*0.99, (abs(0.5-(i-1)/(length(temp_lab)-1)))*((i-1)/(length(temp_lab)-1))*0.99, 0.5), yticks=true, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));
         end
     end
     for i in 1:length(temp_lab)
-        plot!(plt, temp_q[i], fontfamily="Computer Modern", label=["class $i" "i"], linewidth=2 , linecolor = RGBA(1-i/length(temp_lab)*0.85, 0, i/length(temp_lab)*0.85, 1), yticks=true, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));    
+        plot!(plt, temp_q[i], fontfamily="Computer Modern", label=["class $i" "i"], linewidth=2 , linecolor = RGBA((abs(0.5-(i-1)/(length(temp_lab)-1)))*(1-(i-1)/(length(temp_lab)-1))*0.99, ((i-1)/(length(temp_lab)-1))*(1-(i-1)/(length(temp_lab)-1))*0.85, (abs(0.5-(i-1)/(length(temp_lab)-1)))*((i-1)/(length(temp_lab)-1))*0.99, 1), yticks=true, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));    
     end
-    # savefig(plt, "nearest_m_rc-det.pdf")
+    savefig(plt, "nearest_m_rc-det.pdf")
     return plt
 end
 
