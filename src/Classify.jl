@@ -43,11 +43,11 @@ function accuracy_nearest_neighbour(temp_q::AbstractArray, temp_lab::AbstractArr
     return acc_rcdt
 end
 
+function accuracy_nearest_cross_neighbour(data_q::AbstractArray, data_lab::AbstractArray, norm::String)
 
-function mnist_mNRCDT_nearest_cross_neighbour(data_q::AbstractArray, data_lab::AbstractArray)
+    # variabel cross <-- TO DO
 
-    acc_rcdt_max_inf_normalized = zeros(10)
-    acc_rcdt_max_2_normalized = zeros(10)
+    acc_rcdt = zeros(10)
     size_data = length(data_lab)
     samp = div(size_data,10)
     
@@ -65,13 +65,13 @@ function mnist_mNRCDT_nearest_cross_neighbour(data_q::AbstractArray, data_lab::A
         test_data_q = data_q[test_range]
         test_labels = data_lab[test_range]
 
-        acc_rcdt_max_inf_normalized[l], acc_rcdt_max_2_normalized[l] = mNRCDT_nearest_neighbour(train_data_q, train_labels, test_data_q, test_labels)
+        acc_rcdt[l] = accuracy_nearest_neighbour(train_data_q, train_labels, test_data_q, test_labels, norm)
     end
-    @info "Acc. of max-NRCDT (||.||_inf): \t $(mean(acc_rcdt_max_inf_normalized)) +/- $(std(acc_rcdt_max_inf_normalized))"
-    @info "Acc. of max-NRCDT (||.||_2): \t $(mean(acc_rcdt_max_2_normalized)) +/- $(std(acc_rcdt_max_2_normalized))"
+    @info "Acc. using $(norm)-norm : \t $(mean(acc_rcdt)) +/- $(std(acc_rcdt))"
 end
 
-function classify_flatten_svm(data::AbstractArray, data_lab::AbstractArray)
+
+function accuracy_cross_svm(data::AbstractArray, data_lab::AbstractArray)
     acc = zeros(10)
     size_data = length(data_lab)
     samp = div(size_data,10)
