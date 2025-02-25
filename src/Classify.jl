@@ -16,34 +16,33 @@ function plot_quantiles(temp_q::AbstractArray, temp_lab::AbstractArray, data_q::
     return plt
 end
 
-function mNRCDT_nearest_neighbour(temp_q::AbstractArray, temp_lab::AbstractArray, data_q::AbstractArray, data_lab::AbstractArray; ret::Int64=0)
-    pred_rcdt_max_inf_normalized = zeros(length(temp_q),length(data_q))
-    pred_rcdt_max_2_normalized = zeros(length(temp_q),length(data_q))
+function accuracy_nearest_neighbour(temp_q::AbstractArray, temp_lab::AbstractArray, data_q::AbstractArray, data_lab::AbstractArray, norm::String; ret::Int64=0)
+    pred_rcdt = zeros(length(temp_q),length(data_q))
 
     for k in 1:length(data_q), kk in 1:length(temp_q)
-        pred_rcdt_max_inf_normalized[kk,k] = maximum(abs.(temp_q[kk] .- data_q[k]))
-        pred_rcdt_max_2_normalized[kk,k] = sqrt(sum((temp_q[kk] .- data_q[k]).*(temp_q[kk] .- data_q[k])))
+        if norm=="inf"
+            pred_rcdt[kk,k] = maximum(abs.(temp_q[kk] .- data_q[k]))
+        end
+        if norm=="euclidean"
+            pred_rcdt[kk,k] = sqrt(sum((temp_q[kk] .- data_q[k]).*(temp_q[kk] .- data_q[k])))
+        end
     end
     
-    pred_label_rcdt_max_inf_normalized = argmin(pred_rcdt_max_inf_normalized, dims=1)
-    pred_label_rcdt_max_2_normalized = argmin(pred_rcdt_max_2_normalized, dims=1)
+    pred_label_rcdt = argmin(pred_rcdt, dims=1)
 
-    label_rcdt_max_inf_normalized = zeros(length(data_q))
-    label_rcdt_max_2_normalized = zeros(length(data_q))
+    label_rcdt = zeros(length(data_q))
 
     for k in 1:length(data_q)
-        label_rcdt_max_inf_normalized[k] = temp_lab[pred_label_rcdt_max_inf_normalized[k][1]]
-        label_rcdt_max_2_normalized[k] = temp_lab[pred_label_rcdt_max_2_normalized[k][1]]
+        label_rcdt[k] = temp_lab[pred_label_rcdt[k][1]]
     end 
 
-    acc_rcdt_max_inf_normalized = mean(data_lab .== label_rcdt_max_inf_normalized)
-    acc_rcdt_max_2_normalized = mean(data_lab .== label_rcdt_max_2_normalized)
+    acc_rcdt = mean(data_lab .== label_rcdt)
     if ret==1
-        @info "Acc. of max-NRCDT (||.||_inf): \t $(acc_rcdt_max_inf_normalized)"
-        @info "Acc. of max-NRCDT (||.||_2): \t $(acc_rcdt_max_2_normalized)"
+        @info "Acc. using $(norm)-norm : \t $(acc_rcdt)"
     end
-    return acc_rcdt_max_inf_normalized, acc_rcdt_max_2_normalized
+    return acc_rcdt
 end
+
 
 function mnist_mNRCDT_nearest_cross_neighbour(data_q::AbstractArray, data_lab::AbstractArray)
 
