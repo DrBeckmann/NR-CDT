@@ -1,11 +1,6 @@
 using Plots
 using LIBSVM, LIBLINEAR
 
-function norm_data(data::AbstractArray)
-    ndata = [data[i]./sum(data[i]) for i in 1:length(data)]
-    return ndata
-end
-
 function mNRCDT_quantiles(temp_q::AbstractArray, temp_lab::AbstractArray, data_q::AbstractArray, data_lab::AbstractArray)
     dd = length(data_q[1])
     plt = plot(plot_title="Quantiles of mNR-CDT", size = (500,350))
