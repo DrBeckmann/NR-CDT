@@ -6,6 +6,8 @@ using Luxor
 export Circle, Empty, Polygon, Square, Star, Triangle
 export OrbAndCross, Shield
 export render
+export extend_image
+export generate_academic_classes, generate_ml_classes
 
 abstract type AbstractShape end
 abstract type AbstractBaseShape <: AbstractShape end
