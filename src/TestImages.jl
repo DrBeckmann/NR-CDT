@@ -2,7 +2,6 @@ module TestImages
 
 using Images
 using Luxor
-using MLDataset
 
 export Circle, Empty, Polygon, Square, Star, Triangle
 export OrbAndCross, Shield
@@ -270,7 +269,7 @@ function shuffle_data(classes::AbstractArray, labels::AbstractArray)
     return classes, labels
 end
 
-function samp_mnist(trainset, labels::AbstractArray, size_classes::Int64)
+function generate_ml_classes(trainset, labels::AbstractArray, size_classes::Int64)
     target = trainset.targets;
     pos = findall(x->x==labels[1], target)
     pos = pos[1:size_classes]
