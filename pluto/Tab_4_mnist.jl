@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.47
+# v0.20.4
 
 using Markdown
 using InteractiveUtils
@@ -12,6 +12,7 @@ begin
 	using NormalizedRadonCDT
 	using NormalizedRadonCDT.TestImages
 	using NormalizedRadonCDT.DataTransformations
+	using NormalizedRadonCDT.Classify
 	using Images
 	using Plots
 	using MLDatasets
@@ -24,7 +25,7 @@ trainset = MNIST(:train)
 typeof(trainset)
 
 # ╔═╡ 81170d86-6140-41ce-a1e4-24e70c0530ff
-MLClass, MLLabel = DataTransformations.samp_mnist(trainset, [1, 7], 50);
+MLClass, MLLabel = generate_ml_classes(trainset, [1, 7], 50);
 
 # ╔═╡ bf8448db-7cb1-42ba-9f1e-03b775b31cb8
 MLClass
@@ -61,21 +62,21 @@ rClass = RCDT.(TMLClass);
 mClass = mNRCDT.(TMLClass);
 
 # ╔═╡ e1d7ede5-1b44-4186-9b9e-21e6ddd29dda
-NormalizedRadonCDT.mNRCDT_quantiles([mClass[1], mClass[11]], [1, 7], mClass, MLLabel)
+plot_quantiles([mClass[1], mClass[11]], [1, 7], mClass, MLLabel)
 
 # ╔═╡ 9bfdf99b-6b93-477c-9954-56409f53774a
-NormalizedRadonCDT.classify_flatten_svm(TMLClass, MLLabel)
+accuracy_cross_svm(TMLClass, MLLabel)
 
 # ╔═╡ 051f04d7-dd1d-4a8e-bd68-32199e4216c0
-NormalizedRadonCDT.classify_flatten_svm(rClass, MLLabel)
+accuracy_cross_svm(rClass, MLLabel)
 
 # ╔═╡ d1208fce-2ef8-4243-99bd-ba6a8f3deda1
-NormalizedRadonCDT.classify_flatten_svm(mClass, MLLabel)
+accuracy_cross_svm(mClass, MLLabel)
 
 # ╔═╡ ec24a204-5a8a-4752-8839-6ff7b35756b1
 # ╠═╡ disabled = true
 #=╠═╡
-gMLClass, gMLLabel = DataTransformations.samp_mnist(trainset, [1, 7], 5000);
+gMLClass, gMLLabel = generate_ml_classes(trainset, [1, 7], 5000);
   ╠═╡ =#
 
 # ╔═╡ 44476053-4531-4bc9-9740-44ac54817c44
@@ -95,7 +96,7 @@ for class_size in [10,20,50,250,500,1000,5000]
 	sMLLabel = gMLLabel[1:class_size];
 	append!(sMLLabel, gMLLabel[5001:5000+class_size]);
 	
-	NormalizedRadonCDT.classify_flatten_svm(sTMLClass, sMLLabel)
+	accuracy_cross_svm(sTMLClass, sMLLabel)
 	
 	for angle in [2,4,8,16]
 		R = RadonTransform(floor(Int,sqrt(2)*256),angle,0.0);
@@ -105,8 +106,8 @@ for class_size in [10,20,50,250,500,1000,5000]
 		rqMLClass = RCDT.(sTMLClass);
 		mqMLClass = mNRCDT.(sTMLClass);
 		@info "number of equispaced angles:" angle
-		NormalizedRadonCDT.classify_flatten_svm(rqMLClass, sMLLabel)
-		NormalizedRadonCDT.classify_flatten_svm(mqMLClass, sMLLabel)	
+		accuracy_cross_svm(rqMLClass, sMLLabel)
+		accuracy_cross_svm(mqMLClass, sMLLabel)	
 	end
 end
   ╠═╡ =#
