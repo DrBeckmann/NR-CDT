@@ -7,6 +7,8 @@ export TestImages
 export RadonCDT, RadonTransform
 export NormRadonCDT, MaxNormRadonCDT, MeanNormRadonCDT
 export RandomAffineTransformation
+export Classify
+
 
 include("TestImages.jl")
 include("RadonTransform.jl")

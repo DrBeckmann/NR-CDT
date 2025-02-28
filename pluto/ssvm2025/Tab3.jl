@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.47
+# v0.20.4
 
 using Markdown
 using InteractiveUtils
@@ -12,27 +12,28 @@ begin
 	using NormalizedRadonCDT
 	using NormalizedRadonCDT.TestImages
 	using NormalizedRadonCDT.DataTransformations
+	using NormalizedRadonCDT.Classify
 	using Images
 	using Plots
 end
 
 # ╔═╡ c9a1f57f-1874-40e4-b47f-d66f7dd4a064
-I₁ = Gray{Float64}.(render(OrbAndCross(Circle(),Star(1))));
+I₁ = render(OrbAndCross(Circle(),Star(1)));
 
 # ╔═╡ 237a6d1c-6d30-40a0-8eb6-aa0ae913b6d2
-J₁ = DataTransformations.extend_image(I₁, (256, 256))
+J₁ = extend_image(I₁, (256, 256))
 
 # ╔═╡ 8ab0ffae-2f4c-4b8b-b201-7f86d9ef25ac
-I₂ = Gray{Float64}.(render(OrbAndCross(Square(),Star(4))));
+I₂ = render(OrbAndCross(Square(),Star(4)));
 
 # ╔═╡ 29d43338-99a6-42ce-9cf6-eee91d3905b8
-J₂ = DataTransformations.extend_image(I₂, (256, 256))
+J₂ = extend_image(I₂, (256, 256))
 
 # ╔═╡ e6c9fb45-2ec7-4925-bc2c-efbed91caa46
-I₃ = Gray{Float64}.(render(Shield(Triangle())));
+I₃ = render(Shield(Triangle()));
 
 # ╔═╡ 25220f99-8cbd-4387-b4fd-bb4a0e6fad96
-J₃ = DataTransformations.extend_image(I₃, (256, 256))
+J₃ = extend_image(I₃, (256, 256))
 
 # ╔═╡ c1959bcd-b5ce-40ae-9c41-142fca3027b6
 # J = [J₁, J₂, J₃]; Label = [1, 2, 3];
@@ -40,7 +41,7 @@ J₃ = DataTransformations.extend_image(I₃, (256, 256))
 J = [J₁, J₂]; Label = [1, 2];
 
 # ╔═╡ 14864b75-d2e6-476a-bf63-5ffffa95a61d
-Class, Labels = DataTransformations.generate_academic_classes(J, class_size=90);
+Class, Labels = generate_academic_classes(J, class_size=90);
 
 # ╔═╡ 773832af-9099-4dcf-bd1b-c82baaa83424
 A = DataTransformations.RandomAffineTransformation(
@@ -79,21 +80,21 @@ qClass = mNRCDT.(TClass);
 qTemp = mNRCDT.(J);
 
 # ╔═╡ e1d7ede5-1b44-4186-9b9e-21e6ddd29dda
-NormalizedRadonCDT.mNRCDT_quantiles(qTemp, Label, qClass, Labels)
+plot_quantiles(qTemp, Label, qClass, Labels)
 
 # ╔═╡ 2a6defcb-81de-44fa-936b-d7871a188d1a
-NormalizedRadonCDT.classify_flatten_svm(TClass, Labels)
+accuracy_cross_svm(TClass, Labels)
 
 # ╔═╡ 67396c87-3bf4-4189-9a6b-9f861600a425
-NormalizedRadonCDT.classify_flatten_svm(rClass, Labels)
+accuracy_cross_svm(rClass, Labels)
 
 # ╔═╡ ad89e85d-92a8-445a-8e6f-14ed1a570d06
-NormalizedRadonCDT.classify_flatten_svm(qClass, Labels)
+accuracy_cross_svm(qClass, Labels)
 
 # ╔═╡ 457006d5-ae0d-4ee9-b58d-0c0c87d4b128
 # ╠═╡ disabled = true
 #=╠═╡
-gClass, gLabels = DataTransformations.generate_academic_classes(J, class_size=270);
+gClass, gLabels = generate_academic_classes(J, class_size=270);
   ╠═╡ =#
 
 # ╔═╡ c974aee4-ba38-4103-ab3d-b9d1a29066e9
@@ -113,7 +114,7 @@ for class_size in [10,30,90,270]
 	sLabels = gLabels[1:class_size];
 	append!(sLabels, gLabels[271:270+class_size]);
 	
-	NormalizedRadonCDT.classify_flatten_svm(sTClass, sLabels)
+	classify_flatten_svm(sTClass, sLabels)
 	
 	for angle in [2,4,8,16]
 		R = RadonTransform(floor(Int,sqrt(2)*256),angle,0.0);
@@ -123,8 +124,8 @@ for class_size in [10,30,90,270]
 		rqClass = RCDT.(sTClass);
 		mqClass = mNRCDT.(sTClass);
 		@info "number of equispaced angles:" angle
-		NormalizedRadonCDT.classify_flatten_svm(rqClass, sLabels)
-		NormalizedRadonCDT.classify_flatten_svm(mqClass, sLabels)	
+		accuracy_cross_svm(rqClass, sLabels)
+		accuracy_cross_svm(mqClass, sLabels)	
 	end
 end
   ╠═╡ =#

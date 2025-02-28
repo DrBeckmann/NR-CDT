@@ -6,6 +6,8 @@ using Luxor
 export Circle, Empty, Polygon, Square, Star, Triangle
 export OrbAndCross, Shield
 export render
+export extend_image
+export generate_academic_classes, generate_ml_classes
 
 abstract type AbstractShape end
 abstract type AbstractBaseShape <: AbstractShape end
@@ -225,6 +227,63 @@ function extract_luxor_drawing()
     image = image_as_matrix()
     finish()
     return Gray{Float64}.(image)
+end
+
+function extend_image(image::AbstractMatrix, shape::Tuple{Int64, Int64})
+    (dim_y, dim_x) = size(image)
+    if dim_y > shape[1] || dim_x > shape[2]
+        error("dimension mismatch")
+    end
+    I = zeros(Gray{Float64}, shape)
+    id_x = max((shape[2] - dim_x) ÷ 2, 1)
+    id_y = max((shape[1] - dim_y) ÷ 2, 1)
+    I[id_y:(id_y + dim_y - 1), id_x:(id_x + dim_x - 1)] .= Gray{Float64}.(image)
+    return I
+end
+
+function extend_image(image::AbstractMatrix, shape::Int64)
+    return extend_image(image, (shape, shape))
+end
+
+
+function generate_academic_classes(images::AbstractArray; class_size::Int64=10, shuf::Int64=0)
+    num = length(images)
+    classes = []
+    labels = []
+    for k in 1:num
+        for l in 1:class_size
+            append!(classes, images[k,:,:])
+            append!(labels, k)
+        end
+    end
+    if shuf==1
+        return shuffle_data(classes, labels)
+    else
+        return classes, labels
+    end
+end
+
+function shuffle_data(classes::AbstractArray, labels::AbstractArray)
+    dim = length(classes)
+    p = shuffle(1:dim)
+    classes = classes[p]
+    labels = labels[p]
+    return classes, labels
+end
+
+function generate_ml_classes(trainset, labels::AbstractArray, size_classes::Int64)
+    target = trainset.targets;
+    pos = findall(x->x==labels[1], target)
+    pos = pos[1:size_classes]
+    for k in 2:size(labels)[1]
+        pos1 = findall(x->x==labels[k], target)
+        append!(pos, pos1[1:size_classes])
+    end
+    data_mnist_tens = Gray{Float64}.(permutedims(trainset[pos].features, [3,2,1]))
+    dim = length(labels)*size_classes
+    data_mnist = [extend_image(imresize(data_mnist_tens[i,:,:], ratio=2),128) for i in 1:dim]
+    label_mnist = trainset[pos].targets
+    return data_mnist, label_mnist #shuffle_data(data_mnist, label_mnist)
 end
 
 end

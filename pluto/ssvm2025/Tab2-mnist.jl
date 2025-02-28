@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.47
+# v0.20.4
 
 using Markdown
 using InteractiveUtils
@@ -12,6 +12,7 @@ begin
 	using NormalizedRadonCDT
 	using NormalizedRadonCDT.TestImages
 	using NormalizedRadonCDT.DataTransformations
+	using NormalizedRadonCDT.Classify
 	using Images
 	using Plots
 	using MLDatasets
@@ -24,7 +25,7 @@ trainset = MNIST(:train)
 typeof(trainset)
 
 # ╔═╡ 81170d86-6140-41ce-a1e4-24e70c0530ff
-MLClass, MLLabel = DataTransformations.samp_mnist(trainset, [1, 5, 7], 50);
+MLClass, MLLabel = generate_ml_classes(trainset, [1, 5, 7], 50);
 
 # ╔═╡ bf8448db-7cb1-42ba-9f1e-03b775b31cb8
 MLClass
@@ -43,7 +44,7 @@ A = DataTransformations.RandomAffineTransformation(
 TMLClass = A.(MLClass)
 
 # ╔═╡ 8fb1f5c3-386e-4117-9b87-dedb75c1ae1d
-R = RadonTransform(256,128,0.0)
+R = RadonTransform(256,8,0.0)
 
 # ╔═╡ bbbcd04c-8b4f-4c44-958d-9e4089ada051
 RCDT = RadonCDT(256, R)
@@ -58,10 +59,13 @@ mNRCDT = MaxNormRadonCDT(RCDT)
 qClass = mNRCDT.(TMLClass);
 
 # ╔═╡ e1d7ede5-1b44-4186-9b9e-21e6ddd29dda
-NormalizedRadonCDT.mNRCDT_quantiles([qClass[1], qClass[11], qClass[21]], [1, 5, 7], qClass, MLLabel)
+plot_quantiles([qClass[1], qClass[11], qClass[21]], [1, 5, 7], qClass, MLLabel)
 
-# ╔═╡ e2dd2d01-a701-4939-86ab-256c6254942f
-NormalizedRadonCDT.mnist_mNRCDT_nearest_cross_neighbour(qClass, MLLabel)
+# ╔═╡ 2a28b3ba-60c5-4a5c-9aee-e3c342748f75
+accuracy_nearest_cross_neighbour(qClass, MLLabel, "inf")
+
+# ╔═╡ 47ef7d01-cef9-4be3-b494-b12a459b5b89
+accuracy_nearest_cross_neighbour(qClass, MLLabel, "euclidean")
 
 # ╔═╡ 348b704c-c1b5-456b-ad6b-d19a5057e84b
 # ╠═╡ disabled = true
@@ -73,7 +77,8 @@ for angle in [2,4,8,16,32,64,128]
 	mNRCDT = MaxNormRadonCDT(RCDT);
 	qClass = mNRCDT.(TMLClass);
 	@info "number of equispaced angles:" angle
-	NormalizedRadonCDT.mnist_mNRCDT_nearest_cross_neighbour(qClass, MLLabel)
+	accuracy_nearest_cross_neighbour(qClass, MLLabel, "inf")
+	accuracy_nearest_cross_neighbour(qClass, MLLabel, "euclidean")
 end
   ╠═╡ =#
 
@@ -91,5 +96,6 @@ end
 # ╠═81e32395-78d9-4a5f-b6f0-ba2d6f01c8ee
 # ╠═553a0f34-84b4-4997-b00d-c90fdb1ae833
 # ╠═e1d7ede5-1b44-4186-9b9e-21e6ddd29dda
-# ╠═e2dd2d01-a701-4939-86ab-256c6254942f
+# ╠═2a28b3ba-60c5-4a5c-9aee-e3c342748f75
+# ╠═47ef7d01-cef9-4be3-b494-b12a459b5b89
 # ╠═348b704c-c1b5-456b-ad6b-d19a5057e84b
