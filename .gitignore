@@ -1,2 +1,6 @@
 playground/
+
+.vscode
+
 *.pdf
+*.jld
