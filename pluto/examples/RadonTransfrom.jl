@@ -8,7 +8,7 @@ using InteractiveUtils
 # ╠═╡ show_logs = false
 begin
 	import Pkg
-	Pkg.activate("..")
+	Pkg.activate("../..")
 	using NormalizedRadonCDT
 	using NormalizedRadonCDT.TestImages
 	using NormalizedRadonCDT.RadonTransform
