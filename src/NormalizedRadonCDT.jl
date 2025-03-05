@@ -6,7 +6,7 @@ using Statistics
 export TestImages
 export RadonCDT, RadonTransform
 export NormRadonCDT, MaxNormRadonCDT, MeanNormRadonCDT
-export RandomAffineTransformation
+export DataTransformations
 export Classify
 
 
