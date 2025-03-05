@@ -14,6 +14,8 @@ struct RadonTransform
     end
 end
 
+RadonTransform(radii, angles; width=0.0) = RadonTransform(radii, angles, width)
+
 struct Phantom
     data::Matrix{Float64}
     pixel_size::Float64
