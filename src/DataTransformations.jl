@@ -3,6 +3,12 @@ module DataTransformations
 using Random, Images, Luxor
 using Augmentor
 
+export RandomAffineTransformation
+export MikadoNoise
+export SaltNoise
+export BarNoise
+export ElasticNoise
+
 struct RandomAffineTransformation
     scaling_x::Tuple{Float64, Float64}
     scaling_y::Tuple{Float64, Float64}
