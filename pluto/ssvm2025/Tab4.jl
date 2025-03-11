@@ -120,26 +120,28 @@ we use the Julia package `LIBLINEAR` from
   (https://www.jmlr.org/papers/volume9/fan08a/fan08a.pdf)', 
   *Journal of Machine Learning Research* **9**, 
   1871--1874 (2008).
+
+!!! note "Runtime"
+	This experiment may need around 1--1.5 hours!
 """
 
 # ╔═╡ 9dde6e4f-ca20-4843-90fc-19edddd83f75
 for class_size in [10,20,50,250,500,1000,5000]
 	@info "class size:" class_size
 	
-	sTMLClass = gTMLClass[1:class_size];
-	append!(sTMLClass, gTMLClass[5001:5000+class_size]);
-	sMLLabel = gMLLabel[1:class_size];
-	append!(sMLLabel, gMLLabel[5001:5000+class_size]);
+	sTMLClass = TMLClass[1:class_size]
+	append!(sTMLClass, TMLClass[5001:5000+class_size])
+	sMLLabel = MLLabel[1:class_size]
+	append!(sMLLabel, MLLabel[5001:5000+class_size])
 	
 	accuracy_cross_svm(sTMLClass, sMLLabel)
 	
 	for angle in [2,4,8,16]
-		R = RadonTransform(floor(Int,sqrt(2)*256),angle,0.0);
-		RCDT = RadonCDT(floor(Int,sqrt(2)*256), R);
-		NRCDT = NormRadonCDT(RCDT);
-		mNRCDT = MaxNormRadonCDT(RCDT);
-		rqMLClass = RCDT.(sTMLClass);
-		mqMLClass = mNRCDT.(sTMLClass);
+		R = RadonTransform(floor(Int,sqrt(2)*256),angle,0.0)
+		RCDT = RadonCDT(floor(Int,sqrt(2)*256), R)
+		mNRCDT = MaxNormRadonCDT(RCDT)
+		rqMLClass = RCDT.(sTMLClass)
+		mqMLClass = mNRCDT.(sTMLClass)
 		@info "number of equispaced angles:" angle
 		accuracy_cross_svm(rqMLClass, sMLLabel)
 		accuracy_cross_svm(mqMLClass, sMLLabel)	
