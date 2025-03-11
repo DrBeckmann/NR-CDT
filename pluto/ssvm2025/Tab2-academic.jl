@@ -56,7 +56,6 @@ J₃ = extend_image(I₃, (256, 256))
 
 # ╔═╡ c1959bcd-b5ce-40ae-9c41-142fca3027b6
 J = [J₁, J₂, J₃]; Label = [1, 2, 3];
-# J = [J₂, J₃]; Label = [1, 2];
 
 # ╔═╡ 0a3ccf51-e303-4f8d-b627-0676df4f561d
 md"""
