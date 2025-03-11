@@ -91,6 +91,14 @@ and nine tenth for testing.
 The experiment is repeated 
 for different class sizes
 and different numbers of used angles.
+For training the linear SVM,
+we use the Julia package `LIBLINEAR` from
+
+- R.E. Fan, K.W. Chang, C.J. Hsieh, X.R. Wang, C.J. Lin,
+  '[LIBLINEAR: A library for large linear classification]
+  (https://www.jmlr.org/papers/volume9/fan08a/fan08a.pdf)', 
+  *Journal of Machine Learning Research* **9**, 
+  1871--1874 (2008).
 """
 
 # ╔═╡ 59720153-0f97-4144-befa-0cff41aee075
