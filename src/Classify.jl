@@ -1,7 +1,7 @@
 module Classify 
 
 using Plots
-using LIBSVM, LIBLINEAR
+using LIBLINEAR
 using Statistics
 
 export plot_quantiles
