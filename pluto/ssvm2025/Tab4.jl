@@ -18,17 +18,72 @@ begin
 	using MLDatasets
 end
 
+# ╔═╡ 60c6e670-a8a7-45f4-8f20-ae2a6351a27c
+md"""
+# SSVM 2025 -- Table 4
+This pluto notebook reproduces the numerical experiment
+for Table 4 from
+
+- Matthias Beckmann, Robert Beinert, Jonas Bresch, 
+  'Max-Normalized Radon Cumulative Distribution
+  Transform for Limited Data Classification',
+  SSVM 2025.
+"""
+
+# ╔═╡ d163b8f7-110f-4a3d-9340-b87a3fa5c888
+md"""
+## Dataset
+Load MNIST 
+using `MLDatasets`.
+Further information about MNIST can be found in
+
+- L. Deng, 
+  '[The MNIST database of handwritten digit images 
+  for machine learning research]
+  (https://doi.org/10.1109/MSP.2012.2211477)',
+  *IEEE Signal Processing Magazine* **29**(6),
+  141--142 (2012). 
+
+!!! warning "Download MNIST"
+	In order to load MNIST
+	using `MLDatasets`,
+	MNIST has to be downloaded first!
+	For this,
+	one can activate the enivironment of the project
+	and load the dataset one time explicitly.
+	Starting a Julia REPL 
+	in the main directory of the project,
+	this can be done by
+	```
+	import Pkg
+	Pkg.activate
+	using MLDatasets
+	MNIST(:train)
+	```
+	Julia then asks to download the corresponding dataset.
+"""
+
 # ╔═╡ 81783bfb-d7a2-4c18-a4f8-b634f3bbc59b
 trainset = MNIST(:train)
 
-# ╔═╡ 98131234-5ab0-4954-bd68-0646241ed22a
-typeof(trainset)
+# ╔═╡ 5b130423-33f7-4b94-a919-9980f5cc7998
+md"""
+Generate LinMNIST
+by selecting a subset of samples
+and applying random affine transformations
+using the submodule `DataTransformations`.
+Further information about LinMNIST can be found in
+
+- M. Beckmann, N. Heilenkötter,
+  '[Equivariant neural networks 
+  for indirect measurements]
+  (https://doi.org/10.1137/23M1582862)',
+  *SIAM Journal on Mathematics of Data Science* **6**(3),
+  579--601 (2024).
+"""
 
 # ╔═╡ 81170d86-6140-41ce-a1e4-24e70c0530ff
-MLClass, MLLabel = generate_ml_classes(trainset, [1, 7], 50);
-
-# ╔═╡ bf8448db-7cb1-42ba-9f1e-03b775b31cb8
-MLClass
+MLClass, MLLabel = generate_ml_classes(trainset, [1, 7], 5000);
 
 # ╔═╡ 773832af-9099-4dcf-bd1b-c82baaa83424
 A = DataTransformations.RandomAffineTransformation(
@@ -43,51 +98,31 @@ A = DataTransformations.RandomAffineTransformation(
 # ╔═╡ fb3629dc-1860-4a96-a75e-2b4402f847fe
 TMLClass = A.(MLClass)
 
-# ╔═╡ 8fb1f5c3-386e-4117-9b87-dedb75c1ae1d
-R = RadonTransform(256,4,0.0)
+# ╔═╡ 74f73f93-d83b-4179-b021-a5ec8d7edd5c
+md"""
+## Linear SVM Classification -- Table 4
+Train a linear support vector machine (SVM)
+to classify the generated dataset.
+The first SVM employes the Euclidean representations,
+the second SVM the plain RCDT projections,
+and the third SVM the max-normalized RCDTs.
+We perform a 10-fold cross-validation,
+where one tenth is used for training
+and nine tenth for testing.
+The experiment is repeated 
+for different class sizes
+and different numbers of used angles.
+For training the linear SVM,
+we use the Julia package `LIBLINEAR` from
 
-# ╔═╡ bbbcd04c-8b4f-4c44-958d-9e4089ada051
-RCDT = RadonCDT(256, R)
-
-# ╔═╡ 81fd55d8-24df-4047-b235-20468b2c111c
-NRCDT = NormRadonCDT(RCDT)
-
-# ╔═╡ 81e32395-78d9-4a5f-b6f0-ba2d6f01c8ee
-mNRCDT = MaxNormRadonCDT(RCDT)
-
-# ╔═╡ 0d3b5261-8b36-4476-8086-478ba5335517
-rClass = RCDT.(TMLClass);
-
-# ╔═╡ 553a0f34-84b4-4997-b00d-c90fdb1ae833
-mClass = mNRCDT.(TMLClass);
-
-# ╔═╡ e1d7ede5-1b44-4186-9b9e-21e6ddd29dda
-plot_quantiles([mClass[1], mClass[11]], [1, 7], mClass, MLLabel)
-
-# ╔═╡ 9bfdf99b-6b93-477c-9954-56409f53774a
-accuracy_cross_svm(TMLClass, MLLabel)
-
-# ╔═╡ 051f04d7-dd1d-4a8e-bd68-32199e4216c0
-accuracy_cross_svm(rClass, MLLabel)
-
-# ╔═╡ d1208fce-2ef8-4243-99bd-ba6a8f3deda1
-accuracy_cross_svm(mClass, MLLabel)
-
-# ╔═╡ ec24a204-5a8a-4752-8839-6ff7b35756b1
-# ╠═╡ disabled = true
-#=╠═╡
-gMLClass, gMLLabel = generate_ml_classes(trainset, [1, 7], 5000);
-  ╠═╡ =#
-
-# ╔═╡ 44476053-4531-4bc9-9740-44ac54817c44
-# ╠═╡ disabled = true
-#=╠═╡
-gTMLClass = A.(gMLClass);
-  ╠═╡ =#
+- R.E. Fan, K.W. Chang, C.J. Hsieh, X.R. Wang, C.J. Lin,
+  '[LIBLINEAR: A library for large linear classification]
+  (https://www.jmlr.org/papers/volume9/fan08a/fan08a.pdf)', 
+  *Journal of Machine Learning Research* **9**, 
+  1871--1874 (2008).
+"""
 
 # ╔═╡ 9dde6e4f-ca20-4843-90fc-19edddd83f75
-# ╠═╡ disabled = true
-#=╠═╡
 for class_size in [10,20,50,250,500,1000,5000]
 	@info "class size:" class_size
 	
@@ -110,26 +145,15 @@ for class_size in [10,20,50,250,500,1000,5000]
 		accuracy_cross_svm(mqMLClass, sMLLabel)	
 	end
 end
-  ╠═╡ =#
 
 # ╔═╡ Cell order:
+# ╟─60c6e670-a8a7-45f4-8f20-ae2a6351a27c
 # ╠═8cbe0300-edff-11ef-2fad-d3b8cca171a9
+# ╟─d163b8f7-110f-4a3d-9340-b87a3fa5c888
 # ╠═81783bfb-d7a2-4c18-a4f8-b634f3bbc59b
-# ╠═98131234-5ab0-4954-bd68-0646241ed22a
+# ╟─5b130423-33f7-4b94-a919-9980f5cc7998
 # ╠═81170d86-6140-41ce-a1e4-24e70c0530ff
-# ╠═bf8448db-7cb1-42ba-9f1e-03b775b31cb8
 # ╠═773832af-9099-4dcf-bd1b-c82baaa83424
 # ╠═fb3629dc-1860-4a96-a75e-2b4402f847fe
-# ╠═8fb1f5c3-386e-4117-9b87-dedb75c1ae1d
-# ╠═bbbcd04c-8b4f-4c44-958d-9e4089ada051
-# ╠═81fd55d8-24df-4047-b235-20468b2c111c
-# ╠═81e32395-78d9-4a5f-b6f0-ba2d6f01c8ee
-# ╠═0d3b5261-8b36-4476-8086-478ba5335517
-# ╠═553a0f34-84b4-4997-b00d-c90fdb1ae833
-# ╠═e1d7ede5-1b44-4186-9b9e-21e6ddd29dda
-# ╠═9bfdf99b-6b93-477c-9954-56409f53774a
-# ╠═051f04d7-dd1d-4a8e-bd68-32199e4216c0
-# ╠═d1208fce-2ef8-4243-99bd-ba6a8f3deda1
-# ╠═ec24a204-5a8a-4752-8839-6ff7b35756b1
-# ╠═44476053-4531-4bc9-9740-44ac54817c44
+# ╟─74f73f93-d83b-4179-b021-a5ec8d7edd5c
 # ╠═9dde6e4f-ca20-4843-90fc-19edddd83f75
