@@ -1,6 +1,7 @@
 playground/
 
 .vscode
+.DS_store
 
 *.pdf
 *.jld
