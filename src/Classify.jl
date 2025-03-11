@@ -18,7 +18,6 @@ function plot_quantiles(temp_q::AbstractArray, temp_lab::AbstractArray, data_q::
     for i in 1:length(temp_lab)
         plot!(plt, temp_q[i], fontfamily="Computer Modern", label=["class $i" "i"], linewidth=2 , linecolor = RGBA((abs(0.5-(i-1)/(length(temp_lab)-1)))*(1-(i-1)/(length(temp_lab)-1))*0.99, ((i-1)/(length(temp_lab)-1))*(1-(i-1)/(length(temp_lab)-1))*0.85, (abs(0.5-(i-1)/(length(temp_lab)-1)))*((i-1)/(length(temp_lab)-1))*0.99, 1), yticks=true, xticks = (LinRange(0,dd,4), ["0", "0.25", "0.75", "1"]));    
     end
-    savefig(plt, "quantiles_norm_rcdt.pdf")
     return plt
 end
 
