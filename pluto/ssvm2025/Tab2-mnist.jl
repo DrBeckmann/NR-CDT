@@ -56,7 +56,7 @@ Further information about MNIST can be found in
 	this can be done by
 	```
 	import Pkg
-	Pkg.activate
+	Pkg.activate()
 	using MLDatasets
 	MNIST(:train)
 	```
