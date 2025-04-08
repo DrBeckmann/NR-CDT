@@ -83,7 +83,7 @@ Further information about LinMNIST can be found in
 """
 
 # ╔═╡ 81170d86-6140-41ce-a1e4-24e70c0530ff
-MLClass, MLLabel = generate_ml_classes(trainset, [1, 5, 7], 10);
+MLClass, MLLabel = generate_ml_classes(trainset, [1, 5, 7], 50);
 
 # ╔═╡ bf8448db-7cb1-42ba-9f1e-03b775b31cb8
 MLClass
