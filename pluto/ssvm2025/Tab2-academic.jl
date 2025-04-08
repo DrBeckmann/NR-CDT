@@ -67,7 +67,7 @@ using the submodule `DataTransformations`.
 """
 
 # ╔═╡ 14864b75-d2e6-476a-bf63-5ffffa95a61d
-Class, Labels = generate_academic_classes(J, class_size=10);
+Class, Labels = generate_academic_classes(J, Label, class_size=10);
 
 # ╔═╡ 773832af-9099-4dcf-bd1b-c82baaa83424
 A = DataTransformations.RandomAffineTransformation(
