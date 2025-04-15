@@ -6,6 +6,7 @@ using Statistics
 export TestImages
 export RadonCDT, RadonTransform
 export NormRadonCDT, MaxNormRadonCDT, MeanNormRadonCDT
+export normalization, filter_angles, max_normalization, mean_normalization
 export DataTransformations
 export Classify
 

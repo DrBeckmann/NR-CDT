@@ -68,3 +68,24 @@ function (aNRCDT::MeanNormRadonCDT)(image::AbstractMatrix)
     anrcdt = dropdims(mean(nrcdt, dims=2), dims=2)
     return anrcdt
 end
+
+function filter_angles(rcdt::AbstractMatrix, num_angle::Int64, angles::Int64)
+    choice_angles = sort(Int64.(angles+1 .- collect(range(0,angles,length=num_angle+1))))[1:num_angle]
+    filter_rcdt = rcdt[:,choice_angles]
+    return filter_rcdt
+end
+
+function normalization(rcdt::AbstractArray)
+    nrcdt = (rcdt .- mean(rcdt, dims=1)) ./ std(rcdt, dims=1)
+    return nrcdt
+end
+
+function max_normalization(rcdt::AbstractArray)
+    mnrcdt = dropdims(maximum(normalization(rcdt), dims=2), dims=2)
+    return mnrcdt
+end
+
+function mean_normalization(rcdt::AbstractArray)
+    mnrcdt = dropdims(mean(normalization(rcdt), dims=2), dims=2)
+    return mnrcdt
+end

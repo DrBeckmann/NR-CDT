@@ -246,14 +246,14 @@ function extend_image(image::AbstractMatrix, shape::Int64)
 end
 
 
-function generate_academic_classes(images::AbstractArray; class_size::Int64=10, shuf::Int64=0)
+function generate_academic_classes(images::AbstractArray, label::AbstractArray; class_size::Int64=10, shuf::Int64=0)
     num = length(images)
     classes = []
     labels = []
     for k in 1:num
         for l in 1:class_size
             append!(classes, images[k,:,:])
-            append!(labels, k)
+            append!(labels, label[k])
         end
     end
     if shuf==1
@@ -271,7 +271,7 @@ function shuffle_data(classes::AbstractArray, labels::AbstractArray)
     return classes, labels
 end
 
-function generate_ml_classes(trainset, labels::AbstractArray, size_classes::Int64)
+function generate_ml_classes(trainset, labels::AbstractArray, size_classes::Int64, thres::Float64=0.5)
     target = trainset.targets;
     pos = findall(x->x==labels[1], target)
     pos = pos[1:size_classes]
@@ -279,6 +279,7 @@ function generate_ml_classes(trainset, labels::AbstractArray, size_classes::Int6
         pos1 = findall(x->x==labels[k], target)
         append!(pos, pos1[1:size_classes])
     end
+    trainset.features[trainset.features.<thres] .= 0.0
     data_mnist_tens = Gray{Float64}.(permutedims(trainset[pos].features, [3,2,1]))
     dim = length(labels)*size_classes
     data_mnist = [extend_image(imresize(data_mnist_tens[i,:,:], ratio=2),128) for i in 1:dim]
