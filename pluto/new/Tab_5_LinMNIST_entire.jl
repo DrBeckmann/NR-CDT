@@ -7,7 +7,7 @@ using InteractiveUtils
 # ╔═╡ 8cbe0300-edff-11ef-2fad-d3b8cca171a9
 begin
 	import Pkg
-	Pkg.activate("..")
+	Pkg.activate("../..")
 	using Revise
 	using NormalizedRadonCDT
 	using NormalizedRadonCDT.TestImages
@@ -16,6 +16,7 @@ begin
 	using Images
 	using Plots
 	using MLDatasets
+	using JLD2
 	using Random
 	Random.seed!(42)
 end
@@ -34,11 +35,11 @@ MLClass
 
 # ╔═╡ 773832af-9099-4dcf-bd1b-c82baaa83424
 A = DataTransformations.RandomAffineTransformation(
-	scale_x = (0.75, 1.25), 
-	scale_y = (0.75, 1.25),
-	rotate=(-45.0, 45.0), 
-	shear_x=(-5.0, 5.0),
-	shear_y=(-5.0, 5.0),
+	scale_x = (0.75, 1.0), 
+	scale_y = (0.75, 1.0),
+	rotate=(-180.0, 180.0), 
+	#shear_x=(-5.0, 5.0),
+	#shear_y=(-5.0, 5.0),
 	shift_x=(-20, 20),
 	shift_y=(-20, 20))
 
@@ -46,13 +47,16 @@ A = DataTransformations.RandomAffineTransformation(
 Random.seed!(42); TMLClass = A.(MLClass)
 
 # ╔═╡ 8fb1f5c3-386e-4117-9b87-dedb75c1ae1d
-R = RadonTransform(128,128,0.0)
+R = RadonTransform(300,128,0.0)
 
 # ╔═╡ bbbcd04c-8b4f-4c44-958d-9e4089ada051
-RCDT = RadonCDT(128, R)
+RCDT = RadonCDT(64, R)
 
 # ╔═╡ 81fd55d8-24df-4047-b235-20468b2c111c
+# ╠═╡ disabled = true
+#=╠═╡
 NRCDT = NormRadonCDT(RCDT)
+  ╠═╡ =#
 
 # ╔═╡ 81e32395-78d9-4a5f-b6f0-ba2d6f01c8ee
 # ╠═╡ disabled = true
@@ -70,7 +74,10 @@ aNRCDT = MeanNormRadonCDT(RCDT); aqClass = aNRCDT.(TMLClass)
 rcdt = RCDT.(TMLClass)
 
 # ╔═╡ 0084b432-9cf1-4f6e-a8dc-8127ec832643
+# ╠═╡ disabled = true
+#=╠═╡
 rqMLClass = filter_angles.(rcdt, 128, 128)
+  ╠═╡ =#
 
 # ╔═╡ c678f383-6fc4-4264-a045-b85decb41528
 mqMLClass = max_normalization.(rcdt)
@@ -81,7 +88,7 @@ aqMLClass = mean_normalization.(rcdt)
 # ╔═╡ 68dc3cd6-7b79-44fa-9116-6470b7b0b485
 # ╠═╡ disabled = true
 #=╠═╡
-for angle in [1,2,3,4,5,6,128]
+for angle in [1,2,3,4,5,6,128,256]
 	R = RadonTransform(256,angle,0.0);
 	RCDT = RadonCDT(256, R);
 	NRCDT = NormRadonCDT(RCDT);
@@ -98,25 +105,28 @@ end
   ╠═╡ =#
 
 # ╔═╡ edae2657-66a9-4976-abe5-d8576dd6eab6
-# ╠═╡ disabled = true
-#=╠═╡
 for prop in [11,25,50]
 	for KK in [1,5,11]
 		@info "split" prop, "k-NN" KK
-		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 500, 10, mqMLClass, MLLabel, "inf", K=KK);
-		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 500, 10, mqMLClass, MLLabel, "euclidean", K=KK);
-		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 500, 10, aqMLClass, MLLabel, "inf", K=KK);
-		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 500, 10, aqMLClass, MLLabel, "euclidean", K=KK);
+		Random.seed!(42); CC = accuracy_k_nearest_part_neighbour(20, prop, 500, 10, rcdt, MLLabel, "inf", K=KK, ret=1);
+		jldsave("conf_LinMNIST_$(KK)NN_$(prop)_RCDT_inf.jld2"; CC)
+		Random.seed!(42); CC = accuracy_k_nearest_part_neighbour(20, prop, 500, 10, rcdt, MLLabel, "euclidean", K=KK, ret=1);
+		jldsave("conf_LinMNIST_$(KK)NN_$(prop)_RCDT_eucl.jld2"; CC)
+		Random.seed!(42); CC = accuracy_k_nearest_part_neighbour(20, prop, 500, 10, mqMLClass, MLLabel, "inf", K=KK, ret=1);
+		jldsave("conf_LinMNIST_$(KK)NN_$(prop)_maxNRCDT_inf.jld2"; CC)
+		Random.seed!(42); CC = accuracy_k_nearest_part_neighbour(20, prop, 500, 10, mqMLClass, MLLabel, "euclidean", K=KK, ret=1);
+		jldsave("conf_LinMNIST_$(KK)NN_$(prop)_maxNRCDT_eucl.jld2"; CC)
+		Random.seed!(42); CC = accuracy_k_nearest_part_neighbour(20, prop, 500, 10, aqMLClass, MLLabel, "inf", K=KK, ret=1);
+		jldsave("conf_LinMNIST_$(KK)NN_$(prop)_meanNRCDT_inf.jld2"; CC)
+		Random.seed!(42); CC = accuracy_k_nearest_part_neighbour(20, prop, 500, 10, aqMLClass, MLLabel, "euclidean", K=KK, ret=1);
+		jldsave("conf_LinMNIST_$(KK)NN_$(prop)_meanNRCDT_eucl.jld2"; CC)
 	end
 end
-  ╠═╡ =#
 
-# ╔═╡ e59d1402-52dd-48c2-971f-b925dc392ade
+# ╔═╡ ecb0c307-2f8d-4fb7-8688-d9f72cc9e992
 for prop in [11,25,50]
 	for KK in [1,5,11]
 		@info "split" prop, "k-NN" KK
-		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 500, 10, rcdt, MLLabel, "inf", K=KK);
-		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 500, 10, rcdt, MLLabel, "euclidean", K=KK);
 		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 500, 10, Array{Float64}.(TMLClass), MLLabel, "inf", K=KK);
 		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 500, 10, Array{Float64}.(TMLClass), MLLabel, "euclidean", K=KK);
 	end
@@ -159,7 +169,7 @@ savefig(hh, "linmnist_11NN_50_mean_eucl.pdf")
 # ╠═4bd83071-ed45-4eb1-b6a8-667c44c27a7e
 # ╠═68dc3cd6-7b79-44fa-9116-6470b7b0b485
 # ╠═edae2657-66a9-4976-abe5-d8576dd6eab6
-# ╠═e59d1402-52dd-48c2-971f-b925dc392ade
+# ╠═ecb0c307-2f8d-4fb7-8688-d9f72cc9e992
 # ╠═88baa5c9-3de6-47a9-941d-57c8d6b2ef3d
 # ╠═6bf26e05-1d50-4516-9432-deaa0a00e4bf
 # ╠═62095eb0-aa7d-4c55-b8a6-34e7d344461a
