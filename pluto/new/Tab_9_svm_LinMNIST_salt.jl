@@ -7,7 +7,7 @@ using InteractiveUtils
 # ╔═╡ 8cbe0300-edff-11ef-2fad-d3b8cca171a9
 begin
 	import Pkg
-	Pkg.activate("..")
+	Pkg.activate("../..")
 	using Revise
 	using NormalizedRadonCDT
 	using NormalizedRadonCDT.TestImages
@@ -34,11 +34,11 @@ MLClass
 
 # ╔═╡ 773832af-9099-4dcf-bd1b-c82baaa83424
 A = DataTransformations.RandomAffineTransformation(
-	scale_x = (0.75, 1.25), 
-	scale_y = (0.75, 1.25),
-	rotate=(-45.0, 45.0), 
-	shear_x=(-5.0, 5.0),
-	shear_y=(-5.0, 5.0),
+	scale_x = (0.75, 1.0), 
+	scale_y = (0.75, 1.0),
+	rotate=(-180.0, 180.0), 
+	#shear_x=(-5.0, 5.0),
+	#shear_y=(-5.0, 5.0),
 	shift_x=(-20, 20),
 	shift_y=(-20, 20))
 
@@ -50,16 +50,16 @@ E = DataTransformations.ElasticNoise(
 	frequency_y=(0.5, 2.0))
 
 # ╔═╡ 6261bb3f-cbae-462c-9ec1-0a41089904ea
-S = DataTransformations.SaltNoise((5,10), (3/128, 3/128))
+S = DataTransformations.SaltNoise((4,7), (3/128, 7/128))
 
 # ╔═╡ fb3629dc-1860-4a96-a75e-2b4402f847fe
 Random.seed!(42); TMLClass = S.(A.(MLClass))
 
 # ╔═╡ 8fb1f5c3-386e-4117-9b87-dedb75c1ae1d
-R = RadonTransform(128,128,0.0);
+R = RadonTransform(300,128,0.0);
 
 # ╔═╡ bbbcd04c-8b4f-4c44-958d-9e4089ada051
-RCDT = RadonCDT(128, R);
+RCDT = RadonCDT(64, R);
 
 # ╔═╡ 81fd55d8-24df-4047-b235-20468b2c111c
 rcdt = RCDT.(TMLClass);
