@@ -7,7 +7,7 @@ using InteractiveUtils
 # ╔═╡ 8cbe0300-edff-11ef-2fad-d3b8cca171a9
 begin
 	import Pkg
-	Pkg.activate("..")
+	Pkg.activate("../..")
 	using Revise
 	using NormalizedRadonCDT
 	using NormalizedRadonCDT.TestImages
@@ -20,13 +20,13 @@ begin
 end
 
 # ╔═╡ c9a1f57f-1874-40e4-b47f-d66f7dd4a064
-I₁₁ = render(OrbAndCross(Circle(),Star(1)))
+I₁₁ = render(OrbAndCross(Circle(),Star(1)), width=4)
 
 # ╔═╡ 79449727-86d4-45b7-b4c1-9ac2fcd88c52
 J₁₁ = extend_image(I₁₁, (256, 256));
 
 # ╔═╡ 43d55941-e2b7-4228-95d4-0c43858d1089
-I₂₂ = render(OrbAndCross(Square(),Star(4)))
+I₂₂ = render(OrbAndCross(Square(),Star(4)), width=4)
 
 # ╔═╡ f9d33d62-4b48-4878-b504-4d1d00f79c5a
 J₂₂ = extend_image(I₂₂, (256, 256));
@@ -39,16 +39,16 @@ Class, Labels = generate_academic_classes(J, Label, class_size=90);
 
 # ╔═╡ 773832af-9099-4dcf-bd1b-c82baaa83424
 A = DataTransformations.RandomAffineTransformation(
-	scale_x = (0.75, 1.25), 
-	scale_y = (0.75, 1.25),
-	rotate=(-45.0, 45.0), 
-	shear_x=(-5.0, 5.0),
-	shear_y=(-5.0, 5.0),
+	scale_x = (0.75, 1.0), 
+	scale_y = (0.75, 1.0),
+	rotate=(-180.0, 180.0), 
+	#shear_x=(-45.0, 45.0),
+	#shear_y=(-45.0, 45.0),
 	shift_x=(-20, 20),
 	shift_y=(-20, 20))
 
 # ╔═╡ 1f303cbf-8caf-4c85-8f2a-a1460a4c31c3
-S = DataTransformations.SaltNoise((5,10), (3/128, 3/128))
+S = DataTransformations.SaltNoise((4,7), (3/128, 3/128))
 
 # ╔═╡ c8585729-1dc6-437d-807f-f04896f067f1
 E = DataTransformations.ElasticNoise(
@@ -63,10 +63,10 @@ Random.seed!(42); TClass = S.(A.(E.(Class)))
 # TClass = S.(B.(A.(Class)))
 
 # ╔═╡ 8fb1f5c3-386e-4117-9b87-dedb75c1ae1d
-R = RadonTransform(256,128,0.0)
+R = RadonTransform(850,256,0.0)
 
 # ╔═╡ bbbcd04c-8b4f-4c44-958d-9e4089ada051
-RCDT = RadonCDT(256, R)
+RCDT = RadonCDT(64, R)
 
 # ╔═╡ 83ac70b2-b26f-4b30-b4d9-32ac732de5ce
 rcdt = RCDT.(TClass);
@@ -106,8 +106,8 @@ for split in [1]
 	
 	Random.seed!(42); accuracy_part_svm(20, split, 90, 2, TClass, Labels)
 	
-	for angle in [1,2,4,8,16,32,64,128]
-		rqTClass = filter_angles.(rcdt, angle, 128)
+	for angle in [1,2,4,8,16,32,64,128,256]
+		rqTClass = filter_angles.(rcdt, angle, 256)
 		mqTClass = max_normalization.(rqTClass)
 		aqTClass = mean_normalization.(rqTClass)
 		@info "number of equispaced angles:" angle
@@ -123,8 +123,8 @@ for split in [3]
 	
 	Random.seed!(42); accuracy_part_svm(20, split, 90, 2, TClass, Labels)
 	
-	for angle in [1,2,4,8,16,32,64,128]
-		rqTClass = filter_angles.(rcdt, angle, 128)
+	for angle in [1,2,4,8,16,32,64,128,256]
+		rqTClass = filter_angles.(rcdt, angle, 256)
 		mqTClass = max_normalization.(rqTClass)
 		aqTClass = mean_normalization.(rqTClass)
 		@info "number of equispaced angles:" angle
@@ -140,8 +140,8 @@ for split in [9]
 	
 	Random.seed!(42); accuracy_part_svm(20, split, 90, 2, TClass, Labels)
 	
-	for angle in [1,2,4,8,16,32,64,128]
-		rqTClass = filter_angles.(rcdt, angle, 128)
+	for angle in [1,2,4,8,16,32,64,128,256]
+		rqTClass = filter_angles.(rcdt, angle, 256)
 		mqTClass = max_normalization.(rqTClass)
 		aqTClass = mean_normalization.(rqTClass)
 		@info "number of equispaced angles:" angle
