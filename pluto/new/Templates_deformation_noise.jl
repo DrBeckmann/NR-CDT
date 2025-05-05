@@ -7,7 +7,7 @@ using InteractiveUtils
 # ╔═╡ 03f9300e-692e-11ef-145c-85ecce1e4c7f
 begin
 	import Pkg
-	Pkg.activate("..")
+	Pkg.activate("../..")
 	using Revise
 	using NormalizedRadonCDT
 	using NormalizedRadonCDT.TestImages
@@ -21,7 +21,7 @@ end
 using JLD, PythonOT
 
 # ╔═╡ e2ba028e-6346-4a9b-8bd3-9223a9c537d9
-I₁ = render(OrbAndCross(Square(),Star(4)));
+I₁ = render(Shield(Triangle()), width=4);
 
 # ╔═╡ 43c617ec-3abd-42ef-80ef-62cc80d4dee7
 J₁ = extend_image(I₁, (256, 256))
@@ -31,11 +31,11 @@ savefig(plot(Gray.(J₁), axis=false, grid=false), "org_img.pdf")
 
 # ╔═╡ cd3f1705-772f-41d0-a37e-ba5cd345712d
 A = DataTransformations.RandomAffineTransformation(
-	scale_x = (0.75, 1.25), 
-	scale_y = (0.75, 1.25),
-	rotate=(-90.0, 90.0), 
-	shear_x=(-10.0, 10.0),
-	shear_y=(-10.0, 10.0),
+	scale_x = (0.5, 1.25), 
+	scale_y = (0.5, 1.25),
+	rotate=(-180.0, 180.0), 
+	shear_x=(-45.0, 45.0),
+	shear_y=(-45.0, 45.0),
 	shift_x=(-20, 20),
 	shift_y=(-20, 20)
 	)
@@ -44,20 +44,17 @@ A = DataTransformations.RandomAffineTransformation(
 E = DataTransformations.ElasticNoise(
 	amplitude_x=(2.5, 7.5), 
 	amplitude_y=(2.5, 7.5),
-	frequency_x=(0.5, 2.0),
-	frequency_y=(0.5, 2.0))
+	frequency_x=(0.5, 4.0),
+	frequency_y=(0.5, 4.0))
 
 # ╔═╡ 9056755a-b5c4-4a3a-8525-02738200a117
 S = DataTransformations.SaltNoise((3,7), (3/128, 3/128))
-
-# ╔═╡ 9fe89baa-4882-4af3-b3f1-06c7a5311fe3
-N = DataTransformations.MikadoNoise((2,10), (0.125,0.5), (0.1,1))
 
 # ╔═╡ 10196a6b-ae6b-4999-a9f8-a8761e8cd8b7
 savefig(plot(J₁), "orig_img.pdf")
 
 # ╔═╡ 4e012794-7f50-4e38-884f-65f4458c2f94
-T = S(E(J₁))
+T = E(J₁)
 
 # ╔═╡ 8932eb05-932d-4a06-ba5b-4a1e6dffb435
 temp_img = Array{Float64}(J₁); temp_dis = Array{Float64}(T);
@@ -178,7 +175,6 @@ savefig(qq, "movement_img_particals.pdf")
 # ╠═cd3f1705-772f-41d0-a37e-ba5cd345712d
 # ╠═144852d9-16d8-46f7-81a2-300e1d8e3c30
 # ╠═9056755a-b5c4-4a3a-8525-02738200a117
-# ╠═9fe89baa-4882-4af3-b3f1-06c7a5311fe3
 # ╠═10196a6b-ae6b-4999-a9f8-a8761e8cd8b7
 # ╠═4e012794-7f50-4e38-884f-65f4458c2f94
 # ╠═8932eb05-932d-4a06-ba5b-4a1e6dffb435
