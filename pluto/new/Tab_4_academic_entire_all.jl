@@ -104,8 +104,8 @@ A = DataTransformations.RandomAffineTransformation(
 	scale_x = (0.75, 1.0), 
 	scale_y = (0.75, 1.0),
 	rotate=(-180.0, 180.0), 
-	#shear_x=(-5.0, 5.0),
-	#shear_y=(-5.0, 5.0),
+	shear_x=(-5.0, 5.0),
+	shear_y=(-5.0, 5.0),
 	shift_x=(-20, 20),
 	shift_y=(-20, 20))
 
