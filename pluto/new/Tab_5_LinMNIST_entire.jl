@@ -71,7 +71,10 @@ aNRCDT = MeanNormRadonCDT(RCDT); aqClass = aNRCDT.(TMLClass)
   ╠═╡ =#
 
 # ╔═╡ 908e9571-1cea-4333-b087-76f08de3f485
+# ╠═╡ disabled = true
+#=╠═╡
 rcdt = RCDT.(TMLClass)
+  ╠═╡ =#
 
 # ╔═╡ 0084b432-9cf1-4f6e-a8dc-8127ec832643
 # ╠═╡ disabled = true
@@ -80,10 +83,16 @@ rqMLClass = filter_angles.(rcdt, 128, 128)
   ╠═╡ =#
 
 # ╔═╡ c678f383-6fc4-4264-a045-b85decb41528
+# ╠═╡ disabled = true
+#=╠═╡
 mqMLClass = max_normalization.(rcdt)
+  ╠═╡ =#
 
 # ╔═╡ 4bd83071-ed45-4eb1-b6a8-667c44c27a7e
+# ╠═╡ disabled = true
+#=╠═╡
 aqMLClass = mean_normalization.(rcdt)
+  ╠═╡ =#
 
 # ╔═╡ 68dc3cd6-7b79-44fa-9116-6470b7b0b485
 # ╠═╡ disabled = true
@@ -105,6 +114,8 @@ end
   ╠═╡ =#
 
 # ╔═╡ edae2657-66a9-4976-abe5-d8576dd6eab6
+# ╠═╡ disabled = true
+#=╠═╡
 for prop in [11,25,50]
 	for KK in [1,5,11]
 		@info "split" prop, "k-NN" KK
@@ -122,8 +133,11 @@ for prop in [11,25,50]
 		jldsave("conf_LinMNIST_$(KK)NN_$(prop)_meanNRCDT_eucl.jld2"; CC)
 	end
 end
+  ╠═╡ =#
 
 # ╔═╡ ecb0c307-2f8d-4fb7-8688-d9f72cc9e992
+# ╠═╡ disabled = true
+#=╠═╡
 for prop in [11,25,50]
 	for KK in [1,5,11]
 		@info "split" prop, "k-NN" KK
@@ -131,6 +145,7 @@ for prop in [11,25,50]
 		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 500, 10, Array{Float64}.(TMLClass), MLLabel, "euclidean", K=KK);
 	end
 end
+  ╠═╡ =#
 
 # ╔═╡ 88baa5c9-3de6-47a9-941d-57c8d6b2ef3d
 # ╠═╡ disabled = true
