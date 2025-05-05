@@ -103,24 +103,24 @@ A = DataTransformations.RandomAffineTransformation(
 	scale_x = (0.75, 1.0), 
 	scale_y = (0.75, 1.0),
 	rotate=(-180.0, 180.0), 
-	#shear_x=(-45.0, 45.0),
-	#shear_y=(-45.0, 45.0),
+	shear_x=(-5.0, 5.0),
+	shear_y=(-5.0, 5.0),
 	shift_x=(-20, 20),
 	shift_y=(-20, 20))
 
 # ╔═╡ 1f303cbf-8caf-4c85-8f2a-a1460a4c31c3
-S = DataTransformations.SaltNoise((4,7), (3/128, 3/128))
+S = DataTransformations.SaltNoise((5,10), (3/128, 3/128))
 
 # ╔═╡ c8585729-1dc6-437d-807f-f04896f067f1
 E = DataTransformations.ElasticNoise(
-	amplitude_x=(2.5, 7.5), 
-	amplitude_y=(2.5, 7.5),
-	frequency_x=(0.5, 2.0),
-	frequency_y=(0.5, 2.0))
+	amplitude_x=(0.5, 7.5), 
+	amplitude_y=(0.5, 7.5),
+	frequency_x=(0.5, 4.0),
+	frequency_y=(0.5, 4.0))
 
 # ╔═╡ fb3629dc-1860-4a96-a75e-2b4402f847fe
 # TClass = S.(A.(E.(Class)))
-Random.seed!(42); TClass = S.(A.(E.(Class)))
+Random.seed!(42); TClass = A.(E.(Class))
 # TClass = S.(B.(A.(Class)))
 
 # ╔═╡ 2b4a9e41-ddb8-41c2-bb92-204db41dfa85

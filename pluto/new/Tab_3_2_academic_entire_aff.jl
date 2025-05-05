@@ -93,7 +93,13 @@ I₄₃ = render(Shield(Triangle()), width=4)
 J₄₃ = extend_image(I₄₃, (256, 256));
 
 # ╔═╡ c1959bcd-b5ce-40ae-9c41-142fca3027b6
+# ╠═╡ disabled = true
+#=╠═╡
 J = [J₁₁, J₁₂, J₁₃, J₂₁, J₂₂, J₂₃, J₃₁, J₃₂, J₃₃, J₄₁, J₄₂, J₄₃]; Label = collect(1:12);
+  ╠═╡ =#
+
+# ╔═╡ ea140295-ff1f-48ad-99e1-8867879940e1
+J = [J₂₂, J₄₃]; Label = [5, 12];
 
 # ╔═╡ 14864b75-d2e6-476a-bf63-5ffffa95a61d
 Class, Labels = generate_academic_classes(J, Label, class_size=10);
@@ -103,13 +109,13 @@ A = DataTransformations.RandomAffineTransformation(
 	scale_x = (0.75, 1.0), 
 	scale_y = (0.75, 1.0),
 	rotate=(-180.0, 180.0), 
-	#shear_x=(-45.0, 45.0),
-	#shear_y=(-45.0, 45.0),
+	shear_x=(-5.0, 5.0),
+	shear_y=(-5.0, 5.0),
 	shift_x=(-20, 20),
 	shift_y=(-20, 20))
 
 # ╔═╡ 1f303cbf-8caf-4c85-8f2a-a1460a4c31c3
-S = DataTransformations.SaltNoise((4,7), (3/128, 3/128))
+S = DataTransformations.SaltNoise((5,10), (3/128, 3/128))
 
 # ╔═╡ c8585729-1dc6-437d-807f-f04896f067f1
 E = DataTransformations.ElasticNoise(
@@ -118,10 +124,22 @@ E = DataTransformations.ElasticNoise(
 	frequency_x=(0.5, 2.0),
 	frequency_y=(0.5, 2.0))
 
-# ╔═╡ fb3629dc-1860-4a96-a75e-2b4402f847fe
+# ╔═╡ a61d790f-a0d9-449f-9c0a-b35c73c8e10e
 # TClass = S.(A.(E.(Class)))
-Random.seed!(42); TClass = S.(A.(Class))
+Random.seed!(42); TClass = A.(E.(Class))
 # TClass = S.(B.(A.(Class)))
+
+# ╔═╡ 82b55684-659a-44e1-89a1-3f4261f5867e
+R = RadonTransform(850,128,0.0); RCDT = RadonCDT(64, R)
+
+# ╔═╡ 7337ae00-abf3-434b-90f4-db7bb9555fa9
+qClass = RCDT.(TClass); qTemp = RCDT.(J); mqClass = max_normalization.(qClass); mqTemp = max_normalization.(qTemp); aqClass = mean_normalization.(qClass); aqTemp = mean_normalization.(qTemp);
+
+# ╔═╡ 2942658d-6215-48ac-8a5f-6e39964f8c9d
+plot_quantiles(mqTemp, Label, mqClass, Labels)
+
+# ╔═╡ 28917f1d-2ea0-4906-b128-dc780e20de7c
+plot_quantiles(aqTemp, Label, aqClass, Labels)
 
 # ╔═╡ 2b4a9e41-ddb8-41c2-bb92-204db41dfa85
 accuracy_k_nearest_neighbour(Array{Float64}.(J), Label, Array{Float64}.(TClass), Labels, "inf", ret=1);
@@ -178,11 +196,16 @@ end
 # ╠═875e9a13-7d49-4669-bdd6-f819f571f2d6
 # ╠═cad515d1-c4ed-47c2-90f9-b8b88ee30ded
 # ╠═c1959bcd-b5ce-40ae-9c41-142fca3027b6
+# ╠═ea140295-ff1f-48ad-99e1-8867879940e1
 # ╠═14864b75-d2e6-476a-bf63-5ffffa95a61d
 # ╠═773832af-9099-4dcf-bd1b-c82baaa83424
 # ╠═1f303cbf-8caf-4c85-8f2a-a1460a4c31c3
 # ╠═c8585729-1dc6-437d-807f-f04896f067f1
-# ╠═fb3629dc-1860-4a96-a75e-2b4402f847fe
+# ╠═a61d790f-a0d9-449f-9c0a-b35c73c8e10e
+# ╠═82b55684-659a-44e1-89a1-3f4261f5867e
+# ╠═7337ae00-abf3-434b-90f4-db7bb9555fa9
+# ╠═2942658d-6215-48ac-8a5f-6e39964f8c9d
+# ╠═28917f1d-2ea0-4906-b128-dc780e20de7c
 # ╠═2b4a9e41-ddb8-41c2-bb92-204db41dfa85
 # ╠═dbcf0415-09ea-49b1-b637-74f4625d8343
 # ╠═548356e2-570f-45e8-856c-372afdc890f3
