@@ -20,6 +20,24 @@ begin
 	Random.seed!(42)
 end
 
+# ╔═╡ fd83dabe-12c0-4b65-bbb5-fafd2e437696
+md"""
+# XXXX 2025 -- Table 3 (second column), Figure 4
+This pluto notebook reproduces the numerical experiment
+for Table 3 (second column) and Figure 4 from
+
+- Matthias Beckmann, Robert Beinert, Jonas Bresch, 
+  'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
+  XXXX 2025.
+"""
+
+# ╔═╡ 0db2e2a7-0f11-4ec9-ad42-14a50c96923e
+md"""
+## Templates
+Generate the 12 templates
+using the submodule `TestImages`.
+"""
+
 # ╔═╡ c9a1f57f-1874-40e4-b47f-d66f7dd4a064
 I₁₁ = render(OrbAndCross(Circle(),Star(1)), width=4)
 
@@ -93,13 +111,16 @@ I₄₃ = render(Shield(Triangle()), width=4)
 J₄₃ = extend_image(I₄₃, (256, 256));
 
 # ╔═╡ c1959bcd-b5ce-40ae-9c41-142fca3027b6
-# ╠═╡ disabled = true
-#=╠═╡
 J = [J₁₁, J₁₂, J₁₃, J₂₁, J₂₂, J₂₃, J₃₁, J₃₂, J₃₃, J₄₁, J₄₂, J₄₃]; Label = collect(1:12);
-  ╠═╡ =#
 
-# ╔═╡ ea140295-ff1f-48ad-99e1-8867879940e1
-J = [J₂₂, J₄₃]; Label = [5, 12];
+# ╔═╡ f99d1949-b44d-4575-b704-d5af3be3844f
+md"""
+## Dataset
+Generate the dataset 
+by duplicating the templates
+and by applying random affine transformations
+using the submodule `DataTransformations`.
+"""
 
 # ╔═╡ 14864b75-d2e6-476a-bf63-5ffffa95a61d
 Class, Labels = generate_academic_classes(J, Label, class_size=10);
@@ -114,9 +135,6 @@ A = DataTransformations.RandomAffineTransformation(
 	shift_x=(-20, 20),
 	shift_y=(-20, 20))
 
-# ╔═╡ 1f303cbf-8caf-4c85-8f2a-a1460a4c31c3
-S = DataTransformations.SaltNoise((5,10), (3/128, 3/128))
-
 # ╔═╡ c8585729-1dc6-437d-807f-f04896f067f1
 E = DataTransformations.ElasticNoise(
 	amplitude_x=(2.5, 7.5), 
@@ -125,27 +143,97 @@ E = DataTransformations.ElasticNoise(
 	frequency_y=(0.5, 2.0))
 
 # ╔═╡ a61d790f-a0d9-449f-9c0a-b35c73c8e10e
-# TClass = S.(A.(E.(Class)))
 Random.seed!(42); TClass = A.(E.(Class))
-# TClass = S.(B.(A.(Class)))
 
-# ╔═╡ 82b55684-659a-44e1-89a1-3f4261f5867e
-R = RadonTransform(850,128,0.0); RCDT = RadonCDT(64, R)
+# ╔═╡ 1cc66d50-3539-4807-a5af-3fa7356b9a56
+md"""
+## Max- and Mean-Normalized RCDT -- Figure 4
+Setup the max- and mean-normalized RCDT,
+and apply it 
+to the dataset and templates.
+"""
 
-# ╔═╡ 7337ae00-abf3-434b-90f4-db7bb9555fa9
-qClass = RCDT.(TClass); qTemp = RCDT.(J); mqClass = max_normalization.(qClass); mqTemp = max_normalization.(qTemp); aqClass = mean_normalization.(qClass); aqTemp = mean_normalization.(qTemp);
+# ╔═╡ 43903c73-67a9-419f-bcf9-d991ca016f66
+R = RadonTransform(850,256,0.0)
 
-# ╔═╡ 2942658d-6215-48ac-8a5f-6e39964f8c9d
-plot_quantiles(mqTemp, Label, mqClass, Labels)
+# ╔═╡ 1b65cc66-1483-4df5-ad1b-ab2ed3e6d22a
+RCDT = RadonCDT(64, R)
 
-# ╔═╡ 28917f1d-2ea0-4906-b128-dc780e20de7c
-plot_quantiles(aqTemp, Label, aqClass, Labels)
+# ╔═╡ c2664043-b4d1-4337-8408-d871f7e3f70a
+NRCDT = NormRadonCDT(RCDT)
+
+# ╔═╡ d3cf9f2e-c604-4837-9106-f62fa67521f4
+mNRCDT = MaxNormRadonCDT(RCDT)
+
+# ╔═╡ 22fec966-cf02-4200-af64-89c927411218
+aNRCDT = MeanNormRadonCDT(RCDT)
+
+# ╔═╡ b8d4a2c4-b490-44dc-bbac-0195234cfa74
+md"""
+Reduce the set of tamplates and test images to those from class 5 and 12.
+"""
+
+# ╔═╡ 7c47cae1-fd42-4f43-88a3-fef7a7ea2071
+set = append!(collect(51:60), collect(121:130)); sett = [5,12];
+
+# ╔═╡ 035d1c26-35e5-4ad0-822b-0f21d276e94d
+redTClass = TClass[set];
+
+# ╔═╡ 00b36307-0e7d-4aa9-a78f-46ddee78c6a4
+redJ = J[sett];
+
+# ╔═╡ 14d852e4-0a0e-406d-9931-504e2f95bcc7
+redLabel = Label[sett];
+
+# ╔═╡ dc70a0ab-fdb1-47cc-b839-09ac60753fda
+redLabels = Labels[set];
+
+# ╔═╡ a281f74c-9f66-47a5-b716-aab34f815741
+mqredClass = mNRCDT.(redTClass);
+
+# ╔═╡ 2b7d18e3-79e2-40bc-9b86-ea647414a19c
+aqredClass = aNRCDT.(redTClass);
+
+# ╔═╡ 13ba9fe6-81cf-4b63-9ae9-3895ef1aa273
+mqredTemp = mNRCDT.(redJ);
+
+# ╔═╡ de4a2195-86c0-4151-ba82-161c5bb7d951
+aqredTemp = aNRCDT.(redJ);
+
+# ╔═╡ f0287f82-8150-4dbe-89f3-27b948cfc785
+md"""
+Plot the computed max-normalized RCDTs.
+"""
+
+# ╔═╡ b6423f0d-57e6-4ccc-8472-2387dd8faec7
+mp = plot_quantiles(mqredTemp, redLabel, mqredClass, redLabels)
+
+# ╔═╡ a4cfabc4-1483-455a-86ff-912dd53718ff
+md"""
+Plot the computed mean-normalized RCDTs.
+"""
+
+# ╔═╡ ff62a270-9d19-4c17-a4dc-d0d4af074570
+ap = plot_quantiles(aqredTemp, redLabel, aqredClass, redLabels)
+
+# ╔═╡ f95c5024-60dc-405b-8e2b-99a60d2cacf5
+md"""
+## Nearest Neighbour Classification -- Table 3
+Use the nearest neighbour classification
+with respect to the chosen templates
+to classify the generated dataset.
+The max- and mean-normalized RCDT is applied
+with different numbers of used angles.
+"""
 
 # ╔═╡ 2b4a9e41-ddb8-41c2-bb92-204db41dfa85
 accuracy_k_nearest_neighbour(Array{Float64}.(J), Label, Array{Float64}.(TClass), Labels, "inf", ret=1);
 
 # ╔═╡ dbcf0415-09ea-49b1-b637-74f4625d8343
 accuracy_k_nearest_neighbour(Array{Float64}.(J), Label, Array{Float64}.(TClass), Labels, "euclidean", ret=1);
+
+# ╔═╡ 68a3244f-195a-432d-9784-997354018108
+md"Short cut for the computations of the max- and mean-normalized RCDT by computing once the entire RCDT."
 
 # ╔═╡ 548356e2-570f-45e8-856c-372afdc890f3
 for angle in [1,2,4,8,16,32,64,128,256]
@@ -170,7 +258,9 @@ for angle in [1,2,4,8,16,32,64,128,256]
 end
 
 # ╔═╡ Cell order:
+# ╟─fd83dabe-12c0-4b65-bbb5-fafd2e437696
 # ╠═8cbe0300-edff-11ef-2fad-d3b8cca171a9
+# ╟─0db2e2a7-0f11-4ec9-ad42-14a50c96923e
 # ╠═c9a1f57f-1874-40e4-b47f-d66f7dd4a064
 # ╠═79449727-86d4-45b7-b4c1-9ac2fcd88c52
 # ╠═af494be1-3291-473a-8160-19de1869dd1d
@@ -196,16 +286,33 @@ end
 # ╠═875e9a13-7d49-4669-bdd6-f819f571f2d6
 # ╠═cad515d1-c4ed-47c2-90f9-b8b88ee30ded
 # ╠═c1959bcd-b5ce-40ae-9c41-142fca3027b6
-# ╠═ea140295-ff1f-48ad-99e1-8867879940e1
+# ╟─f99d1949-b44d-4575-b704-d5af3be3844f
 # ╠═14864b75-d2e6-476a-bf63-5ffffa95a61d
 # ╠═773832af-9099-4dcf-bd1b-c82baaa83424
-# ╠═1f303cbf-8caf-4c85-8f2a-a1460a4c31c3
 # ╠═c8585729-1dc6-437d-807f-f04896f067f1
 # ╠═a61d790f-a0d9-449f-9c0a-b35c73c8e10e
-# ╠═82b55684-659a-44e1-89a1-3f4261f5867e
-# ╠═7337ae00-abf3-434b-90f4-db7bb9555fa9
-# ╠═2942658d-6215-48ac-8a5f-6e39964f8c9d
-# ╠═28917f1d-2ea0-4906-b128-dc780e20de7c
+# ╟─1cc66d50-3539-4807-a5af-3fa7356b9a56
+# ╠═43903c73-67a9-419f-bcf9-d991ca016f66
+# ╠═1b65cc66-1483-4df5-ad1b-ab2ed3e6d22a
+# ╠═c2664043-b4d1-4337-8408-d871f7e3f70a
+# ╠═d3cf9f2e-c604-4837-9106-f62fa67521f4
+# ╠═22fec966-cf02-4200-af64-89c927411218
+# ╟─b8d4a2c4-b490-44dc-bbac-0195234cfa74
+# ╠═7c47cae1-fd42-4f43-88a3-fef7a7ea2071
+# ╠═035d1c26-35e5-4ad0-822b-0f21d276e94d
+# ╠═00b36307-0e7d-4aa9-a78f-46ddee78c6a4
+# ╠═14d852e4-0a0e-406d-9931-504e2f95bcc7
+# ╠═dc70a0ab-fdb1-47cc-b839-09ac60753fda
+# ╠═a281f74c-9f66-47a5-b716-aab34f815741
+# ╠═2b7d18e3-79e2-40bc-9b86-ea647414a19c
+# ╠═13ba9fe6-81cf-4b63-9ae9-3895ef1aa273
+# ╠═de4a2195-86c0-4151-ba82-161c5bb7d951
+# ╟─f0287f82-8150-4dbe-89f3-27b948cfc785
+# ╠═b6423f0d-57e6-4ccc-8472-2387dd8faec7
+# ╟─a4cfabc4-1483-455a-86ff-912dd53718ff
+# ╠═ff62a270-9d19-4c17-a4dc-d0d4af074570
+# ╟─f95c5024-60dc-405b-8e2b-99a60d2cacf5
 # ╠═2b4a9e41-ddb8-41c2-bb92-204db41dfa85
 # ╠═dbcf0415-09ea-49b1-b637-74f4625d8343
+# ╟─68a3244f-195a-432d-9784-997354018108
 # ╠═548356e2-570f-45e8-856c-372afdc890f3

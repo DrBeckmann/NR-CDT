@@ -20,6 +20,24 @@ begin
 	Random.seed!(42)
 end
 
+# ╔═╡ 612cff45-7cb0-4f07-841a-621ffa0a623c
+md"""
+# XXXX 2025 -- Table 3 (third column)
+This pluto notebook reproduces the numerical experiment
+for Table 3 (third column) from
+
+- Matthias Beckmann, Robert Beinert, Jonas Bresch, 
+  'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
+  XXXX 2025.
+"""
+
+# ╔═╡ 40d1bdd3-64e0-43b3-84b3-02a11ef93c13
+md"""
+## Templates
+Generate the 12 templates
+using the submodule `TestImages`.
+"""
+
 # ╔═╡ c9a1f57f-1874-40e4-b47f-d66f7dd4a064
 I₁₁ = render(OrbAndCross(Circle(),Star(1)), width=4)
 
@@ -95,6 +113,15 @@ J₄₃ = extend_image(I₄₃, (256, 256));
 # ╔═╡ c1959bcd-b5ce-40ae-9c41-142fca3027b6
 J = [J₁₁, J₁₂, J₁₃, J₂₁, J₂₂, J₂₃, J₃₁, J₃₂, J₃₃, J₄₁, J₄₂, J₄₃]; Label = collect(1:12);
 
+# ╔═╡ 991770c4-3a6c-4613-baf1-6158e4c34f72
+md"""
+## Dataset
+Generate the dataset 
+by duplicating the templates
+and by applying random affine transformations
+using the submodule `DataTransformations`.
+"""
+
 # ╔═╡ 14864b75-d2e6-476a-bf63-5ffffa95a61d
 Class, Labels = generate_academic_classes(J, Label, class_size=10);
 
@@ -108,9 +135,6 @@ A = DataTransformations.RandomAffineTransformation(
 	shift_x=(-20, 20),
 	shift_y=(-20, 20))
 
-# ╔═╡ 1f303cbf-8caf-4c85-8f2a-a1460a4c31c3
-S = DataTransformations.SaltNoise((5,10), (3/128, 3/128))
-
 # ╔═╡ c8585729-1dc6-437d-807f-f04896f067f1
 E = DataTransformations.ElasticNoise(
 	amplitude_x=(8.0, 13.0), 
@@ -119,15 +143,26 @@ E = DataTransformations.ElasticNoise(
 	frequency_y=(0.5, 2.0))
 
 # ╔═╡ fb3629dc-1860-4a96-a75e-2b4402f847fe
-# TClass = S.(A.(E.(Class)))
 Random.seed!(42); TClass = A.(E.(Class))
-# TClass = S.(B.(A.(Class)))
+
+# ╔═╡ 2f727c43-690d-4b5d-9cb2-1db82bd10590
+md"""
+## Nearest Neighbour Classification -- Table 3
+Use the nearest neighbour classification
+with respect to the chosen templates
+to classify the generated dataset.
+The max- and mean-normalized RCDT is applied
+with different numbers of used angles.
+"""
 
 # ╔═╡ 2b4a9e41-ddb8-41c2-bb92-204db41dfa85
 accuracy_k_nearest_neighbour(Array{Float64}.(J), Label, Array{Float64}.(TClass), Labels, "inf", ret=1);
 
 # ╔═╡ dbcf0415-09ea-49b1-b637-74f4625d8343
 accuracy_k_nearest_neighbour(Array{Float64}.(J), Label, Array{Float64}.(TClass), Labels, "euclidean", ret=1);
+
+# ╔═╡ f70ae820-73f0-4a02-b3f5-4c2744d1402e
+md"Short cut for the computations of the max- and mean-normalized RCDT by computing once the entire RCDT."
 
 # ╔═╡ 548356e2-570f-45e8-856c-372afdc890f3
 for angle in [1,2,4,8,16,32,64,128,256]
@@ -152,7 +187,9 @@ for angle in [1,2,4,8,16,32,64,128,256]
 end
 
 # ╔═╡ Cell order:
+# ╟─612cff45-7cb0-4f07-841a-621ffa0a623c
 # ╠═8cbe0300-edff-11ef-2fad-d3b8cca171a9
+# ╟─40d1bdd3-64e0-43b3-84b3-02a11ef93c13
 # ╠═c9a1f57f-1874-40e4-b47f-d66f7dd4a064
 # ╠═79449727-86d4-45b7-b4c1-9ac2fcd88c52
 # ╠═af494be1-3291-473a-8160-19de1869dd1d
@@ -178,11 +215,13 @@ end
 # ╠═875e9a13-7d49-4669-bdd6-f819f571f2d6
 # ╠═cad515d1-c4ed-47c2-90f9-b8b88ee30ded
 # ╠═c1959bcd-b5ce-40ae-9c41-142fca3027b6
+# ╟─991770c4-3a6c-4613-baf1-6158e4c34f72
 # ╠═14864b75-d2e6-476a-bf63-5ffffa95a61d
 # ╠═773832af-9099-4dcf-bd1b-c82baaa83424
-# ╠═1f303cbf-8caf-4c85-8f2a-a1460a4c31c3
 # ╠═c8585729-1dc6-437d-807f-f04896f067f1
 # ╠═fb3629dc-1860-4a96-a75e-2b4402f847fe
+# ╟─2f727c43-690d-4b5d-9cb2-1db82bd10590
 # ╠═2b4a9e41-ddb8-41c2-bb92-204db41dfa85
 # ╠═dbcf0415-09ea-49b1-b637-74f4625d8343
+# ╟─f70ae820-73f0-4a02-b3f5-4c2744d1402e
 # ╠═548356e2-570f-45e8-856c-372afdc890f3
