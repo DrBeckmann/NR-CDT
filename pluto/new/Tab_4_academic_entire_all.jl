@@ -21,6 +21,24 @@ begin
 	Random.seed!(42)
 end
 
+# ╔═╡ adfe0625-f6ad-4bbd-b13c-f26bc9ed4b72
+md"""
+# XXXX 2025 -- Table 4 (fourth rwo)
+This pluto notebook reproduces the numerical experiment
+for Table 4 (fourth row) from
+
+- Matthias Beckmann, Robert Beinert, Jonas Bresch, 
+  'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
+  XXXX 2025.
+"""
+
+# ╔═╡ 109e702b-58b5-4f62-a453-d9a75cab0d68
+md"""
+## Templates
+Generate the 12 templates
+using the submodule `TestImages`.
+"""
+
 # ╔═╡ c9a1f57f-1874-40e4-b47f-d66f7dd4a064
 I₁₁ = render(OrbAndCross(Circle(),Star(1)), width=4)
 
@@ -96,6 +114,15 @@ J₄₃ = extend_image(I₄₃, (256, 256));
 # ╔═╡ c1959bcd-b5ce-40ae-9c41-142fca3027b6
 J = [J₁₁, J₁₂, J₁₃, J₂₁, J₂₂, J₂₃, J₃₁, J₃₂, J₃₃, J₄₁, J₄₂, J₄₃]; Label = collect(1:12);
 
+# ╔═╡ b74ddc12-5522-4102-863d-1836edb6bc51
+md"""
+## Dataset
+Generate the dataset 
+by duplicating the templates
+and by applying random affine transformations
+using the submodule `DataTransformations`.
+"""
+
 # ╔═╡ 14864b75-d2e6-476a-bf63-5ffffa95a61d
 Class, Labels = generate_academic_classes(J, Label, class_size=100);
 
@@ -120,15 +147,28 @@ E = DataTransformations.ElasticNoise(
 	frequency_y=(0.5, 2.0))
 
 # ╔═╡ fb3629dc-1860-4a96-a75e-2b4402f847fe
-# TClass = S.(A.(E.(Class)))
 Random.seed!(42); TClass = S.(A.(E.(Class)))
-# TClass = S.(B.(A.(Class)))
+
+# ╔═╡ d5206c19-b0d4-4563-ba01-c6cb5d915f12
+md"""
+## Nearest Neighbour Classification -- Table 4
+Use the nearest neighbour classification
+with respect to a 5 and 10 randomly chosen training samples 
+from the generated dataset
+to classify the generated dataset.
+The max- and mean-normalized RCDT is applied
+with different numbers of used angles.
+Each experiment is repeated twenty times.
+"""
+
+# ╔═╡ 620c8104-986f-4372-8730-921179a73f4c
+md"- NN using the RCDT, max- and mean-normalized RCDT embedding."
 
 # ╔═╡ a8293654-d83e-4b37-8d3f-1070cb5c6571
 for angle in [128] #[1,2,4,8,16,32,64,128]
 	R = RadonTransform(850,angle,0.0);
 	RCDT = RadonCDT(64, R);
-	#NRCDT = NormRadonCDT(RCDT);
+	NRCDT = NormRadonCDT(RCDT);
 	#mNRCDT = MaxNormRadonCDT(RCDT);
 	#aNRCDT = MeanNormRadonCDT(RCDT);
 	qTemp = RCDT.(TClass);
@@ -154,9 +194,10 @@ for angle in [128] #[1,2,4,8,16,32,64,128]
 	end
 end
 
+# ╔═╡ b5d16752-32c2-494e-be8c-4caff39e94a2
+md"- NN using the Euclidean embedding."
+
 # ╔═╡ 1470cd30-2f5a-4411-9e9c-7ec87a1365a0
-# ╠═╡ disabled = true
-#=╠═╡
 for prop in [5,10]
 	for KK in [1,3,5]
 		@info "split" prop, "k-NN" KK
@@ -164,10 +205,11 @@ for prop in [5,10]
 		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 100, 12, Array{Float64}.(TClass), Labels, "euclidean", K=KK);
 	end
 end
-  ╠═╡ =#
 
 # ╔═╡ Cell order:
+# ╟─adfe0625-f6ad-4bbd-b13c-f26bc9ed4b72
 # ╠═8cbe0300-edff-11ef-2fad-d3b8cca171a9
+# ╟─109e702b-58b5-4f62-a453-d9a75cab0d68
 # ╠═c9a1f57f-1874-40e4-b47f-d66f7dd4a064
 # ╠═79449727-86d4-45b7-b4c1-9ac2fcd88c52
 # ╠═af494be1-3291-473a-8160-19de1869dd1d
@@ -193,10 +235,14 @@ end
 # ╠═875e9a13-7d49-4669-bdd6-f819f571f2d6
 # ╠═cad515d1-c4ed-47c2-90f9-b8b88ee30ded
 # ╠═c1959bcd-b5ce-40ae-9c41-142fca3027b6
+# ╟─b74ddc12-5522-4102-863d-1836edb6bc51
 # ╠═14864b75-d2e6-476a-bf63-5ffffa95a61d
 # ╠═773832af-9099-4dcf-bd1b-c82baaa83424
 # ╠═1f303cbf-8caf-4c85-8f2a-a1460a4c31c3
 # ╠═c8585729-1dc6-437d-807f-f04896f067f1
 # ╠═fb3629dc-1860-4a96-a75e-2b4402f847fe
+# ╟─d5206c19-b0d4-4563-ba01-c6cb5d915f12
+# ╟─620c8104-986f-4372-8730-921179a73f4c
 # ╠═a8293654-d83e-4b37-8d3f-1070cb5c6571
+# ╟─b5d16752-32c2-494e-be8c-4caff39e94a2
 # ╠═1470cd30-2f5a-4411-9e9c-7ec87a1365a0

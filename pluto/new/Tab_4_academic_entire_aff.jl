@@ -21,6 +21,24 @@ begin
 	Random.seed!(42)
 end
 
+# ╔═╡ f12ae88d-7cc6-4e54-91ad-a083c812c1b3
+md"""
+# XXXX 2025 -- Table 4 (first rwo)
+This pluto notebook reproduces the numerical experiment
+for Table 4 (first row) from
+
+- Matthias Beckmann, Robert Beinert, Jonas Bresch, 
+  'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
+  XXXX 2025.
+"""
+
+# ╔═╡ 553f7072-632d-4b33-afb9-1748b3c9ccfe
+md"""
+## Templates
+Generate the 12 templates
+using the submodule `TestImages`.
+"""
+
 # ╔═╡ c9a1f57f-1874-40e4-b47f-d66f7dd4a064
 I₁₁ = render(OrbAndCross(Circle(),Star(1)), width=4)
 
@@ -93,11 +111,17 @@ I₄₃ = render(Shield(Triangle()), width=4)
 # ╔═╡ cad515d1-c4ed-47c2-90f9-b8b88ee30ded
 J₄₃ = extend_image(I₄₃, (256, 256));
 
-# ╔═╡ a2ce201f-456c-449b-9d4a-34b02a7579c3
-I₄ = render(OrbAndCross(Triangle(),Star(5)), width=4);
-
 # ╔═╡ c1959bcd-b5ce-40ae-9c41-142fca3027b6
 J = [J₁₁, J₁₂, J₁₃, J₂₁, J₂₂, J₂₃, J₃₁, J₃₂, J₃₃, J₄₁, J₄₂, J₄₃]; Label = collect(1:12);
+
+# ╔═╡ 3dafd5b6-7f64-4e46-a4cf-791b3d269e0b
+md"""
+## Dataset
+Generate the dataset 
+by duplicating the templates
+and by applying random affine transformations
+using the submodule `DataTransformations`.
+"""
 
 # ╔═╡ 14864b75-d2e6-476a-bf63-5ffffa95a61d
 Class, Labels = generate_academic_classes(J, Label, class_size=100);
@@ -112,26 +136,29 @@ A = DataTransformations.RandomAffineTransformation(
 	shift_x=(-20, 20),
 	shift_y=(-20, 20))
 
-# ╔═╡ 1f303cbf-8caf-4c85-8f2a-a1460a4c31c3
-S = DataTransformations.SaltNoise((7,10), (3/128, 3/128))
-
-# ╔═╡ c8585729-1dc6-437d-807f-f04896f067f1
-E = DataTransformations.ElasticNoise(
-	amplitude_x=(2.5, 7.5), 
-	amplitude_y=(2.5, 7.5),
-	frequency_x=(0.5, 2.0),
-	frequency_y=(0.5, 2.0))
-
 # ╔═╡ fb3629dc-1860-4a96-a75e-2b4402f847fe
-# TClass = S.(A.(E.(Class)))
 Random.seed!(42); TClass = A.(Class)
-# TClass = S.(B.(A.(Class)))
+
+# ╔═╡ bb8109fa-75d6-4218-ac97-47bf8c5b2a0c
+md"""
+## Nearest Neighbour Classification -- Table 4
+Use the nearest neighbour classification
+with respect to a 5 and 10 randomly chosen training samples 
+from the generated dataset
+to classify the generated dataset.
+The max- and mean-normalized RCDT is applied
+with different numbers of used angles.
+Each experiment is repeated twenty times.
+"""
+
+# ╔═╡ 315ea725-544a-4fb9-83f3-35dc66fffe47
+md"- NN using the RCDT, max- and mean-normalized RCDT embedding."
 
 # ╔═╡ 8b7635b9-f1b1-4ed2-b5d1-ad177dc74807
 for angle in [128] #[1,2,4,8,16,32,64,128]
 	R = RadonTransform(850,angle,0.0);
 	RCDT = RadonCDT(64, R);
-	#NRCDT = NormRadonCDT(RCDT);
+	NRCDT = NormRadonCDT(RCDT);
 	#mNRCDT = MaxNormRadonCDT(RCDT);
 	#aNRCDT = MeanNormRadonCDT(RCDT);
 	qTemp = RCDT.(TClass);
@@ -157,9 +184,10 @@ for angle in [128] #[1,2,4,8,16,32,64,128]
 	end
 end
 
+# ╔═╡ b5c2de85-752f-4ae8-a79c-19956f4db662
+md"- NN using the Euclidean embedding."
+
 # ╔═╡ b367773a-8038-409a-aceb-25db04e7a721
-# ╠═╡ disabled = true
-#=╠═╡
 for prop in [5,10]
 	for KK in [1,3,5]
 		@info "split" prop, "k-NN" KK
@@ -167,94 +195,11 @@ for prop in [5,10]
 		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 100, 12, Array{Float64}.(TClass), Labels, "euclidean", K=KK);
 	end
 end
-  ╠═╡ =#
-
-# ╔═╡ 485c0121-b555-4b28-b8d7-d7e2525003a0
-# ╠═╡ disabled = true
-#=╠═╡
-R = RadonTransform(837,128,0.0);
-  ╠═╡ =#
-
-# ╔═╡ aded54a8-3850-4981-9676-10040ff7a9b5
-# ╠═╡ disabled = true
-#=╠═╡
-RCDT = RadonCDT(64, R);
-  ╠═╡ =#
-
-# ╔═╡ f2a4c847-584a-49ca-acf3-4989378eefb1
-# ╠═╡ disabled = true
-#=╠═╡
-qTemp = RCDT.(TClass); mqTemp = max_normalization.(qTemp); aqTemp = mean_normalization.(qTemp);
-  ╠═╡ =#
-
-# ╔═╡ b4debe92-0af9-47d2-b242-a1e5a1b0eb19
-# ╠═╡ disabled = true
-#=╠═╡
-mNRCDT = MeanNormRadonCDT(RCDT);
-  ╠═╡ =#
-
-# ╔═╡ d5e67310-6f8d-4f38-91c4-9e4aa003f57d
-# ╠═╡ disabled = true
-#=╠═╡
-aNRCDT = MeanNormRadonCDT(RCDT);
-  ╠═╡ =#
-
-# ╔═╡ 253befee-8f8f-432a-b374-a50883296d04
-# ╠═╡ disabled = true
-#=╠═╡
-aqClass = aNRCDT.(TClass);
-  ╠═╡ =#
-
-# ╔═╡ ee031d2b-7653-4259-8a16-d818c9be9e28
-# ╠═╡ disabled = true
-#=╠═╡
-mqClass = mNRCDT.(TClass);
-  ╠═╡ =#
-
-# ╔═╡ 170c5ef2-b3b1-42ab-9311-451dc7713558
-# ╠═╡ disabled = true
-#=╠═╡
-Random.seed!(42); CC = accuracy_k_nearest_part_neighbour(20, 10, 100, 12, aqTemp, Labels, "euclidean", K=5, ret=1);
-  ╠═╡ =#
-
-# ╔═╡ 3ce4e9e1-542a-4747-a5b7-3df22401f8d9
-# ╠═╡ disabled = true
-#=╠═╡
-hh = heatmap(CC/20, fontfamily="Computer Modern", size=(550,500), xticks=(1:12, 1:12), yticks=(1:12, 1:12))
-  ╠═╡ =#
-
-# ╔═╡ c1c102c2-2037-42d4-9eec-1e97b21d6130
-# ╠═╡ disabled = true
-#=╠═╡
-hhp = heatmap(log1p.(CC/20), fontfamily="Computer Modern", size=(550,500), xticks=(1:12, 1:12), yticks=(1:12, 1:12))
-  ╠═╡ =#
-
-# ╔═╡ b4da13f5-069e-4cfe-bbd0-779f983c6edb
-# ╠═╡ disabled = true
-#=╠═╡
-hhe = heatmap(exp.(-CC/20), fontfamily="Computer Modern", size=(550,500), xticks=(1:12, 1:12), yticks=(1:12, 1:12))
-  ╠═╡ =#
-
-# ╔═╡ 5ddd00f3-ca97-4b74-af75-b8a16783c666
-# ╠═╡ disabled = true
-#=╠═╡
-savefig(hhp, "academic_entire_5NN_10_mean_eucl_1p.pdf")
-  ╠═╡ =#
-
-# ╔═╡ b672f1d2-bf4c-41e2-ba16-c7ee420183eb
-# ╠═╡ disabled = true
-#=╠═╡
-savefig(hh, "academic_entire_5NN_10_mean_eucl.pdf")
-  ╠═╡ =#
-
-# ╔═╡ a7c955e8-e5aa-4567-afa4-cd670e2ec861
-# ╠═╡ disabled = true
-#=╠═╡
-savefig(hhe, "academic_entire_5NN_10_mean_eucl_-exp.pdf")
-  ╠═╡ =#
 
 # ╔═╡ Cell order:
+# ╟─f12ae88d-7cc6-4e54-91ad-a083c812c1b3
 # ╠═8cbe0300-edff-11ef-2fad-d3b8cca171a9
+# ╟─553f7072-632d-4b33-afb9-1748b3c9ccfe
 # ╠═c9a1f57f-1874-40e4-b47f-d66f7dd4a064
 # ╠═79449727-86d4-45b7-b4c1-9ac2fcd88c52
 # ╠═af494be1-3291-473a-8160-19de1869dd1d
@@ -279,26 +224,13 @@ savefig(hhe, "academic_entire_5NN_10_mean_eucl_-exp.pdf")
 # ╠═f4dc4243-8223-48c1-bde5-4144072cc94e
 # ╠═875e9a13-7d49-4669-bdd6-f819f571f2d6
 # ╠═cad515d1-c4ed-47c2-90f9-b8b88ee30ded
-# ╠═a2ce201f-456c-449b-9d4a-34b02a7579c3
 # ╠═c1959bcd-b5ce-40ae-9c41-142fca3027b6
+# ╟─3dafd5b6-7f64-4e46-a4cf-791b3d269e0b
 # ╠═14864b75-d2e6-476a-bf63-5ffffa95a61d
 # ╠═773832af-9099-4dcf-bd1b-c82baaa83424
-# ╠═1f303cbf-8caf-4c85-8f2a-a1460a4c31c3
-# ╠═c8585729-1dc6-437d-807f-f04896f067f1
 # ╠═fb3629dc-1860-4a96-a75e-2b4402f847fe
+# ╟─bb8109fa-75d6-4218-ac97-47bf8c5b2a0c
+# ╟─315ea725-544a-4fb9-83f3-35dc66fffe47
 # ╠═8b7635b9-f1b1-4ed2-b5d1-ad177dc74807
+# ╟─b5c2de85-752f-4ae8-a79c-19956f4db662
 # ╠═b367773a-8038-409a-aceb-25db04e7a721
-# ╠═485c0121-b555-4b28-b8d7-d7e2525003a0
-# ╠═aded54a8-3850-4981-9676-10040ff7a9b5
-# ╠═f2a4c847-584a-49ca-acf3-4989378eefb1
-# ╠═b4debe92-0af9-47d2-b242-a1e5a1b0eb19
-# ╠═d5e67310-6f8d-4f38-91c4-9e4aa003f57d
-# ╠═253befee-8f8f-432a-b374-a50883296d04
-# ╠═ee031d2b-7653-4259-8a16-d818c9be9e28
-# ╠═170c5ef2-b3b1-42ab-9311-451dc7713558
-# ╠═3ce4e9e1-542a-4747-a5b7-3df22401f8d9
-# ╠═c1c102c2-2037-42d4-9eec-1e97b21d6130
-# ╠═b4da13f5-069e-4cfe-bbd0-779f983c6edb
-# ╠═5ddd00f3-ca97-4b74-af75-b8a16783c666
-# ╠═b672f1d2-bf4c-41e2-ba16-c7ee420183eb
-# ╠═a7c955e8-e5aa-4567-afa4-cd670e2ec861
