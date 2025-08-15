@@ -2,8 +2,9 @@ module DataTransformations
 
 using Random, Images, Luxor
 using Augmentor
+using ImageTransformations, Interpolations, OffsetArrays, Rotations, CoordinateTransformations
 
-export RandomAffineTransformation
+export RandomAffineTransformation, RandomAffineTransformation3d
 export MikadoNoise
 export SaltNoise
 export BarNoise
@@ -121,21 +122,25 @@ end
 struct SaltNoise <: AbstractNoise
     dots::Tuple{Int64, Int64}
     width::Tuple{Float64, Float64}
-    function SaltNoise(d, w)
+    pos::Tuple{Float64, Float64}
+    function SaltNoise(d, w, p)
         if !(0 <= d[1] <= d[2]) 
             error("inconsistent dot number")
         elseif !(0 <= w[1] <= w[2]) 
             error("inconsistent width")
+        elseif !((0 <= p[1] <= 1) & (0 <= p[2] <= 1)) 
+            error("inconsistent position")
         end
-        return new(d, w)
+        return new(d, w, p)
     end
 end
 
 function SaltNoise(;
     dots::Tuple{Int64, Int64}=(10, 15),
-    width::Tuple{Float64, Float64}=(1e-5, 1e-5)
+    width::Tuple{Float64, Float64}=(1e-5, 1e-5),
+    pos::Tuple{Float64, Float64}=(0.0, 0.0)
 )
-    return SaltNoise(dots, width)
+    return SaltNoise(dots, width, pos)
 end
 
 function (N::SaltNoise)(image::AbstractMatrix)
@@ -227,7 +232,13 @@ end
 
 function luxor_draw_dot(noise::SaltNoise)
     width = randu(noise.width)
-    (x, y) = (2 - width) .* (rand(2) .- 0.5) 
+    if max(noise.pos[1],noise.pos[2])==0
+        pos=rand(2)
+    else
+        pos=[noise.pos[1],noise.pos[2]]
+    end
+    #(x, y) = (2 - width) .* (rand(2) .- 0.5)
+    (x, y) = (2 - width) .* (pos .- 0.5) 
     circle(Point(x, y), width / 2; action=:fill)
 end
 
@@ -322,6 +333,127 @@ end
 
 function periodic_index(j::Int64, dim::Int64)
     return mod(j - 1, dim) + 1
+end
+
+struct RandomAffineTransformation3d
+    scaling_x::Tuple{Float64, Float64}
+    scaling_y::Tuple{Float64, Float64}
+    scaling_z::Tuple{Float64, Float64}
+    rotating_x::Tuple{Float64, Float64}
+    rotating_y::Tuple{Float64, Float64}
+    rotating_z::Tuple{Float64, Float64}
+    shearing_xy::Tuple{Float64, Float64}
+    shearing_yx::Tuple{Float64, Float64}
+    shearing_yz::Tuple{Float64, Float64}
+    shearing_zy::Tuple{Float64, Float64}
+    shearing_xz::Tuple{Float64, Float64}
+    shearing_zx::Tuple{Float64, Float64}
+    translating_x::Tuple{Int64, Int64}
+    translating_y::Tuple{Int64, Int64}
+    translating_z::Tuple{Int64, Int64}
+    function RandomAffineTransformation3d(scx, scy, scz, rotx, roty, rotz, shxy, shyx, shyz, shzy, shxz, shzx, tax, tay, taz)
+        if !(0 <= scx[1] <= scx[2]) 
+            error("inconsistent x scaling")
+        elseif !(0 <= scy[1] <= scy[2]) 
+            error("inconsistent y scaling")
+        elseif !(0 <= scz[1] <= scz[2]) 
+            error("inconsistent z scaling")
+        elseif !(rotx[1] <= rotx[2]) 
+            error("inconsistent x rotating")
+        elseif !(roty[1] <= roty[2]) 
+            error("inconsistent y rotating")
+        elseif !(rotz[1] <= rotz[2]) 
+            error("inconsistent z rotating")
+        elseif !(shxy[1] <= shxy[2]) 
+            error("inconsistent xy shearing")
+        elseif !(shyx[1] <= shyx[2]) 
+            error("inconsistent yx shearing")
+        elseif !(shyz[1] <= shyz[2]) 
+            error("inconsistent yz shearing")
+        elseif !(shzy[1] <= shzy[2]) 
+            error("inconsistent zy shearing")
+        elseif !(shxz[1] <= shxz[2]) 
+            error("inconsistent xz shearing")
+        elseif !(shzx[1] <= shzx[2]) 
+            error("inconsistent zx shearing")
+        elseif !(tax[1] <= tax[2]) 
+            error("inconsistent x translating")
+        elseif !(tay[1] <= tay[2]) 
+            error("inconsistent y translating")
+        elseif !(taz[1] <= taz[2]) 
+            error("inconsistent z translating")
+        end
+        return new(scx, scy, scz, rotx, roty, rotz, shxy, shyx, shyz, shzy, shxz, shzx, tax, tay, taz)
+    end
+end
+
+function RandomAffineTransformation3d(;
+    scale_x::Tuple{Float64, Float64}=(1.0, 1.0),
+    scale_y::Tuple{Float64, Float64}=(1.0, 1.0),
+    scale_z::Tuple{Float64, Float64}=(1.0, 1.0),
+    rotate_x::Tuple{Real, Real}=(0.0, 0.0),
+    rotate_y::Tuple{Real, Real}=(0.0, 0.0),
+    rotate_z::Tuple{Real, Real}=(0.0, 0.0),
+    shear_xy::Tuple{Float64, Float64}=(0.0, 0.0),
+    shear_yx::Tuple{Float64, Float64}=(0.0, 0.0),
+    shear_yz::Tuple{Float64, Float64}=(0.0, 0.0),
+    shear_zy::Tuple{Float64, Float64}=(0.0, 0.0),
+    shear_xz::Tuple{Float64, Float64}=(0.0, 0.0),
+    shear_zx::Tuple{Float64, Float64}=(0.0, 0.0),
+    shift_x::Tuple{Int64, Int64}=(0, 0),
+    shift_y::Tuple{Int64, Int64}=(0, 0),
+    shift_z::Tuple{Int64, Int64}=(0, 0)
+)
+    return RandomAffineTransformation3d(scale_x, scale_y, scale_z, rotate_x, rotate_y, rotate_z, shear_xy, shear_yx, shear_yz, shear_zy, shear_xz, shear_zx, shift_x, shift_y, shift_z)
+end
+
+function (A::RandomAffineTransformation3d)(image::AbstractArray)
+    I = image                 
+    I = scaling3d(I, randu(A.scaling_x), randu(A.scaling_y), randu(A.scaling_z))  
+    I = rotate3d(I, randu(A.rotating_x), randu(A.rotating_y), randu(A.rotating_z))
+    I = shear3d(I, randu(A.shearing_xy), randu(A.shearing_yx), randu(A.shearing_yz), randu(A.shearing_zy), randu(A.shearing_xz), randu(A.shearing_zx))
+    I = translate3d(I, randi(A.translating_x), randi(A.translating_y), randi(A.translating_z))
+    return I
+end
+
+function scaling3d(I::AbstractArray, sx::Float64, sy::Float64, sz::Float64)
+    Scale = AffineMap([1/sx 0.0 0.0; 0.0 1/sy 0.0; 0.0 0.0 1/sz], [0.0, 0.0, 0.0])
+    center_offset = (-).(div.(size(I), 2));  
+    I_centered = OffsetArray(I, center_offset...);
+    I_scaled = warp(I_centered, Scale, axes(I_centered); fillvalue = 0.0, interp = BSpline(Linear()))
+    I_centered = OffsetArray(I_scaled, (-).(center_offset)...);
+    return I_centered
+end
+
+function rotate3d(I::AbstractArray, a::Real, b::Real, g::Real)
+    Rx = RotX(a)
+    Ry = RotY(b)
+    Rz = RotZ(g)
+    R = Matrix(Rx) * Matrix(Ry) * Matrix(Rz)
+    Rotation = AffineMap(R, [0.0, 0.0, 0.0]);
+    center_offset = (-).(div.(size(I), 2));
+    I_centered = OffsetArray(I, center_offset...);
+    I_rotated = warp(I_centered, Rotation, axes(I_centered); fillvalue = 0.0, interp = BSpline(Linear()))
+    I_centered = OffsetArray(I_rotated, (-).(center_offset)...);
+    return I_centered
+end
+
+function shear3d(I::AbstractArray, sxy::Float64, syx::Float64, syz::Float64, szy::Float64, sxz::Float64, szx::Float64)
+    Translation = AffineMap([1.0 sxy sxz; syx 1.0 syz; szx szy 1.0], [0.0, 0.0, 0.0])
+    center_offset = (-).(div.(size(I), 2));
+    I_centered = OffsetArray(I, center_offset...);
+    I_shared = warp(I_centered, Translation, axes(I_centered); fillvalue = 0.0, interp = BSpline(Linear()))
+    I_centered = OffsetArray(I_shared, (-).(center_offset)...);
+    return I_centered
+end
+
+function translate3d(I::AbstractArray, x::Int64, y::Int64, z::Int64)
+    Translation = AffineMap([1.0 0.0 0.0; 0.0 1.0 0.0; 0.0 0.0 1.0], [x, y, z])
+    center_offset = (-).(div.(size(I), 2));
+    I_centered = OffsetArray(I, center_offset...);
+    I_translated = warp(I_centered, Translation, axes(I_centered); fillvalue = 0.0, interp = BSpline(Linear()))
+    I_centered = OffsetArray(I_translated, (-).(center_offset)...);
+    return I_centered
 end
 
 end
