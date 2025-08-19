@@ -15,8 +15,7 @@ This repository contains the code and experiments for the papers:
    '[Normalized Radon Cumulative Distribution Transforms for
    Invariance and Robustness in Optimal Transport Based
    Image Classification](https://doi.org/10.48550/arXiv.2506.08761)',
-   [arXiv:2506.08761](https://arxiv.org/abs/2506.08761),
-   2025.
+   arXiv:2506.08761, 2025.
 
 Please cite the papers if you use the code.
 
