@@ -22,13 +22,13 @@ end
 
 # ╔═╡ f08fd150-21b6-4ecf-b0f8-19fb138d8dc4
 md"""
-# XXXX 2025 -- Table 2 (second column)
+# arXiv:2506.08761 -- Table 2 (2nd block)
 This pluto notebook reproduces the numerical experiment
-for Table 2 (second column) from
+for Table 2 (second block) from
 
 - Matthias Beckmann, Robert Beinert, Jonas Bresch, 
   'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
-  XXXX 2025.
+  arXiv:2506.08761, 2025.
 """
 
 # ╔═╡ 5c0828b9-f870-4d41-87b2-65f5c9d83730
