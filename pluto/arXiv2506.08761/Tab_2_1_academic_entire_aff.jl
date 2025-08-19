@@ -22,13 +22,13 @@ end
 
 # ╔═╡ 2a981b3c-2765-49cf-8bbd-038f12904400
 md"""
-# XXXX 2025 -- Table 2 (first column), Figure 2
+# arXiv:2506.08761 -- Table 2 (1st block), Figure 2
 This pluto notebook reproduces the numerical experiment
-for Table 2 (first column) and Figure 2 from
+for Table 2 (first block) and Figure 2 from
 
 - Matthias Beckmann, Robert Beinert, Jonas Bresch, 
   'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
-  XXXX 2025.
+  arXiv:2506.08761, 2025.
 """
 
 # ╔═╡ 9997f3ac-b425-4881-9d46-579f3abe282b
@@ -163,11 +163,11 @@ aNRCDT = MeanNormRadonCDT(RCDT)
 
 # ╔═╡ 540c0a0b-ed62-401b-a15d-e0d7d4d6228c
 md"""
-Reduce the set of tamplates and test images to those from class 5 and 12.
+Reduce the set of templates and test images to those from class 5 and 12.
 """
 
 # ╔═╡ 274784d5-088b-42d6-b4c2-4491c2f9ec2f
-set = append!(collect(51:60), collect(121:130)); sett = [5,12];
+set = append!(collect(41:50), collect(111:120)); sett = [5,12];
 
 # ╔═╡ 5f0a1b08-f2ae-4257-993b-cc3740775a3c
 redTClass = TClass[set];
