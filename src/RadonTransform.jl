@@ -51,7 +51,7 @@ function determine_corresponding_ray(j::Int64, k::Int64, R::RadonTransform)
 end
 
 function integrate_along_ray(P::Phantom, r::Ray)
-    if π / 4 <= r.θ < 3 * π / 4
+    if π / 4 <= r.θ < 3 * π / 4 || 5 * π / 4 < r.θ <= 7 * π / 4 
         return integrate_horizontal_ray(P, r)
     else
         return integrate_vertical_ray(P, r)
