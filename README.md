@@ -2,21 +2,23 @@
 
 [![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/JuliaDiff/BlueStyle)
 
-This repository contains the code and experiments for the paper:
+This repository contains the code and experiments for the papers:
 
 1. Matthias Beckmann, Robert Beinert, Jonas Bresch,
-   '[Max-Normalized Radon Cumulative Distribution
-   Transform for Limited Data Classification](https://doi.org/10.48550/arXiv.2411.16282)',
-   [arXiv:2411.16282](https://arxiv.org/abs/2411.16282)
-   (2025):
-   Accepted for publication in
-   *Proceedings of SSVM 2025*,
-   10th International Conference on
-   Scale Space and Variational Methods in Computer Vision,
-   May 18-22 2025,
-   Totnes, Devon, UK.
+   '[Max-Normalized Radon Cumulative Distribution Transform for
+   Limited Data Classification](https://doi.org/10.1007/978-3-031-92366-1_19)',
+   International Conference on 
+   Scale Space and Variational Methods in Computer Vision (SSVM),
+   2025, 241-254.
 
-Please cite the paper if you use the code.
+2. Matthias Beckmann, Robert Beinert, Jonas Bresch,
+   '[Normalized Radon Cumulative Distribution Transforms for
+   Invariance and Robustness in Optimal Transport Based
+   Image Classification](https://doi.org/10.48550/arXiv.2506.08761)',
+   [arXiv:2506.08761](https://arxiv.org/abs/2506.08761),
+   2025.
+
+Please cite the papers if you use the code.
 
 ## Usage
 
