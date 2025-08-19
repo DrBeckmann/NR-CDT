@@ -21,13 +21,13 @@ end
 
 # ╔═╡ a827fd33-c5ec-4c5b-b209-1364f91fa1e6
 md"""
-# XXXX 2025 -- Figure 7
-This pluto notebook reproduces the numerical experiment
+# arXiv:2506.08761 -- Figure 7
+This Pluto notebook reproduces the numerical experiment
 for Figure 7 from
 
 - Matthias Beckmann, Robert Beinert, Jonas Bresch, 
   'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
-  XXXX 2025.
+  arXiv:2506.08761, 2025.
 """
 
 # ╔═╡ 5b58bf37-7019-4b8d-9dd4-36c04040a393
@@ -92,8 +92,8 @@ with:
 - noise stength (size of the salt noise) ranging from 1 to 21 according to Figure 5,
 - noise component numbers (number of salt dots) ranging from 0 to 19.
 
-The max- and mean-normalized RCDT is applied
-with different numbers of used Radon angles, here (16,64,256).
+The max- and mean-normalized R-CDT is applied
+with different numbers of Radon angles, here (16,64,256).
 """
 
 # ╔═╡ 580b2b44-6fb9-430c-ade9-32ab807fc59e
@@ -131,12 +131,10 @@ for angle in 1:3
 end
 
 # ╔═╡ ae1d6c6b-df40-4b27-aedd-2e0c7180e6f8
-md"Visualizing the Phase transitions as provided in Figure 7."
+md"Visualizing the phase transitions as provided in Figure 7."
 
 # ╔═╡ 9b1580f7-2364-4c74-bb9b-1d36fe3c60d9
-#=╠═╡
 hh = heatmap(CC[2,2,3,:,:], size=(555,500), xticks = ([1,11,21],[1,11,21]), yticks = ([1,11,21],[0,10,20]), clim=(0,1), fontfamily="Computer Modern")
-  ╠═╡ =#
 
 # ╔═╡ 20796793-bd32-4bae-8706-1337025df15c
 # ╠═╡ disabled = true

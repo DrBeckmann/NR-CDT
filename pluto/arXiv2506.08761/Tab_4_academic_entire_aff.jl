@@ -23,13 +23,13 @@ end
 
 # ╔═╡ f12ae88d-7cc6-4e54-91ad-a083c812c1b3
 md"""
-# XXXX 2025 -- Table 4 (first rwo)
-This pluto notebook reproduces the numerical experiment
+# arXiv:2506.08761 -- Table 4 (1st row)
+This Pluto notebook reproduces the numerical experiment
 for Table 4 (first row) from
 
 - Matthias Beckmann, Robert Beinert, Jonas Bresch, 
   'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
-  XXXX 2025.
+  arXiv:2506.08761, 2025.
 """
 
 # ╔═╡ 553f7072-632d-4b33-afb9-1748b3c9ccfe
@@ -146,13 +146,13 @@ Use the nearest neighbour classification
 with respect to a 5 and 10 randomly chosen training samples 
 from the generated dataset
 to classify the generated dataset.
-The max- and mean-normalized RCDT is applied
-with different numbers of used angles.
+The max- and mean-normalized R-CDT is applied
+with different numbers of angles.
 Each experiment is repeated twenty times.
 """
 
 # ╔═╡ 315ea725-544a-4fb9-83f3-35dc66fffe47
-md"- NN using the RCDT, max- and mean-normalized RCDT embedding."
+md"- NN using the R-CDT, max- and mean-normalized R-CDT embedding."
 
 # ╔═╡ 8b7635b9-f1b1-4ed2-b5d1-ad177dc74807
 for angle in [128] #[1,2,4,8,16,32,64,128]

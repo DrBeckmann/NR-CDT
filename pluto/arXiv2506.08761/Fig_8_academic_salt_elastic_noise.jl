@@ -21,13 +21,13 @@ end
 
 # ╔═╡ fa205a49-6475-4b8f-a8fe-db7e9ca57ea7
 md"""
-# XXXX 2025 -- Figure 8
-This pluto notebook reproduces the numerical experiment
+# arXiv:2506.08761 -- Figure 8
+This Pluto notebook reproduces the numerical experiment
 for Figure 8 from
 
 - Matthias Beckmann, Robert Beinert, Jonas Bresch, 
   'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
-  XXXX 2025.
+  arXiv:2506.08761, 2025.
 """
 
 # ╔═╡ 5b58bf37-7019-4b8d-9dd4-36c04040a393
@@ -95,8 +95,8 @@ with:
 - fixed range for the random non-affine transformation of the templates w.r.t. the frequencies, here in [0,2],
 - variouse ranges for the random non-affine transformation of the templates w.r.t. the amplitudes, here reaching from [0,1],...,[0,20].
 
-The max- and mean-normalized RCDT is applied
-with different numbers of used Radon angles, here (16,64,256).
+The max- and mean-normalized R-CDT is applied
+with different numbers of Radon angles, here (16,64,256).
 """
 
 # ╔═╡ 580b2b44-6fb9-430c-ade9-32ab807fc59e
@@ -136,12 +136,10 @@ for angle in 3:3
 end
 
 # ╔═╡ 5062128e-a67e-4326-bcc3-4270ca667405
-md"Visualizing the Phase transitions as provided in Figure 7."
+md"Visualizing the phase transitions as provided in Figure 7."
 
 # ╔═╡ 9b1580f7-2364-4c74-bb9b-1d36fe3c60d9
-#=╠═╡
 hh = heatmap(CC[2,2,1,:,:], c=:thermal, size=(555,500), xticks = ([1,10,20],[1,10,20]), yticks = ([1,10,20],[0,9,19]), clim=(0,1), fontfamily="Computer Modern")
-  ╠═╡ =#
 
 # ╔═╡ Cell order:
 # ╟─fa205a49-6475-4b8f-a8fe-db7e9ca57ea7

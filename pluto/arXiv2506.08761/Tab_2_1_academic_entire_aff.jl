@@ -23,7 +23,7 @@ end
 # ╔═╡ 2a981b3c-2765-49cf-8bbd-038f12904400
 md"""
 # arXiv:2506.08761 -- Table 2 (1st block), Figure 2
-This pluto notebook reproduces the numerical experiment
+This Pluto notebook reproduces the numerical experiment
 for Table 2 (first block) and Figure 2 from
 
 - Matthias Beckmann, Robert Beinert, Jonas Bresch, 
@@ -140,8 +140,8 @@ Random.seed!(42); TClass = A.(Class)
 
 # ╔═╡ 3ef98e3a-160f-42cc-a22a-1cba512697c0
 md"""
-## Max- and Mean-Normalized RCDT -- Figure 2
-Setup the max- and mean-normalized RCDT,
+## Max- and Mean-Normalized R-CDT -- Figure 2
+Setup the max- and mean-normalized R-CDT,
 and apply it 
 to the dataset and templates.
 """
@@ -195,7 +195,7 @@ aqredTemp = aNRCDT.(redJ);
 
 # ╔═╡ 4e7c3707-5ed1-4888-a7f6-e490718f4692
 md"""
-Plot the computed max-normalized RCDTs.
+Plot the computed max-normalized R-CDTs.
 """
 
 # ╔═╡ ed505ea7-c690-4813-9bc5-569e18c698b8
@@ -203,7 +203,7 @@ mp = plot_quantiles(mqredTemp, redLabel, mqredClass, redLabels)
 
 # ╔═╡ 5bc61555-1ce4-49a2-8347-a53d79571760
 md"""
-Plot the computed mean-normalized RCDTs.
+Plot the computed mean-normalized R-CDTs.
 """
 
 # ╔═╡ 21f9c54c-dd3b-4e00-888f-4c91363d0385
@@ -215,8 +215,8 @@ md"""
 Use the nearest neighbour classification
 with respect to the chosen templates
 to classify the generated dataset.
-The max- and mean-normalized RCDT is applied
-with different numbers of used angles.
+The max- and mean-normalized R-CDT is applied
+with different numbers of angles.
 """
 
 # ╔═╡ 2b4a9e41-ddb8-41c2-bb92-204db41dfa85
@@ -226,7 +226,7 @@ accuracy_k_nearest_neighbour(Array{Float64}.(J), Label, Array{Float64}.(TClass),
 accuracy_k_nearest_neighbour(Array{Float64}.(J), Label, Array{Float64}.(TClass), Labels, "euclidean", ret=1);
 
 # ╔═╡ 29c2d769-1bbb-4d8f-8bd8-874eaea96ac9
-md"Short cut for the computations of the max- and mean-normalized RCDT by computing once the entire RCDT."
+md"Shortcut for the computations of the max- and mean-normalized R-CDT by computing once the entire R-CDT."
 
 # ╔═╡ 548356e2-570f-45e8-856c-372afdc890f3
 for angle in [1,2,4,8,16,32,64,128,256]
@@ -303,8 +303,8 @@ end
 # ╠═ed505ea7-c690-4813-9bc5-569e18c698b8
 # ╟─5bc61555-1ce4-49a2-8347-a53d79571760
 # ╠═21f9c54c-dd3b-4e00-888f-4c91363d0385
-# ╠═f199f6d0-970e-4fb9-b126-e4530f17671a
+# ╟─f199f6d0-970e-4fb9-b126-e4530f17671a
 # ╠═2b4a9e41-ddb8-41c2-bb92-204db41dfa85
 # ╠═dbcf0415-09ea-49b1-b637-74f4625d8343
-# ╠═29c2d769-1bbb-4d8f-8bd8-874eaea96ac9
+# ╟─29c2d769-1bbb-4d8f-8bd8-874eaea96ac9
 # ╠═548356e2-570f-45e8-856c-372afdc890f3

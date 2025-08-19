@@ -22,13 +22,13 @@ end
 
 # ╔═╡ 612cff45-7cb0-4f07-841a-621ffa0a623c
 md"""
-# XXXX 2025 -- Table 3 (third column)
-This pluto notebook reproduces the numerical experiment
-for Table 3 (third column) from
+# arXiv:2506.08761 -- Table 3 (3rd block)
+This Pluto notebook reproduces the numerical experiment
+for Table 3 (third block) from
 
 - Matthias Beckmann, Robert Beinert, Jonas Bresch, 
   'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
-  XXXX 2025.
+  arXiv:2506.08761, 2025.
 """
 
 # ╔═╡ 40d1bdd3-64e0-43b3-84b3-02a11ef93c13
@@ -151,8 +151,8 @@ md"""
 Use the nearest neighbour classification
 with respect to the chosen templates
 to classify the generated dataset.
-The max- and mean-normalized RCDT is applied
-with different numbers of used angles.
+The max- and mean-normalized R-CDT is applied
+with different numbers of angles.
 """
 
 # ╔═╡ 2b4a9e41-ddb8-41c2-bb92-204db41dfa85
@@ -162,7 +162,7 @@ accuracy_k_nearest_neighbour(Array{Float64}.(J), Label, Array{Float64}.(TClass),
 accuracy_k_nearest_neighbour(Array{Float64}.(J), Label, Array{Float64}.(TClass), Labels, "euclidean", ret=1);
 
 # ╔═╡ f70ae820-73f0-4a02-b3f5-4c2744d1402e
-md"Short cut for the computations of the max- and mean-normalized RCDT by computing once the entire RCDT."
+md"Shortcut for the computations of the max- and mean-normalized R-CDT by computing once the entire R-CDT."
 
 # ╔═╡ 548356e2-570f-45e8-856c-372afdc890f3
 for angle in [1,2,4,8,16,32,64,128,256]

@@ -22,13 +22,13 @@ end
 
 # ╔═╡ fd83dabe-12c0-4b65-bbb5-fafd2e437696
 md"""
-# XXXX 2025 -- Table 3 (second column), Figure 4
-This pluto notebook reproduces the numerical experiment
-for Table 3 (second column) and Figure 4 from
+# arXiv:2506.08761 -- Table 3 (2nd block), Figure 4
+This Pluto notebook reproduces the numerical experiment
+for Table 3 (second block) and Figure 4 from
 
 - Matthias Beckmann, Robert Beinert, Jonas Bresch, 
   'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
-  XXXX 2025.
+  arXiv:2506.08761, 2025.
 """
 
 # ╔═╡ 0db2e2a7-0f11-4ec9-ad42-14a50c96923e
@@ -147,8 +147,8 @@ Random.seed!(42); TClass = A.(E.(Class))
 
 # ╔═╡ 1cc66d50-3539-4807-a5af-3fa7356b9a56
 md"""
-## Max- and Mean-Normalized RCDT -- Figure 4
-Setup the max- and mean-normalized RCDT,
+## Max- and Mean-Normalized R-CDT -- Figure 4
+Setup the max- and mean-normalized R-CDT,
 and apply it 
 to the dataset and templates.
 """
@@ -170,11 +170,11 @@ aNRCDT = MeanNormRadonCDT(RCDT)
 
 # ╔═╡ b8d4a2c4-b490-44dc-bbac-0195234cfa74
 md"""
-Reduce the set of tamplates and test images to those from class 5 and 12.
+Reduce the set of templates and test images to those from class 5 and 12.
 """
 
 # ╔═╡ 7c47cae1-fd42-4f43-88a3-fef7a7ea2071
-set = append!(collect(51:60), collect(121:130)); sett = [5,12];
+set = append!(collect(41:50), collect(111:120)); sett = [5,12];
 
 # ╔═╡ 035d1c26-35e5-4ad0-822b-0f21d276e94d
 redTClass = TClass[set];
@@ -202,7 +202,7 @@ aqredTemp = aNRCDT.(redJ);
 
 # ╔═╡ f0287f82-8150-4dbe-89f3-27b948cfc785
 md"""
-Plot the computed max-normalized RCDTs.
+Plot the computed max-normalized R-CDTs.
 """
 
 # ╔═╡ b6423f0d-57e6-4ccc-8472-2387dd8faec7
@@ -210,7 +210,7 @@ mp = plot_quantiles(mqredTemp, redLabel, mqredClass, redLabels)
 
 # ╔═╡ a4cfabc4-1483-455a-86ff-912dd53718ff
 md"""
-Plot the computed mean-normalized RCDTs.
+Plot the computed mean-normalized R-CDTs.
 """
 
 # ╔═╡ ff62a270-9d19-4c17-a4dc-d0d4af074570
@@ -222,8 +222,8 @@ md"""
 Use the nearest neighbour classification
 with respect to the chosen templates
 to classify the generated dataset.
-The max- and mean-normalized RCDT is applied
-with different numbers of used angles.
+The max- and mean-normalized R-CDT is applied
+with different numbers of angles.
 """
 
 # ╔═╡ 2b4a9e41-ddb8-41c2-bb92-204db41dfa85
@@ -233,7 +233,7 @@ accuracy_k_nearest_neighbour(Array{Float64}.(J), Label, Array{Float64}.(TClass),
 accuracy_k_nearest_neighbour(Array{Float64}.(J), Label, Array{Float64}.(TClass), Labels, "euclidean", ret=1);
 
 # ╔═╡ 68a3244f-195a-432d-9784-997354018108
-md"Short cut for the computations of the max- and mean-normalized RCDT by computing once the entire RCDT."
+md"Shortcut for the computations of the max- and mean-normalized R-CDT by computing once the entire R-CDT."
 
 # ╔═╡ 548356e2-570f-45e8-856c-372afdc890f3
 for angle in [1,2,4,8,16,32,64,128,256]

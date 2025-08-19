@@ -23,13 +23,13 @@ end
 
 # ╔═╡ a8d8409d-72cb-4e42-832f-0cc142aa021f
 md"""
-# XXXX 2025 -- Table 6
-This pluto notebook reproduces the numerical experiment
+# arXiv:2506.08761 -- Table 6
+This Pluto notebook reproduces the numerical experiment
 for Table 6 from
 
 - Matthias Beckmann, Robert Beinert, Jonas Bresch, 
   'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
-  XXXX 2025.
+  arXiv:2506.08761, 2025.
 """
 
 # ╔═╡ 0380ed85-ee40-47f8-9a12-689a0ad857f2
@@ -105,9 +105,9 @@ Random.seed!(42); TMLClass = A.(MLClass)
 
 # ╔═╡ eff42224-7bdb-4d52-be3c-0fe19911cf2f
 md"
-# Setting the RCDT 
+# Setting the R-CDT 
 with 300 radii, 128 Radon angles, and 64 interpolation points.
-The max- and mean-normalized RCDT are applied on the generated dataset.
+The max- and mean-normalized R-CDT are applied on the generated dataset.
 "
 
 # ╔═╡ 8fb1f5c3-386e-4117-9b87-dedb75c1ae1d
@@ -117,32 +117,26 @@ R = RadonTransform(300,128,0.0)
 RCDT = RadonCDT(64, R)
 
 # ╔═╡ 81fd55d8-24df-4047-b235-20468b2c111c
-#=╠═╡
 NRCDT = NormRadonCDT(RCDT)
-  ╠═╡ =#
 
 # ╔═╡ a4860242-45bb-4f48-816c-3ed1bc82a9c6
 rcdt = RCDT.(TMLClass);
 
 # ╔═╡ 81e32395-78d9-4a5f-b6f0-ba2d6f01c8ee
-#=╠═╡
 mqClass = max_normalization.(rcdt)
-  ╠═╡ =#
 
 # ╔═╡ 13849a92-c3d3-42e9-a959-ca456452aaeb
-#=╠═╡
 aqClass = mean_normalization.(rcdt)
-  ╠═╡ =#
 
 # ╔═╡ c0499ac9-97b0-4ec9-bc0c-a6031b7fa223
 md"""
-## Nearest Neighbour Classification -- Table 2
+## Nearest Neighbour Classification -- Table 6
 Use the nearest neighbour classification
 with respect to 11, 25, and 50 randomly chosen trainings samples 
 from the transformed dataset
 per class
 to classify the generated dataset.
-The max- and mean-normalized RCDT is applied.
+The max- and mean-normalized R-CDT is applied.
 Each experiment is repeated twenty times.
 """
 
@@ -168,11 +162,10 @@ end
 
 # ╔═╡ 570bf90e-0258-470c-90ef-a0ae53144a5f
 md"
-- using the RCDT, max- and mean-normalized RCDT embedding.
+- using the R-CDT, max- and mean-normalized R-CDT embedding.
 "
 
 # ╔═╡ edae2657-66a9-4976-abe5-d8576dd6eab6
-#=╠═╡
 for prop in [11,25,50]
 	for KK in [1,5,11]
 		@info "split" prop, "k-NN" KK
@@ -190,7 +183,6 @@ for prop in [11,25,50]
 		jldsave("conf_LinMNIST_$(KK)NN_$(prop)_meanNRCDT_eucl.jld2"; CC)
 	end
 end
-  ╠═╡ =#
 
 # ╔═╡ 5a7de93e-774d-4bcc-a488-dde5012e1a3f
 md"
@@ -198,7 +190,6 @@ md"
 "
 
 # ╔═╡ ecb0c307-2f8d-4fb7-8688-d9f72cc9e992
-#=╠═╡
 for prop in [11,25,50]
 	for KK in [1,5,11]
 		@info "split" prop, "k-NN" KK
@@ -206,12 +197,11 @@ for prop in [11,25,50]
 		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 500, 10, Array{Float64}.(TMLClass), MLLabel, "euclidean", K=KK);
 	end
 end
-  ╠═╡ =#
 
 # ╔═╡ Cell order:
 # ╟─a8d8409d-72cb-4e42-832f-0cc142aa021f
 # ╠═8cbe0300-edff-11ef-2fad-d3b8cca171a9
-# ╠═0380ed85-ee40-47f8-9a12-689a0ad857f2
+# ╟─0380ed85-ee40-47f8-9a12-689a0ad857f2
 # ╠═81783bfb-d7a2-4c18-a4f8-b634f3bbc59b
 # ╟─98131234-5ab0-4954-bd68-0646241ed22a
 # ╠═81170d86-6140-41ce-a1e4-24e70c0530ff

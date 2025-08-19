@@ -22,13 +22,13 @@ end
 
 # ╔═╡ efcdfcff-cef6-48c9-992e-8a2eb9348424
 md"""
-# XXXX 2025 -- Table 5 (lower right part)
-This pluto notebook reproduces the numerical experiment
-for Table 5 (lower right part) from
+# arXiv:2506.08761 -- Table 5 (lower right block)
+This Pluto notebook reproduces the numerical experiment
+for Table 5 (lower right block) from
 
 - Matthias Beckmann, Robert Beinert, Jonas Bresch, 
   'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
-  XXXX 2025.
+  arXiv:2506.08761, 2025.
 """
 
 # ╔═╡ 6b753037-4286-407d-823b-7ff08f7aa505
@@ -122,9 +122,9 @@ Random.seed!(42); TClass = A.(Class);
 
 # ╔═╡ 466edf1c-ef46-4776-840a-b493d8c687b1
 md"""
-## Setting the Radon CDT
+## Setting the R-CDT
 with 850 radii, 128 Radon angles, and 64 interpolation points. 
-The max- and mean-normalized RCDT are applied
+The max- and mean-normalized R-CDT are applied
 on the entire dataset.
 """
 
@@ -161,7 +161,7 @@ Each experiment is repeated twenty times.
 
 # ╔═╡ 2155c12d-6cbc-47e5-a243-986e945a8085
 md"
-- using the max- and mean-normalized RCDT embedding.
+- using the max- and mean-normalized R-CDT embedding.
 "
 
 # ╔═╡ 0383b820-3203-4188-8bc6-946599a43c81
