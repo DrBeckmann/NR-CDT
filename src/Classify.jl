@@ -34,9 +34,6 @@ function accuracy_nearest_neighbour(temp_q::AbstractArray, temp_lab::AbstractArr
         if norm=="euclidean"
             pred_rcdt[kk,k] = sqrt(sum((temp_q[kk] .- data_q[k]).*(temp_q[kk] .- data_q[k])))
         end
-        if norm=="manhattan"
-            pred_rcdt[kk,k] = sum(abs.(temp_q[kk] .- data_q[k]))
-        end
     end
     pred_label_rcdt = argmin(pred_rcdt, dims=1)
     label_rcdt = zeros(length(data_q))
