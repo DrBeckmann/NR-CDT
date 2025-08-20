@@ -22,13 +22,13 @@ end
 
 # ╔═╡ 24bfee91-efc3-437d-ae96-ed3448b6fab6
 md"""
-# XXXX 2025 -- Table 5 (upper left part)
-This pluto notebook reproduces the numerical experiment
-for Table 5 (upper left part) from
+# arXiv:2506.08761 -- Table 5 (upper left block)
+This Pluto notebook reproduces the numerical experiment
+for Table 5 (upper left block) from
 
 - Matthias Beckmann, Robert Beinert, Jonas Bresch, 
   'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
-  XXXX 2025.
+  arXiv:2506.08761, 2025.
 """
 
 # ╔═╡ 69f91584-2745-43b2-8283-9221ba2b3ec4
@@ -65,8 +65,8 @@ A = DataTransformations.RandomAffineTransformation(
 	scale_x = (0.5, 1.0), 
 	scale_y = (0.5, 1.0),
 	rotate=(-180.0, 180.0), 
-	shear_x=(-45.0, 45.0),
-	shear_y=(-45.0, 45.0),
+	shear_x=(-25.0, 25.0),
+	shear_y=(-25.0, 25.0),
 	shift_x=(-20, 20),
 	shift_y=(-20, 20))
 
