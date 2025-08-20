@@ -103,7 +103,7 @@ with different numbers of Radon angles, here (16,64,256).
 CC = zeros(2, 2, 3, 20, 20);
 
 # ╔═╡ a772fa92-bafd-4022-946d-fda53abb8ebf
-for angle in 3:3
+for angle in 1:3
 	for num in 0:19
 		for r in 1:20
 			E = ElasticNoise(
@@ -136,7 +136,7 @@ for angle in 3:3
 end
 
 # ╔═╡ 5062128e-a67e-4326-bcc3-4270ca667405
-md"Visualizing the phase transitions as provided in Figure 7."
+md"Visualizing the phase transitions as provided in Figure 8."
 
 # ╔═╡ 9b1580f7-2364-4c74-bb9b-1d36fe3c60d9
 hh = heatmap(CC[2,2,1,:,:], c=:thermal, size=(555,500), xticks = ([1,10,20],[1,10,20]), yticks = ([1,10,20],[0,9,19]), clim=(0,1), fontfamily="Computer Modern")
