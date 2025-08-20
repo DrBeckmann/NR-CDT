@@ -15,83 +15,39 @@ begin
 	using NormalizedRadonCDT.Classify
 	using Images
 	using Plots
-	using Glob
+	using JLD2
 	using Random
 	Random.seed!(42)
 end
 
 # ╔═╡ 24bfee91-efc3-437d-ae96-ed3448b6fab6
 md"""
-# arXiv:2506.08761 -- Table 5 (upper left block)
-This Pluto notebook reproduces the numerical experiment
-for Table 5 (upper left block) from
+# XXXX 2025 -- Table 5 (upper left part)
+This pluto notebook reproduces the numerical experiment
+for Table 5 (upper left part) from
 
 - Matthias Beckmann, Robert Beinert, Jonas Bresch, 
   'Normalized Radon Cummulative Distribution Transforms for Invariance and Robustness in Optimal Transport Based Image Classification',
-  arXiv:2506.08761, 2025.
+  XXXX 2025.
 """
 
 # ╔═╡ 69f91584-2745-43b2-8283-9221ba2b3ec4
 md"""
 ## Dataset
-Load the Chinese hand-written character dataset `handwritten-chinese-character-hanzi-datasets`.
-Further information can be found in
+Load a selection of the Chinese hand-written character dataset `CASIA Chinese Handwriting Databases`.
+For Further information we refer to '[Handwritten chinese character hanzi datasets] (https://nlpr.ia.ac.cn/databases/handwriting/Home.html)'. 
 
-- P. Bliem, '[Handwritten chinese character hanzi datasets] (https://www.kaggle.com/datasets/pascalbliem/handwritten-chinese-character-hanzi-datasets)', (2022), Accessed: March 26, 2025.  
-
-!!! warning "Download the Chinese handwritten character dataset"
-	In order to load the dataset
-	using `kaggle`,
-	it has to be loaded first!
-	For this,
-	one can activate the enivironment of the project
-	and load the dataset one time explicitly.
-	Starting a Julia REPL 
-	in the main directory of the project,
-	this can be done by
-	```
-	import kaggle
-	# This will use your credentials from ~/.kaggle/kaggle.json
-	from kaggle.api.kaggle_api_extended import KaggleApi
-	api = KaggleApi()
-	api.authenticate()
-	api.dataset_download_files('pascalbliem/handwritten-chinese-character-hanzi-datasets', path='./data', unzip=True)
-	```
-	Julia then asks to download the corresponding dataset.
+- C.-L. Liu, F. Yin, D.-H. Wang, Q.-F. Wang, CASIA online and offline Chinese handwriting databases, *Proc. 11th International Conference on Document Analysis and Recognition (ICDAR)*, Beijing, China, 2011, pp.37-41.
 """
 
-# ╔═╡ 635970d6-4dae-4440-b958-ecccb9c51613
-md"
-- navigate the dataset to the currect path, i.e. the folder in which the notbook runs.
-- the following steps collect from each of the first 100 classes the first handwritten symbol 
-"
-
-# ╔═╡ 2450a95a-b230-4b73-b369-3aa36d3172b5
-root_folder = "chinese_character";
-
-# ╔═╡ 782377c4-21bf-4f9f-a8ba-4b3bf849c696
-subfolders = filter(name -> isdir(joinpath(root_folder, name)), readdir(root_folder));
-
-# ╔═╡ 639e3aed-dde6-491c-a4a3-8be172766755
-chinese_character = [];
-
-# ╔═╡ dbe82aad-857e-45db-b56f-35e0acffde0c
-for sub in subfolders[1:100]
-    subpath = joinpath(root_folder, sub)
-    # Get all .png files in the subfolder
-     image_files = Glob.glob("*.png", subpath)
-    
-    if !isempty(image_files)
-        # Load the first image from the subfolder
-        first_image = image_files[1]
-        # println("Loading first image from subfolder ", sub, ": ", first_image)
-        img = load(first_image)
-        # Display the image (or process as needed)
-        # display(img)
-		push!(chinese_character, 1 .- img)
-    else
-        println("No image found in subfolder ", sub)
-    end
+# ╔═╡ 431b7d62-cc7a-4d2e-a21a-4c0ec5b806e6
+begin
+	dict = JLD2.load("../../data/CASIA_selection/chinese_character.jld2");
+	chinese_character = dict["chinese_character"];
+	for k in 1:length(chinese_character)
+		chinese_character[k] = 1 .- chinese_character[k]
+	end
+	ext_chinese_character = extend_image.(chinese_character, 128)
 end
 
 # ╔═╡ 46e9a3b9-48dd-457a-890f-74ac08364b3a
@@ -101,19 +57,16 @@ Generate the 100 templates
 using the submodule `TestImages`.
 """
 
-# ╔═╡ 8f5dfb6e-9c0d-4187-9fd1-1c0acccc4ac1
-ext_chinese_character = extend_image.(chinese_character, 128)
-
 # ╔═╡ 28cbf21b-37a0-4307-bad7-7ff6d1efd511
-Class, Labels = generate_academic_classes(ext_chinese_character, 1:100, class_size=50);
+Class, Labels = generate_academic_classes(ext_chinese_character[1:100], 1:100, class_size=50);
 
 # ╔═╡ fc1f2b19-fe55-4421-a904-398a2448597b
 A = DataTransformations.RandomAffineTransformation(
-	scale_x = (0.75, 1.25), 
-	scale_y = (0.75, 1.25),
-	rotate=(-45.0, 45.0), 
-	shear_x=(-5.0, 5.0),
-	shear_y=(-5.0, 5.0),
+	scale_x = (0.5, 1.0), 
+	scale_y = (0.5, 1.0),
+	rotate=(-180.0, 180.0), 
+	shear_x=(-45.0, 45.0),
+	shear_y=(-45.0, 45.0),
 	shift_x=(-20, 20),
 	shift_y=(-20, 20))
 
@@ -126,8 +79,8 @@ md"""
 Use the nearest neighbour classification
 with respect to the chosen templates
 to classify the generated dataset.
-The max- and mean-normalized R-CDT is applied
-with different numbers of angles.
+The max- and mean-normalized RCDT is applied
+with different numbers of used angles.
 """
 
 # ╔═╡ 058e9e41-37bc-4ef0-b8c8-8b5727dff8d8
@@ -165,13 +118,8 @@ end
 # ╟─24bfee91-efc3-437d-ae96-ed3448b6fab6
 # ╠═19587268-0828-11f0-01fa-e979f61f03a3
 # ╟─69f91584-2745-43b2-8283-9221ba2b3ec4
-# ╟─635970d6-4dae-4440-b958-ecccb9c51613
-# ╠═2450a95a-b230-4b73-b369-3aa36d3172b5
-# ╠═782377c4-21bf-4f9f-a8ba-4b3bf849c696
-# ╠═639e3aed-dde6-491c-a4a3-8be172766755
-# ╠═dbe82aad-857e-45db-b56f-35e0acffde0c
+# ╠═431b7d62-cc7a-4d2e-a21a-4c0ec5b806e6
 # ╟─46e9a3b9-48dd-457a-890f-74ac08364b3a
-# ╠═8f5dfb6e-9c0d-4187-9fd1-1c0acccc4ac1
 # ╠═28cbf21b-37a0-4307-bad7-7ff6d1efd511
 # ╠═fc1f2b19-fe55-4421-a904-398a2448597b
 # ╠═7e5f32b7-2f27-4877-a6fe-c6b41750aa1b
