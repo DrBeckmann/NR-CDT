@@ -7,7 +7,7 @@ using InteractiveUtils
 # ╔═╡ 19587268-0828-11f0-01fa-e979f61f03a3
 begin
 	import Pkg
-	Pkg.activate(".")
+	Pkg.activate("../..")
 	using Revise
 	using NormalizedRadonCDT
 	using NormalizedRadonCDT.TestImages
@@ -83,34 +83,24 @@ The max- and mean-normalized R-CDT is applied
 with different numbers of angles.
 """
 
-# ╔═╡ 0a193211-86e6-46cf-a265-e87ff8d00fc6
-accuracy_k_nearest_neighbour(Array{Float64}.(ext_chinese_character), unique(Labels), Array{Float64}.(TClass), Labels, "inf", ret=1)
-
 # ╔═╡ 2fab6713-3367-4696-b326-76d0f81b7429
-accuracy_k_nearest_neighbour(Array{Float64}.(ext_chinese_character), unique(Labels), Array{Float64}.(TClass), Labels, "euclidean", ret=1)
+accuracy_k_nearest_neighbour(Array{Float64}.(ext_chinese_character[1:1000]), unique(Labels), Array{Float64}.(TClass), Labels, "euclidean", ret=1)
 
 # ╔═╡ 1edcfb3c-14fd-4c66-bccd-2e54acd0c544
 for angle in [2,4,8,16,32,64,128]
-	R = RadonTransform(128,angle,0.0)
-	RCDT = RadonCDT(128, R)
+	R = RadonTransform(850,angle,0.0)
+	RCDT = RadonCDT(64, R)
 	mNRCDT = MaxNormRadonCDT(RCDT)
 	aNRCDT = MeanNormRadonCDT(RCDT)
 	qClass = RCDT.(TClass)
-	qTemp = RCDT.(ext_chinese_character)
-	#mqClass = mNRCDT.(TClass)
+	qTemp = RCDT.(ext_chinese_character[1:1000])
 	mqClass = max_normalization.(qClass)
-	#mqTemp = mNRCDT.(ext_chinese_character)
 	mqTemp = max_normalization.(qTemp)
-	#aqClass = aNRCDT.(TClass)
 	aqClass = mean_normalization.(qClass)
-	#aqTemp = aNRCDT.(ext_chinese_character)
 	aqTemp = mean_normalization.(qTemp)
 	@info "number of equispaced angles:" angle
-	accuracy_k_nearest_neighbour(qTemp, unique(Labels), qClass, Labels, "inf", ret=1)
 	accuracy_k_nearest_neighbour(qTemp, unique(Labels), qClass, Labels, "euclidean", ret=1)
-	accuracy_k_nearest_neighbour(mqTemp, unique(Labels), mqClass, Labels, "inf", ret=1)
 	accuracy_k_nearest_neighbour(mqTemp, unique(Labels), mqClass, Labels, "euclidean", ret=1)
-	accuracy_k_nearest_neighbour(aqTemp, unique(Labels), aqClass, Labels, "inf", ret=1)
 	accuracy_k_nearest_neighbour(aqTemp, unique(Labels), aqClass, Labels, "euclidean", ret=1)
 end
 
@@ -124,6 +114,5 @@ end
 # ╠═fc1f2b19-fe55-4421-a904-398a2448597b
 # ╠═7e5f32b7-2f27-4877-a6fe-c6b41750aa1b
 # ╟─ed15d805-9d84-4619-8909-304a83842b86
-# ╠═0a193211-86e6-46cf-a265-e87ff8d00fc6
 # ╠═2fab6713-3367-4696-b326-76d0f81b7429
 # ╠═1edcfb3c-14fd-4c66-bccd-2e54acd0c544

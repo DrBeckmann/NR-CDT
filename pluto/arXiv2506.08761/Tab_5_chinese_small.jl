@@ -83,34 +83,24 @@ The max- and mean-normalized RCDT is applied
 with different numbers of used angles.
 """
 
-# ╔═╡ 058e9e41-37bc-4ef0-b8c8-8b5727dff8d8
-accuracy_k_nearest_neighbour(Array{Float64}.(ext_chinese_character), unique(Labels), Array{Float64}.(TClass), Labels, "inf", ret=1)
-
 # ╔═╡ 57b41939-a469-4511-8bef-def1e6f74ce5
-accuracy_k_nearest_neighbour(Array{Float64}.(ext_chinese_character), unique(Labels), Array{Float64}.(TClass), Labels, "euclidean", ret=1)
+accuracy_k_nearest_neighbour(Array{Float64}.(ext_chinese_character[1:100]), unique(Labels), Array{Float64}.(TClass), Labels, "euclidean", ret=1)
 
 # ╔═╡ cede8b89-ffad-4b36-a234-d563c7a9acca
 for angle in [2,4,8,16,32,64,128]
-	R = RadonTransform(256,angle,0.0)
-	RCDT = RadonCDT(256, R)
+	R = RadonTransform(850,angle,0.0)
+	RCDT = RadonCDT(64, R)
 	mNRCDT = MaxNormRadonCDT(RCDT)
 	aNRCDT = MeanNormRadonCDT(RCDT)
 	qClass = RCDT.(TClass)
-	qTemp = RCDT.(ext_chinese_character)
-	#mqClass = mNRCDT.(TClass)
+	qTemp = RCDT.(ext_chinese_character[1:100])
 	mqClass = max_normalization.(qClass)
-	#mqTemp = mNRCDT.(ext_chinese_character)
 	mqTemp = max_normalization.(qTemp)
-	#aqClass = aNRCDT.(TClass)
 	aqClass = mean_normalization.(qClass)
-	#aqTemp = aNRCDT.(ext_chinese_character)
 	aqTemp = mean_normalization.(qTemp)
 	@info "number of equispaced angles:" angle
-	accuracy_k_nearest_neighbour(qTemp, unique(Labels), qClass, Labels, "inf", ret=1)
 	accuracy_k_nearest_neighbour(qTemp, unique(Labels), qClass, Labels, "euclidean", ret=1)
-	accuracy_k_nearest_neighbour(mqTemp, unique(Labels), mqClass, Labels, "inf", ret=1)
 	accuracy_k_nearest_neighbour(mqTemp, unique(Labels), mqClass, Labels, "euclidean", ret=1)
-	accuracy_k_nearest_neighbour(aqTemp, unique(Labels), aqClass, Labels, "inf", ret=1)
 	accuracy_k_nearest_neighbour(aqTemp, unique(Labels), aqClass, Labels, "euclidean", ret=1)
 end
 
@@ -124,6 +114,5 @@ end
 # ╠═fc1f2b19-fe55-4421-a904-398a2448597b
 # ╠═7e5f32b7-2f27-4877-a6fe-c6b41750aa1b
 # ╟─1986d601-d6f6-44ff-bb14-48ed05b5f88e
-# ╠═058e9e41-37bc-4ef0-b8c8-8b5727dff8d8
 # ╠═57b41939-a469-4511-8bef-def1e6f74ce5
 # ╠═cede8b89-ffad-4b36-a234-d563c7a9acca

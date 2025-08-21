@@ -7,7 +7,7 @@ using InteractiveUtils
 # ╔═╡ 19587268-0828-11f0-01fa-e979f61f03a3
 begin
 	import Pkg
-	Pkg.activate("..")
+	Pkg.activate("../..")
 	using Revise
 	using NormalizedRadonCDT
 	using NormalizedRadonCDT.TestImages
@@ -97,10 +97,10 @@ aNRCDT = MeanNormRadonCDT(RCDT)
 qClass = RCDT.(TClass)
 
 # ╔═╡ 745baebd-b48a-4468-aea5-5e9d5806a25e
-mqClass = max_normalization.(qClass)		#mqClass = mNRCDT.(TClass)
+mqClass = max_normalization.(qClass)
 
 # ╔═╡ c065302a-21d8-4924-9f6d-e118b141bb3c
-aqClass = mean_normalization.(qClass)		#aqClass = aNRCDT.(TClass)
+aqClass = mean_normalization.(qClass)
 
 # ╔═╡ 2554552f-086c-48a3-a968-b921ecbe3bb6
 md"""
@@ -119,11 +119,9 @@ md"
 
 # ╔═╡ 0383b820-3203-4188-8bc6-946599a43c81
 for prop in [5,10]
-	for K in [1,3,5]
+	for K in [1] #[1,3,5]
 		@info "split:" prop, "K-NN:" K 
-		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 50, 1000, mqClass, Labels, "inf", K=K, ret=0)
 		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 50, 1000, mqClass, Labels, "euclidean", K=K, ret=0)
-		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 50, 1000, aqClass, Labels, "inf", K=K, ret=0)
 		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 50, 1000, aqClass, Labels, "euclidean", K=K, ret=0)
 	end
 end
@@ -135,11 +133,9 @@ md"
 
 # ╔═╡ 4d819a08-a727-4b6c-b373-c6917d113fd7
 for prop in [5,10]
-	for K in [1,3,5]
+	for K in [1] #[1,3,5]
 		@info "split:" prop, "K-NN:" K 
-		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 50, 1000, Array{Float64}.(TClass), Labels, "inf", K=K, ret=0)
 		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 50, 1000, Array{Float64}.(TClass), Labels, "euclidean", K=K, ret=0)
-		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 50, 1000, qClass, Labels, "inf", K=K, ret=0)
 		Random.seed!(42); accuracy_k_nearest_part_neighbour(20, prop, 50, 1000, qClass, Labels, "euclidean", K=K, ret=0)
 	end
 end
