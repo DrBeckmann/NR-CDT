@@ -1,7 +1,5 @@
 # NR-CDT
 
-[![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/JuliaDiff/BlueStyle)
-
 This repository contains the code and experiments for the papers:
 
 1. Matthias Beckmann, Robert Beinert, Jonas Bresch,
